@@ -241,26 +241,41 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 ml-2 pl-3 border-l h-9">
                   <div className="text-right text-sm hidden sm:block">
-                    <div className="font-medium leading-tight">{user?.name ?? "Invité"}</div>
-                    <div className="text-[11px] text-muted-foreground leading-tight">Administratrice</div>
+                    <div className="font-medium leading-tight">{currentAppUser?.nom ?? user?.name ?? "Invité"}</div>
+                    <div className="text-[11px] text-muted-foreground leading-tight flex items-center gap-1 justify-end">
+                      <span className={cn("inline-block h-1.5 w-1.5 rounded-full", currentAppUser?.role === "Admin" ? "bg-[color:var(--gold)]" : "bg-primary")} />
+                      {currentAppUser?.role ?? "Administratrice"}
+                    </div>
                   </div>
                   <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground grid place-items-center font-semibold text-sm shadow-sm">
-                    {(user?.name ?? "?").split(" ").map((s) => s[0]).slice(0, 2).join("")}
+                    {(currentAppUser?.nom ?? user?.name ?? "?").split(" ").map((s) => s[0]).slice(0, 2).join("")}
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-72">
                 <DropdownMenuLabel>
-                  <div className="font-medium">{user?.name}</div>
-                  <div className="text-xs text-muted-foreground font-normal">{user?.email}</div>
+                  <div className="font-medium">{currentAppUser?.nom}</div>
+                  <div className="text-xs text-muted-foreground font-normal">{currentAppUser?.email}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-[color:var(--gold)] font-semibold mt-1">{currentAppUser?.role} · {currentAppUser?.fonction}</div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem><User className="h-4 w-4 mr-2" /> Profil</DropdownMenuItem>
-                <DropdownMenuItem><Settings className="h-4 w-4 mr-2" /> Paramètres</DropdownMenuItem>
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Changer d'utilisateur (démo)</DropdownMenuLabel>
+                {allUsers.filter((u) => u.actif).map((u) => (
+                  <DropdownMenuItem key={u.id} onClick={() => currentUser.set(u.id)} className={cn("gap-2", u.id === currentAppUser?.id && "bg-muted/60")}>
+                    <div className={cn("h-6 w-6 rounded-full grid place-items-center text-[10px] font-bold text-white", u.role === "Admin" ? "bg-[color:var(--gold)]" : "bg-primary")}>
+                      {u.nom.split(" ").map((s) => s[0]).slice(0, 2).join("")}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm truncate">{u.nom}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">{u.role} · {u.fonction}</div>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive"><LogOut className="h-4 w-4 mr-2" /> Déconnexion</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
           </div>
         </header>
         <main className="flex-1 overflow-auto app-bg relative">
