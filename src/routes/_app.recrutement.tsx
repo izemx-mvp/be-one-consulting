@@ -77,7 +77,6 @@ function Page() {
   const [editing, setEditing] = useState<Candidat>(empty());
   const [detail, setDetail] = useState<Candidat | null>(null);
   const [confirmDel, setConfirmDel] = useState<Candidat | null>(null);
-  const [campaignOpen, setCampaignOpen] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
 
   const filtered = rows.filter((r) =>
