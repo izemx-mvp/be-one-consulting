@@ -122,8 +122,8 @@ function Page() {
           <TabsTrigger value="calendar"><CalendarDays className="h-4 w-4 mr-2" /> Calendrier</TabsTrigger>
           <TabsTrigger value="config"><Settings2 className="h-4 w-4 mr-2" /> Configuration IA</TabsTrigger>
         </TabsList>
-        <TabsContent value="grid"><GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} /></TabsContent>
-        <TabsContent value="posts"><PostsTab externalDetail={detailPost} setExternalDetail={setDetailPost} /></TabsContent>
+        <TabsContent value="grid" forceMount className="data-[state=inactive]:hidden"><GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} /></TabsContent>
+        <TabsContent value="posts" forceMount className="data-[state=inactive]:hidden"><PostsTab externalDetail={detailPost} setExternalDetail={setDetailPost} /></TabsContent>
         <TabsContent value="calendar"><CalendarTab onArticleClick={setDetailArticle} onPostClick={setDetailPost} /></TabsContent>
         <TabsContent value="config"><ConfigTab /></TabsContent>
       </Tabs>
