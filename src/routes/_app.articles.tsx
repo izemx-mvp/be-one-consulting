@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Check,
@@ -49,20 +50,28 @@ import {
   articlesStore,
   ARTICLE_IMAGES,
   editorialConfigStore,
+  cmConfigStore,
+  postIdeasStore,
   uid,
   useStore,
   type Article,
+  type CmPlatform,
+  type CmPlatformConfig,
+  type PostIdea,
 } from "@/lib/mock-data";
 import { StatusBadge } from "@/components/status-badge";
-import { RichEditor } from "@/components/rich-editor";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { PostWizard, ContentTypePicker } from "@/components/post-wizard";
+import { PostWizard, ContentTypePicker, type PostWizardPrefill } from "@/components/post-wizard";
+import { ArticleWizard } from "@/components/article-wizard";
 import { ScheduleDialog } from "@/components/schedule-dialog";
 import { postsStore, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
-import { Linkedin, Facebook, Instagram, Youtube, Globe as GlobeIcon, Send } from "lucide-react";
+import { Linkedin, Facebook, Instagram, Youtube, Globe as GlobeIcon, Send, Lightbulb, RefreshCw, Bookmark, Copy } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { burstConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_app/articles")({
   head: () => ({ meta: [{ title: "Community Manager AI — Be One Consulting" }] }),
@@ -105,32 +114,19 @@ function Page() {
     >
       <Tabs defaultValue="grid">
         <TabsList className="mb-4">
-          <TabsTrigger value="grid">
-            <LayoutGrid className="h-4 w-4 mr-2" /> Articles
-          </TabsTrigger>
-          <TabsTrigger value="posts">
-            <Send className="h-4 w-4 mr-2" /> Posts sociaux
-          </TabsTrigger>
-          <TabsTrigger value="calendar">
-            <CalendarDays className="h-4 w-4 mr-2" /> Calendrier
-          </TabsTrigger>
-          <TabsTrigger value="config">
-            <Settings2 className="h-4 w-4 mr-2" /> Configuration IA
-          </TabsTrigger>
+          <TabsTrigger value="grid"><LayoutGrid className="h-4 w-4 mr-2" /> Articles</TabsTrigger>
+          <TabsTrigger value="posts"><Send className="h-4 w-4 mr-2" /> Posts sociaux</TabsTrigger>
+          <TabsTrigger value="ideas"><Lightbulb className="h-4 w-4 mr-2" /> Idées AI</TabsTrigger>
+          <TabsTrigger value="calendar"><CalendarDays className="h-4 w-4 mr-2" /> Calendrier</TabsTrigger>
+          <TabsTrigger value="config"><Settings2 className="h-4 w-4 mr-2" /> Configuration IA</TabsTrigger>
         </TabsList>
-        <TabsContent value="grid">
-          <GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} />
-        </TabsContent>
-        <TabsContent value="posts">
-          <PostsTab />
-        </TabsContent>
-        <TabsContent value="calendar">
-          <CalendarTab onArticleClick={setDetailArticle} />
-        </TabsContent>
-        <TabsContent value="config">
-          <ConfigTab />
-        </TabsContent>
+        <TabsContent value="grid"><GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} /></TabsContent>
+        <TabsContent value="posts"><PostsTab /></TabsContent>
+        <TabsContent value="ideas"><IdeasTab /></TabsContent>
+        <TabsContent value="calendar"><CalendarTab onArticleClick={setDetailArticle} /></TabsContent>
+        <TabsContent value="config"><ConfigTab /></TabsContent>
       </Tabs>
+
     </AppShell>
   );
 }
@@ -167,10 +163,8 @@ function GridTab({
   const [auteur, setAuteur] = useState("all");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Article>(empty(cfg));
-  const [tagsInput, setTagsInput] = useState("");
-  const [step, setStep] = useState(1);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardEditing, setWizardEditing] = useState<Article | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [confirmDel, setConfirmDel] = useState<Article | null>(null);
@@ -199,42 +193,9 @@ function GridTab({
   const current = Math.min(page, totalPages);
   const pageItems = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  const openNew = () => {
-    setEditing(empty(cfg));
-    setTagsInput("");
-    setStep(1);
-    setOpen(true);
-  };
-  const openEdit = (a: Article) => {
-    setEditing(a);
-    setTagsInput(a.tags.join(", "));
-    setStep(1);
-    setOpen(true);
-  };
+  const openNew = () => { setWizardEditing(null); setWizardOpen(true); };
+  const openEdit = (a: Article) => { setWizardEditing(a); setWizardOpen(true); };
 
-  // Brouillon must be reviewed (approved) before it can be scheduled or published.
-  const isBrouillon = editing.statut === "Brouillon";
-  const availableStatuts: Article["statut"][] = isBrouillon ? ["Brouillon"] : STATUTS;
-
-  const save = () => {
-    if (!editing.titre) {
-      toast.error("Titre requis");
-      return;
-    }
-    const tags = tagsInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const item = { ...editing, tags };
-    if (editing.id) {
-      articlesStore.update(editing.id, item);
-      toast.success("Article mis à jour");
-    } else {
-      articlesStore.add({ ...item, id: uid() });
-      toast.success("Article créé");
-    }
-    setOpen(false);
-  };
 
   // Lifecycle actions from the detail sheet.
   const approveToPlanified = (a: Article) => {
@@ -420,252 +381,8 @@ function GridTab({
         </div>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-y-auto scroll-fancy p-0">
-          <div className="bg-gradient-to-r from-primary via-primary/90 to-[color:var(--gold)]/70 text-primary-foreground px-6 py-5 border-b">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg">
-                <FileText className="h-5 w-5" />{" "}
-                {editing.id ? "Modifier l'article" : "Nouvel article"}
-              </DialogTitle>
-              <DialogDescription className="text-primary-foreground/80">
-                Assistant en 3 étapes — idée, contenu, publication.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center gap-1.5 pt-3">
-              {[1, 2, 3].map((s) => (
-                <span
-                  key={s}
-                  className={cn(
-                    "h-1.5 flex-1 rounded-full transition-colors",
-                    s <= step ? "bg-[color:var(--gold)]" : "bg-white/25",
-                  )}
-                />
-              ))}
-            </div>
-            <div className="text-xs text-primary-foreground/80 pt-2 font-medium">
-              Étape {step} / 3 — {["Idée & angle", "Contenu", "Publication"][step - 1]}
-            </div>
-          </div>
-          <div className="px-6 py-5 space-y-5">
-            {step === 1 && (
-              <section className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label>Thématique</Label>
-                    <Select
-                      value={editing.thematique}
-                      onValueChange={(v) => setEditing({ ...editing, thematique: v })}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {cfg.thematiques.map((t) => (
-                          <SelectItem key={t} value={t}>{t}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Auteur</Label>
-                    <Select
-                      value={editing.auteur}
-                      onValueChange={(v) =>
-                        setEditing({ ...editing, auteur: v as Article["auteur"] })
-                      }
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Manuel">Manuel</SelectItem>
-                        <SelectItem value="IA">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Sparkles className="h-3.5 w-3.5 text-[color:var(--gold)]" /> IA
-                          </span>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label>Angle / idée directrice</Label>
-                  <Textarea
-                    rows={3}
-                    value={editing.extrait}
-                    onChange={(e) => setEditing({ ...editing, extrait: e.target.value })}
-                    placeholder="Décrivez l'angle : problème traité, promesse au lecteur, ton..."
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="flex items-center gap-1.5">
-                    <Tag className="h-3.5 w-3.5" /> Mots-clés{" "}
-                    <span className="text-muted-foreground text-xs font-normal">
-                      (séparés par virgules)
-                    </span>
-                  </Label>
-                  <Input
-                    value={tagsInput}
-                    onChange={(e) => setTagsInput(e.target.value)}
-                    placeholder="RH, Leadership, Casablanca"
-                  />
-                  {tagsInput && (
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {tagsInput
-                        .split(",")
-                        .map((t) => t.trim())
-                        .filter(Boolean)
-                        .map((t, i) => (
-                          <span
-                            key={i}
-                            className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30 font-medium"
-                          >
-                            <Hash className="h-2.5 w-2.5 inline" />
-                            {t}
-                          </span>
-                        ))}
-                    </div>
-                  )}
-                </div>
-              </section>
-            )}
-            {step === 2 && (
-              <section className="space-y-4">
-                <div className="space-y-1">
-                  <Label>Titre *</Label>
-                  <Input
-                    value={editing.titre}
-                    onChange={(e) => setEditing({ ...editing, titre: e.target.value })}
-                    placeholder="Ex: 5 tendances RH à surveiller au Maroc en 2026"
-                  />
-                </div>
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
-                    <ImageIcon className="h-3.5 w-3.5" /> Image de couverture
-                  </div>
-                  <div className="grid grid-cols-6 gap-2">
-                    {ARTICLE_IMAGES.slice(0, 6).map((src, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        className="aspect-video rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-all"
-                        onClick={() => toast.success("Image de couverture mise à jour")}
-                      >
-                        <img src={src} alt="" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-                    Contenu
-                  </div>
-                  <RichEditor
-                    value={editing.contenu}
-                    onChange={(v) => setEditing({ ...editing, contenu: v })}
-                  />
-                </div>
-              </section>
-            )}
-            {step === 3 && (
-              <section className="space-y-4">
-                {isBrouillon ? (
-                  <div className="rounded-lg border border-dashed p-4 bg-muted/30 text-sm text-muted-foreground flex items-start gap-3">
-                    <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-500" />
-                    <div>
-                      <p className="font-medium text-foreground">
-                        Planification désactivée en brouillon
-                      </p>
-                      <p className="text-xs">
-                        Approuvez l'article depuis sa fiche pour activer la planification et la
-                        publication.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <Label>Statut</Label>
-                      <Select
-                        value={editing.statut}
-                        onValueChange={(v) =>
-                          setEditing({ ...editing, statut: v as Article["statut"] })
-                        }
-                      >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {availableStatuts.map((s) => (
-                            <SelectItem key={s} value={s}>{s}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Date de publication</Label>
-                      <Input
-                        type="date"
-                        value={editing.date}
-                        onChange={(e) => setEditing({ ...editing, date: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Heure</Label>
-                      <Input
-                        type="time"
-                        value={editing.heure ?? "09:00"}
-                        onChange={(e) => setEditing({ ...editing, heure: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="rounded-xl border p-4 bg-gradient-to-br from-[color:var(--gold)]/10 to-transparent border-[color:var(--gold)]/25">
-                  <div className="text-sm font-semibold flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-[color:var(--gold)]" /> Récapitulatif
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                    <div><b className="text-foreground">Titre :</b> {editing.titre || "—"}</div>
-                    <div><b className="text-foreground">Thématique :</b> {editing.thematique} · <b className="text-foreground">Auteur :</b> {editing.auteur}</div>
-                    <div><b className="text-foreground">Statut :</b> {editing.statut}{!isBrouillon && ` · ${editing.date} à ${editing.heure ?? "09:00"}`}</div>
-                  </div>
-                </div>
-              </section>
-            )}
-          </div>
-          <DialogFooter className="px-6 py-4 border-t bg-muted/30 flex-row justify-between sm:justify-between">
-            <Button
-              variant="outline"
-              onClick={() => (step > 1 ? setStep(step - 1) : setOpen(false))}
-            >
-              {step > 1 ? "Précédent" : "Annuler"}
-            </Button>
-            <div className="flex gap-2">
-              {step === 2 && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (!editing.titre) { toast.error("Titre requis pour enregistrer le brouillon"); return; }
-                    save();
-                  }}
-                >
-                  Enregistrer en brouillon
-                </Button>
-              )}
-              {step < 3 ? (
-                <Button
-                  onClick={() => {
-                    if (step === 2 && !editing.titre) { toast.error("Titre requis"); return; }
-                    setStep(step + 1);
-                  }}
-                  className="btn-premium hover:[&]:btn-premium-hover"
-                >
-                  Suivant
-                </Button>
-              ) : (
-                <Button onClick={save} className="btn-premium hover:[&]:btn-premium-hover">
-                  Enregistrer
-                </Button>
-              )}
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ArticleWizard open={wizardOpen} onOpenChange={setWizardOpen} editing={wizardEditing} />
+
 
       <Sheet open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
         <SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto">
@@ -861,8 +578,10 @@ function dateKey(d: Date) {
 
 function CalendarTab({ onArticleClick }: { onArticleClick: (a: Article) => void }) {
   const rows = useStore(articlesStore);
+  const posts = useStore(postsStore);
   const [view, setView] = useState<View>("month");
   const [cursor, setCursor] = useState<Date>(new Date());
+  const [postDetail, setPostDetail] = useState<SocialPost | null>(null);
 
   const byDay = useMemo(() => {
     const m = new Map<string, Article[]>();
@@ -872,6 +591,15 @@ function CalendarTab({ onArticleClick }: { onArticleClick: (a: Article) => void 
     }
     return m;
   }, [rows]);
+  const postsByDay = useMemo(() => {
+    const m = new Map<string, SocialPost[]>();
+    for (const p of posts) {
+      if (!m.has(p.date)) m.set(p.date, []);
+      m.get(p.date)!.push(p);
+    }
+    return m;
+  }, [posts]);
+
 
   const label = useMemo(() => {
     if (view === "year") return `${cursor.getFullYear()}`;
@@ -900,10 +628,11 @@ function CalendarTab({ onArticleClick }: { onArticleClick: (a: Article) => void 
     <div className="space-y-4">
       <Card className="p-4 flex items-center gap-3 flex-wrap">
         <div>
-          <div className="font-semibold text-sm">Calendrier éditorial</div>
+          <div className="font-semibold text-sm">Calendrier éditorial & social</div>
           <div className="text-xs text-muted-foreground">
-            Cliquez un article pour ouvrir ses détails.
+            Articles 🌐 et posts sociaux 📱 — cliquez un événement pour ouvrir ses détails.
           </div>
+
         </div>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
           <div className="inline-flex rounded-lg border p-0.5 bg-muted/40">
@@ -982,21 +711,53 @@ function CalendarTab({ onArticleClick }: { onArticleClick: (a: Article) => void 
         <MonthView
           cursor={cursor}
           byDay={byDay}
+          postsByDay={postsByDay}
           onArticleClick={onArticleClick}
-          onDay={(d) => {
-            setCursor(d);
-            setView("day");
-          }}
+          onPostClick={setPostDetail}
+          onDay={(d) => { setCursor(d); setView("day"); }}
         />
       )}
+
       {view === "week" && (
         <WeekView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />
       )}
       {view === "day" && <DayView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />}
       {view === "agenda" && <AgendaView rows={rows} onArticleClick={onArticleClick} />}
+      <CalendarPostDetail post={postDetail} onOpenChange={(v) => !v && setPostDetail(null)} />
     </div>
   );
 }
+
+function CalendarPostDetail({ post, onOpenChange }: { post: SocialPost | null; onOpenChange: (v: boolean) => void }) {
+  return (
+    <Sheet open={!!post} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto scroll-fancy">
+        {post && (
+          <>
+            <SheetHeader className="border-b pb-4">
+              <div className="flex flex-wrap gap-2 mb-2">
+                {post.platforms.map((pl) => { const Icon = PLATFORM_ICONS[pl]; return <span key={pl} className={cn("text-[10px] px-2 py-0.5 rounded-full border inline-flex items-center gap-1", PLATFORM_META[pl].bg, PLATFORM_META[pl].color)}><Icon className="h-3 w-3" /> {pl}</span>; })}
+                <StatusBadge status={post.statut} dot={post.statut === "Brouillon"} />
+              </div>
+              <SheetTitle>{post.titre}</SheetTitle>
+              <div className="text-xs text-muted-foreground">Publication : {post.date}{post.heure ? ` · ${post.heure}` : ""}</div>
+            </SheetHeader>
+            <div className="py-4 space-y-4">
+              {post.media.length > 0 && (
+                <div className="grid grid-cols-2 gap-2">{post.media.map((m) => (
+                  <div key={m.id} className="aspect-video rounded-lg overflow-hidden border bg-muted"><img src={m.url} alt={m.description ?? ""} className="w-full h-full object-cover" /></div>
+                ))}</div>
+              )}
+              <section><h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Caption</h4><p className="text-sm whitespace-pre-line">{post.caption}</p></section>
+              <section><h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Hashtags</h4><div className="flex flex-wrap gap-1">{post.hashtags.map((h) => <span key={h} className="text-[11px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div></section>
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 
 function startOfWeek(d: Date) {
   const s = new Date(d);
@@ -1072,12 +833,16 @@ function YearView({
 function MonthView({
   cursor,
   byDay,
+  postsByDay,
   onArticleClick,
+  onPostClick,
   onDay,
 }: {
   cursor: Date;
   byDay: Map<string, Article[]>;
+  postsByDay?: Map<string, SocialPost[]>;
   onArticleClick: (a: Article) => void;
+  onPostClick?: (p: SocialPost) => void;
   onDay: (d: Date) => void;
 }) {
   const y = cursor.getFullYear();
@@ -1093,61 +858,41 @@ function MonthView({
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
       <div className="grid grid-cols-7 border-b bg-muted/30 text-[11px] font-semibold text-muted-foreground">
-        {DOW_FR.map((d) => (
-          <div key={d} className="p-2 text-center">
-            {d}
-          </div>
-        ))}
+        {DOW_FR.map((d) => (<div key={d} className="p-2 text-center">{d}</div>))}
       </div>
-      <div className="grid grid-cols-7 auto-rows-[minmax(120px,1fr)]">
+      <div className="grid grid-cols-7 auto-rows-[minmax(130px,1fr)]">
         {cells.map((d, i) => {
           const isToday = d && d.toDateString() === today.toDateString();
           const key = d ? dateKey(d) : "";
-          const evs = key ? (byDay.get(key) ?? []) : [];
+          const articles = key ? (byDay.get(key) ?? []) : [];
+          const dayPosts = key ? (postsByDay?.get(key) ?? []) : [];
+          const total = articles.length + dayPosts.length;
+          const merged = [
+            ...articles.map((a) => ({ kind: "article" as const, id: a.id, entity: a })),
+            ...dayPosts.map((p) => ({ kind: "post" as const, id: p.id, entity: p })),
+          ];
           return (
-            <div
-              key={i}
-              className={cn(
-                "border-r border-b p-1.5 last:border-r-0",
-                i % 7 === 6 && "border-r-0",
-                !d && "bg-muted/20",
-              )}
-            >
+            <div key={i} className={cn("border-r border-b p-1.5 last:border-r-0", i % 7 === 6 && "border-r-0", !d && "bg-muted/20")}>
               {d && (
                 <>
-                  <button
-                    onClick={() => onDay(d)}
-                    className={cn(
-                      "text-xs font-medium mb-1 h-6 w-6 grid place-items-center rounded-full hover:bg-muted",
-                      isToday && "bg-primary text-primary-foreground hover:bg-primary",
-                    )}
-                  >
-                    {d.getDate()}
-                  </button>
+                  <button onClick={() => onDay(d)} className={cn("text-xs font-medium mb-1 h-6 w-6 grid place-items-center rounded-full hover:bg-muted", isToday && "bg-primary text-primary-foreground hover:bg-primary")}>{d.getDate()}</button>
                   <div className="space-y-1">
-                    {evs.slice(0, 3).map((a) => (
-                      <button
-                        key={a.id}
-                        onClick={() => onArticleClick(a)}
-                        className={cn(
-                          "w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border truncate hover:brightness-95 transition flex items-center gap-1",
-                          toneFor(a),
-                        )}
-                        title={a.titre}
-                      >
-                        <GlobeIcon className="h-2.5 w-2.5 shrink-0" />
-                        {a.heure && <span className="opacity-70 tabular-nums text-[9px]">{a.heure}</span>}
-                        <span className="truncate">{a.titre}</span>
+                    {merged.slice(0, 3).map((ev) => ev.kind === "article" ? (
+                      <button key={"a-" + ev.id} onClick={() => onArticleClick(ev.entity)} className={cn("w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border truncate hover:brightness-95 transition flex items-center gap-1", toneFor(ev.entity))} title={ev.entity.titre}>
+                        <GlobeIcon className="h-2.5 w-2.5 shrink-0 text-[color:var(--gold)]" />
+                        {ev.entity.heure && <span className="opacity-70 tabular-nums text-[9px]">{ev.entity.heure}</span>}
+                        <span className="truncate">{ev.entity.titre}</span>
+                      </button>
+                    ) : (
+                      <button key={"p-" + ev.id} onClick={() => onPostClick?.(ev.entity)} className={cn("w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border truncate hover:brightness-95 transition flex items-center gap-1", postToneFor(ev.entity))} title={ev.entity.titre}>
+                        <div className="flex -space-x-1 shrink-0">
+                          {ev.entity.platforms.slice(0, 3).map((pl) => { const Icon = PLATFORM_ICONS[pl]; return <Icon key={pl} className={cn("h-2.5 w-2.5", PLATFORM_META[pl].color)} />; })}
+                        </div>
+                        {ev.entity.heure && <span className="opacity-70 tabular-nums text-[9px]">{ev.entity.heure}</span>}
+                        <span className="truncate">{ev.entity.titre}</span>
                       </button>
                     ))}
-                    {evs.length > 3 && (
-                      <button
-                        onClick={() => onDay(d)}
-                        className="text-[10px] text-muted-foreground pl-1 hover:text-foreground"
-                      >
-                        +{evs.length - 3} autres
-                      </button>
-                    )}
+                    {total > 3 && (<button onClick={() => onDay(d)} className="text-[10px] text-muted-foreground pl-1 hover:text-foreground">+{total - 3} autres</button>)}
                   </div>
                 </>
               )}
@@ -1158,6 +903,13 @@ function MonthView({
     </div>
   );
 }
+
+function postToneFor(p: SocialPost) {
+  if (p.statut === "Publié") return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40";
+  if (p.statut === "Brouillon") return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40";
+  return "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/40";
+}
+
 
 function WeekView({
   cursor,
@@ -1335,16 +1087,23 @@ function AgendaView({
 }
 
 // ---------------- CONFIG TAB ----------------
+const CM_PLATFORMS_ORDER: CmPlatform[] = ["Website", "Facebook", "Instagram", "LinkedIn", "YouTube"];
+const CM_PLATFORM_ICON: Record<CmPlatform, typeof Linkedin> = { Website: GlobeIcon, Facebook, Instagram, LinkedIn: Linkedin, YouTube: Youtube };
+const CM_PLATFORM_ACCENT: Record<CmPlatform, string> = {
+  Website: "text-[color:var(--gold)] bg-[color:var(--gold)]/10 border-[color:var(--gold)]/30",
+  Facebook: "text-blue-700 dark:text-blue-300 bg-blue-500/10 border-blue-500/30",
+  Instagram: "text-pink-700 dark:text-pink-300 bg-pink-500/10 border-pink-500/30",
+  LinkedIn: "text-sky-700 dark:text-sky-300 bg-sky-500/10 border-sky-500/30",
+  YouTube: "text-red-700 dark:text-red-300 bg-red-500/10 border-red-500/30",
+};
+
 function ConfigTab() {
   const cfg = useConfig();
   const [newTheme, setNewTheme] = useState("");
   const [newAvoid, setNewAvoid] = useState("");
-  const [genConfig, setGenConfig] = useState({
-    frequency: "hebdomadaire",
-    ton: "professionnel",
-    longueur: "moyen",
-    autoValidate: false,
-  });
+  const [activePlatform, setActivePlatform] = useState<CmPlatform>("Website");
+  const cmCfgs = useStore(cmConfigStore);
+  const current = cmCfgs.find((c) => c.platform === activePlatform);
 
   const addTheme = () => {
     if (!newTheme.trim() || cfg.thematiques.includes(newTheme.trim())) return;
@@ -1352,183 +1111,237 @@ function ConfigTab() {
     setNewTheme("");
     toast.success("Thématique ajoutée");
   };
-  const removeTheme = (t: string) =>
-    editorialConfigStore.update(cfg.id, { thematiques: cfg.thematiques.filter((x) => x !== t) });
+  const removeTheme = (t: string) => editorialConfigStore.update(cfg.id, { thematiques: cfg.thematiques.filter((x) => x !== t) });
   const addAvoid = () => {
     if (!newAvoid.trim() || cfg.topicsAvoid.includes(newAvoid.trim())) return;
     editorialConfigStore.update(cfg.id, { topicsAvoid: [...cfg.topicsAvoid, newAvoid.trim()] });
     setNewAvoid("");
     toast.success("Sujet ajouté à la liste d'exclusion");
   };
-  const removeAvoid = (t: string) =>
-    editorialConfigStore.update(cfg.id, { topicsAvoid: cfg.topicsAvoid.filter((x) => x !== t) });
+  const removeAvoid = (t: string) => editorialConfigStore.update(cfg.id, { topicsAvoid: cfg.topicsAvoid.filter((x) => x !== t) });
+
+  const updateSetting = (key: string, value: string | number | boolean) => {
+    if (!current) return;
+    cmConfigStore.update(current.id, { settings: { ...current.settings, [key]: value } });
+  };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-9 w-9 rounded-lg bg-primary/15 grid place-items-center"><Tag className="h-4 w-4 text-primary" /></div>
+            <div><div className="font-semibold">Thématiques éditoriales</div><div className="text-xs text-muted-foreground">Utilisées pour classer et générer les articles.</div></div>
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {cfg.thematiques.map((t) => (
+              <span key={t} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">{t}<button onClick={() => removeTheme(t)} className="hover:text-destructive"><X className="h-3 w-3" /></button></span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input value={newTheme} onChange={(e) => setNewTheme(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addTheme()} placeholder="Nouvelle thématique..." />
+            <Button onClick={addTheme}><Plus className="h-4 w-4 mr-1" /> Ajouter</Button>
+          </div>
+        </Card>
+        <Card className="p-5 border-destructive/20">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-9 w-9 rounded-lg bg-destructive/15 grid place-items-center"><AlertTriangle className="h-4 w-4 text-destructive" /></div>
+            <div><div className="font-semibold">Sujets à éviter</div><div className="text-xs text-muted-foreground">L'agent n'abordera jamais ces thèmes.</div></div>
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {cfg.topicsAvoid.map((t) => (
+              <span key={t} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20">{t}<button onClick={() => removeAvoid(t)} className="hover:text-destructive/70"><X className="h-3 w-3" /></button></span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input value={newAvoid} onChange={(e) => setNewAvoid(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addAvoid()} placeholder="Sujet à exclure..." />
+            <Button onClick={addAvoid} variant="outline"><Plus className="h-4 w-4 mr-1" /> Exclure</Button>
+          </div>
+        </Card>
+      </div>
+
       <Card className="p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="h-9 w-9 rounded-lg bg-primary/15 grid place-items-center">
-            <Tag className="h-4 w-4 text-primary" />
-          </div>
+          <div className="h-9 w-9 rounded-lg bg-[color:var(--gold)]/20 grid place-items-center"><Wand2 className="h-4 w-4 text-[color:var(--gold)]" /></div>
           <div>
-            <div className="font-semibold">Thématiques éditoriales</div>
-            <div className="text-xs text-muted-foreground">
-              Utilisées pour classer et générer les articles.
-            </div>
+            <div className="font-semibold">Paramètres IA par plateforme</div>
+            <div className="text-xs text-muted-foreground">Chaque plateforme dispose de sa propre configuration indépendante.</div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {cfg.thematiques.map((t) => (
-            <span
-              key={t}
-              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20"
-            >
-              {t}
-              <button onClick={() => removeTheme(t)} className="hover:text-destructive">
-                <X className="h-3 w-3" />
+        <div className="flex flex-wrap gap-1.5 mb-4 border-b pb-3">
+          {CM_PLATFORMS_ORDER.map((p) => {
+            const Icon = CM_PLATFORM_ICON[p];
+            const on = activePlatform === p;
+            return (
+              <button key={p} onClick={() => setActivePlatform(p)} className={cn("text-xs px-3 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition-all", on ? cn(CM_PLATFORM_ACCENT[p], "font-semibold ring-2 ring-offset-1 ring-current/30") : "hover:bg-muted")}>
+                <Icon className="h-3.5 w-3.5" /> {p === "Website" ? "Website (Articles)" : p}
               </button>
-            </span>
-          ))}
+            );
+          })}
         </div>
-        <div className="flex gap-2">
-          <Input
-            value={newTheme}
-            onChange={(e) => setNewTheme(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addTheme()}
-            placeholder="Nouvelle thématique..."
-          />
-          <Button onClick={addTheme}>
-            <Plus className="h-4 w-4 mr-1" /> Ajouter
-          </Button>
-        </div>
-      </Card>
-
-      <Card className="p-5 border-destructive/20">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="h-9 w-9 rounded-lg bg-destructive/15 grid place-items-center">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-          </div>
-          <div>
-            <div className="font-semibold">Sujets à éviter</div>
-            <div className="text-xs text-muted-foreground">
-              L'agent Rédaction n'abordera jamais ces thèmes.
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {cfg.topicsAvoid.map((t) => (
-            <span
-              key={t}
-              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20"
-            >
-              {t}
-              <button onClick={() => removeAvoid(t)} className="hover:text-destructive/70">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <Input
-            value={newAvoid}
-            onChange={(e) => setNewAvoid(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addAvoid()}
-            placeholder="Sujet à exclure..."
-          />
-          <Button onClick={addAvoid} variant="outline">
-            <Plus className="h-4 w-4 mr-1" /> Exclure
-          </Button>
-        </div>
-      </Card>
-
-      <Card className="p-5 lg:col-span-2">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="h-9 w-9 rounded-lg bg-[color:var(--gold)]/20 grid place-items-center">
-            <Wand2 className="h-4 w-4 text-[color:var(--gold)]" />
-          </div>
-          <div>
-            <div className="font-semibold">Paramètres de génération IA</div>
-            <div className="text-xs text-muted-foreground">
-              Fréquence, ton, longueur et automatisation.
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <Label>Fréquence</Label>
-            <Select
-              value={genConfig.frequency}
-              onValueChange={(v) => setGenConfig({ ...genConfig, frequency: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="quotidienne">Quotidienne</SelectItem>
-                <SelectItem value="hebdomadaire">Hebdomadaire</SelectItem>
-                <SelectItem value="bihebdomadaire">Bi-hebdomadaire</SelectItem>
-                <SelectItem value="mensuelle">Mensuelle</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label>Ton éditorial</Label>
-            <Select
-              value={genConfig.ton}
-              onValueChange={(v) => setGenConfig({ ...genConfig, ton: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="professionnel">Professionnel & expert</SelectItem>
-                <SelectItem value="pedagogique">Pédagogique</SelectItem>
-                <SelectItem value="inspirationnel">Inspirationnel</SelectItem>
-                <SelectItem value="analytique">Analytique</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label>Longueur</Label>
-            <Select
-              value={genConfig.longueur}
-              onValueChange={(v) => setGenConfig({ ...genConfig, longueur: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="court">Court (400-600 mots)</SelectItem>
-                <SelectItem value="moyen">Moyen (700-1200)</SelectItem>
-                <SelectItem value="long">Long (1500+)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="md:col-span-3 flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <div className="text-sm font-medium">Publier sans validation</div>
-              <div className="text-xs text-muted-foreground">
-                Déconseillé — Fatima Zahra préfère valider chaque article.
-              </div>
-            </div>
-            <Switch
-              checked={genConfig.autoValidate}
-              onCheckedChange={(v) => setGenConfig({ ...genConfig, autoValidate: v })}
-            />
-          </div>
-        </div>
+        {current && <PlatformConfigForm platform={activePlatform} settings={current.settings} onChange={updateSetting} />}
         <div className="mt-4 flex justify-end">
-          <Button
-            onClick={() => toast.success("Configuration enregistrée")}
-            className="btn-premium hover:[&]:btn-premium-hover"
-          >
-            Enregistrer la configuration
-          </Button>
+          <Button onClick={() => toast.success(`Configuration ${activePlatform} enregistrée`)} className="btn-premium hover:[&]:btn-premium-hover">Enregistrer</Button>
         </div>
       </Card>
     </div>
   );
 }
+
+type PlatformSettings = Record<string, string | number | boolean>;
+function PlatformConfigForm({ platform, settings, onChange }: { platform: CmPlatform; settings: PlatformSettings; onChange: (k: string, v: string | number | boolean) => void }) {
+  if (platform === "Website") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <SelectField label="Langue par défaut" value={settings.langue as string} onChange={(v) => onChange("langue", v)} options={["Français", "English", "العربية", "Español"]} />
+        <SelectField label="Ton d'écriture" value={settings.ton as string} onChange={(v) => onChange("ton", v)} options={["Professionnel", "Pédagogique", "Inspirationnel", "Analytique", "Expert"]} />
+        <SelectField label="Longueur d'article" value={settings.longueur as string} onChange={(v) => onChange("longueur", v)} options={["Court (400-600 mots)", "Moyen (700-1200)", "Long (1500+)"]} />
+        <SelectField label="Niveau d'optimisation SEO" value={settings.seoLevel as string} onChange={(v) => onChange("seoLevel", v)} options={["Basique", "Standard", "Élevé", "Maximal"]} />
+        <SliderField label="Densité de mots-clés (%)" value={settings.keywordDensity as number} min={1} max={5} step={0.5} onChange={(v) => onChange("keywordDensity", v)} />
+        <InputField label="Audience cible" value={settings.audience as string} onChange={(v) => onChange("audience", v)} />
+        <SelectField label="Style d'écriture" value={settings.style as string} onChange={(v) => onChange("style", v)} options={["Éditorial", "Journalistique", "Storytelling", "Technique"]} />
+        <InputField label="Style de call-to-action" value={settings.cta as string} onChange={(v) => onChange("cta", v)} />
+        <SelectField label="Auteur par défaut" value={settings.auteur as string} onChange={(v) => onChange("auteur", v)} options={["IA", "Manuel"]} />
+        <InputField label="Catégorie par défaut" value={settings.categorie as string} onChange={(v) => onChange("categorie", v)} />
+        <SliderField label="Créativité IA" value={settings.creativite as number} min={0} max={100} step={5} onChange={(v) => onChange("creativite", v)} />
+        <SwitchField label="Inclure une conclusion" value={settings.includeConclusion as boolean} onChange={(v) => onChange("includeConclusion", v)} />
+        <SwitchField label="Inclure une section FAQ" value={settings.includeFaq as boolean} onChange={(v) => onChange("includeFaq", v)} />
+        <SwitchField label="Générer titre SEO" value={settings.generateSeoTitle as boolean} onChange={(v) => onChange("generateSeoTitle", v)} />
+        <SwitchField label="Générer meta description" value={settings.generateSeoDescription as boolean} onChange={(v) => onChange("generateSeoDescription", v)} />
+        <SwitchField label="Générer les tags automatiquement" value={settings.generateTags as boolean} onChange={(v) => onChange("generateTags", v)} />
+        <SwitchField label="Générer l'image de couverture" value={settings.generateCover as boolean} onChange={(v) => onChange("generateCover", v)} />
+      </div>
+    );
+  }
+  if (platform === "Facebook") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <SliderField label="Longueur caption (car.)" value={settings.captionLength as number} min={50} max={500} step={10} onChange={(v) => onChange("captionLength", v)} />
+        <SelectField label="Utilisation des émojis" value={settings.emojiUsage as string} onChange={(v) => onChange("emojiUsage", v)} options={["Aucun", "Faible", "Moyenne", "Élevée"]} />
+        <SliderField label="Nombre de hashtags" value={settings.hashtagCount as number} min={0} max={15} step={1} onChange={(v) => onChange("hashtagCount", v)} />
+        <SelectField label="Style de CTA" value={settings.ctaStyle as string} onChange={(v) => onChange("ctaStyle", v)} options={["Interrogatif", "Impératif", "Invitation", "Aucun"]} />
+        <SelectField label="Ton conversationnel" value={settings.tone as string} onChange={(v) => onChange("tone", v)} options={["Conversationnel", "Informatif", "Professionnel", "Humoristique"]} />
+        <SelectField label="Niveau de storytelling" value={settings.storytellingLevel as string} onChange={(v) => onChange("storytellingLevel", v)} options={["Faible", "Moyen", "Élevé"]} />
+      </div>
+    );
+  }
+  if (platform === "Instagram") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <SliderField label="Longueur caption (car.)" value={settings.captionLength as number} min={50} max={300} step={10} onChange={(v) => onChange("captionLength", v)} />
+        <SliderField label="Nombre de hashtags" value={settings.hashtagCount as number} min={0} max={30} step={1} onChange={(v) => onChange("hashtagCount", v)} />
+        <SelectField label="Densité émojis" value={settings.emojiDensity as string} onChange={(v) => onChange("emojiDensity", v)} options={["Faible", "Moyenne", "Élevée"]} />
+        <SelectField label="Ton" value={settings.tone as string} onChange={(v) => onChange("tone", v)} options={["Chaleureux", "Inspirationnel", "Professionnel", "Fun"]} />
+        <InputField label="CTA" value={settings.cta as string} onChange={(v) => onChange("cta", v)} />
+        <SwitchField label="Image-first (visuel prioritaire)" value={settings.imageFirst as boolean} onChange={(v) => onChange("imageFirst", v)} />
+      </div>
+    );
+  }
+  if (platform === "LinkedIn") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <SelectField label="Ton professionnel" value={settings.tone as string} onChange={(v) => onChange("tone", v)} options={["Professionnel", "Expert", "Inspirationnel", "Analytique"]} />
+        <SelectField label="Formatage des paragraphes" value={settings.paragraphs as string} onChange={(v) => onChange("paragraphs", v)} options={["Court (1-2 lignes)", "Moyen", "Long (storytelling)"]} />
+        <InputField label="CTA" value={settings.cta as string} onChange={(v) => onChange("cta", v)} />
+        <InputField label="Stratégie hashtags" value={settings.hashtagStrategy as string} onChange={(v) => onChange("hashtagStrategy", v)} />
+        <InputField label="Type d'audience" value={settings.audience as string} onChange={(v) => onChange("audience", v)} />
+      </div>
+    );
+  }
+  // YouTube
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <SelectField label="Style du titre" value={settings.titleStyle as string} onChange={(v) => onChange("titleStyle", v)} options={["Accrocheur", "Descriptif", "Question", "Chiffré"]} />
+      <SelectField label="Longueur de description" value={settings.descriptionLength as string} onChange={(v) => onChange("descriptionLength", v)} options={["Court", "Moyen", "Long"]} />
+      <InputField label="Tags (virgules)" value={settings.tags as string} onChange={(v) => onChange("tags", v)} />
+      <InputField label="Prompt miniature" value={settings.thumbnailPrompt as string} onChange={(v) => onChange("thumbnailPrompt", v)} />
+      <SelectField label="Placement du CTA" value={settings.ctaPlacement as string} onChange={(v) => onChange("ctaPlacement", v)} options={["Début", "Milieu", "Fin", "Début & fin"]} />
+    </div>
+  );
+}
+
+function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+  return <div className="space-y-1"><Label className="text-xs">{label}</Label><Select value={value} onValueChange={onChange}><SelectTrigger className="h-9"><SelectValue /></SelectTrigger><SelectContent>{options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select></div>;
+}
+function InputField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return <div className="space-y-1"><Label className="text-xs">{label}</Label><Input className="h-9" value={value ?? ""} onChange={(e) => onChange(e.target.value)} /></div>;
+}
+function SliderField({ label, value, min, max, step, onChange }: { label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void }) {
+  return <div className="space-y-1"><Label className="text-xs flex items-center justify-between">{label}<span className="tabular-nums text-muted-foreground">{value}</span></Label><Slider min={min} max={max} step={step} value={[value ?? min]} onValueChange={(v) => onChange(v[0])} /></div>;
+}
+function SwitchField({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  return <div className="flex items-center justify-between rounded-lg border p-3"><span className="text-xs font-medium">{label}</span><Switch checked={!!value} onCheckedChange={onChange} /></div>;
+}
+
+// ---------------- IDEAS TAB ----------------
+const IDEA_PLATFORM_ICON: Record<SocialPlatform, typeof Linkedin> = { LinkedIn: Linkedin, Facebook, Instagram, YouTube: Youtube };
+function IdeasTab() {
+  const ideas = useStore(postIdeasStore);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [prefill, setPrefill] = useState<PostWizardPrefill | null>(null);
+  const [generating, setGenerating] = useState(false);
+
+  const regenerate = () => {
+    setGenerating(true);
+    setTimeout(() => {
+      const themes = [
+        { titre: "Podcast — DRH d'aujourd'hui", description: "Nouveau format podcast interview DRH.", caption: "Bienvenue dans notre nouveau podcast : chaque mois, une DRH raconte sa transformation 🎙️", mediaConcept: "Vignette portrait + extrait audio.", hashtags: ["#Podcast", "#DRH"], platforms: ["LinkedIn", "YouTube"] as SocialPlatform[] },
+        { titre: "Tendance — Semaine de 4 jours", description: "Débat sur la semaine de 4 jours au Maroc.", caption: "La semaine de 4 jours a-t-elle un avenir au Maroc ? Notre analyse en carrousel 👉", mediaConcept: "Carrousel 6 slides pour/contre.", hashtags: ["#4Jours", "#Debate"], platforms: ["LinkedIn", "Instagram"] as SocialPlatform[] },
+      ];
+      const pick = themes[Math.floor(Math.random() * themes.length)];
+      postIdeasStore.add({ id: uid(), titre: pick.titre, description: pick.description, suggestedCaption: pick.caption, mediaConcept: pick.mediaConcept, hashtags: pick.hashtags, platforms: pick.platforms, suggestedDate: new Date().toISOString().slice(0, 10) });
+      setGenerating(false);
+      toast.success("Nouvelle idée générée");
+    }, 700);
+  };
+
+  const createPost = (idea: PostIdea) => {
+    setPrefill({ titre: idea.titre, caption: idea.suggestedCaption, hashtags: idea.hashtags, platforms: idea.platforms, idea: idea.description, date: idea.suggestedDate });
+    setWizardOpen(true);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div>
+          <div className="text-sm font-semibold flex items-center gap-1.5"><Lightbulb className="h-4 w-4 text-[color:var(--gold)]" /> Idées de posts générées par l'IA</div>
+          <div className="text-xs text-muted-foreground">Basées sur votre profil éditorial et vos thématiques.</div>
+        </div>
+        <Button onClick={regenerate} disabled={generating} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><Sparkles className={cn("h-4 w-4 mr-1.5", generating && "animate-spin")} /> Générer de nouvelles idées</Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {ideas.map((idea) => (
+          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="font-semibold text-sm leading-tight">{idea.titre}</h3>
+                <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{idea.description}</div>
+              </div>
+              {idea.saved && <Bookmark className="h-4 w-4 text-[color:var(--gold)] shrink-0" />}
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-2 text-xs italic text-muted-foreground line-clamp-3">"{idea.suggestedCaption}"</div>
+            <div className="text-[11px] text-muted-foreground"><b className="text-foreground">Média :</b> {idea.mediaConcept}</div>
+            <div className="flex flex-wrap gap-1">{idea.hashtags.map((h) => <span key={h} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-muted-foreground">Plateformes :</span>
+              <div className="flex gap-1">{idea.platforms.map((p) => { const Icon = IDEA_PLATFORM_ICON[p]; return <span key={p} className={cn("h-6 w-6 rounded-full grid place-items-center border", PLATFORM_META[p].bg, PLATFORM_META[p].color)}><Icon className="h-3 w-3" /></span>; })}</div>
+            </div>
+            <div className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> Date suggérée : {idea.suggestedDate}</div>
+            <div className="flex gap-1.5 mt-auto pt-2 border-t flex-wrap">
+              <Button size="sm" onClick={() => createPost(idea)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><Send className="h-3.5 w-3.5 mr-1" /> Créer le post</Button>
+              <Button size="sm" variant="outline" onClick={() => { postIdeasStore.update(idea.id, { saved: !idea.saved }); toast.success(idea.saved ? "Retiré des favoris" : "Idée sauvegardée"); }}><Bookmark className="h-3.5 w-3.5" /></Button>
+              <Button size="sm" variant="outline" onClick={() => { toast.success("Idée régénérée"); }}><RefreshCw className="h-3.5 w-3.5" /></Button>
+              <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => { postIdeasStore.remove(idea.id); toast.success("Idée supprimée"); }}><X className="h-3.5 w-3.5" /></Button>
+            </div>
+          </Card>
+        ))}
+        {ideas.length === 0 && <Card className="p-16 text-center text-muted-foreground col-span-full">Aucune idée. Cliquez sur "Générer" pour commencer.</Card>}
+      </div>
+      <PostWizard open={wizardOpen} onOpenChange={(v) => { setWizardOpen(v); if (!v) setPrefill(null); }} prefill={prefill} />
+    </div>
+  );
+}
+
 
 // ---------------- POSTS TAB ----------------
 const PLATFORM_ICONS: Record<SocialPlatform, typeof Linkedin> = { LinkedIn: Linkedin, Facebook, Instagram, YouTube: Youtube };

@@ -540,7 +540,7 @@ export const DEFAULT_EVAL_CRITERIA: EvaluationCriterion[] = [
 
 // ---------- Community Manager: Social Posts ----------
 export type SocialPlatform = "LinkedIn" | "Facebook" | "Instagram" | "YouTube";
-export type PostMedia = { id: string; kind: "image" | "video"; url: string; alt?: string };
+export type PostMedia = { id: string; kind: "image" | "video"; url: string; alt?: string; description?: string; reference?: string; prompt?: string };
 export type PostPlatformConfig = Record<string, string | number>;
 export type SocialPost = {
   id: string;
@@ -630,3 +630,50 @@ export const assistantConfigStore = createStore<AssistantConfig>([
   { id: "assistant", langue: "Français", timings: ["10min", "1h", "1j"], provider: "Google Meet", notifyAll: true, whatsappDelivery: true, autoFromEmail: true, autoFromWhatsapp: true },
 ]);
 
+
+// ---------- Community Manager: per-platform AI configuration ----------
+export type CmPlatform = "Website" | "Facebook" | "Instagram" | "LinkedIn" | "YouTube";
+export type CmPlatformConfig = { id: string; platform: CmPlatform; settings: Record<string, string | number | boolean> };
+
+const defaultCmConfigs: CmPlatformConfig[] = [
+  { id: "cm-website", platform: "Website", settings: {
+    langue: "Français", ton: "Professionnel", longueur: "Moyen (700-1200)", seoLevel: "Élevé",
+    keywordDensity: 2, audience: "DRH & dirigeants", style: "Éditorial", cta: "Contactez-nous",
+    auteur: "IA", categorie: "RH & Management", creativite: 60,
+    includeConclusion: true, includeFaq: false, generateSeoTitle: true, generateSeoDescription: true,
+    generateTags: true, generateCover: true,
+  } },
+  { id: "cm-facebook", platform: "Facebook", settings: {
+    captionLength: 220, emojiUsage: "Moyenne", hashtagCount: 4, ctaStyle: "Interrogatif",
+    tone: "Conversationnel", storytellingLevel: "Moyen",
+  } },
+  { id: "cm-instagram", platform: "Instagram", settings: {
+    captionLength: 150, hashtagCount: 15, emojiDensity: "Élevée", tone: "Chaleureux",
+    cta: "Lien en bio", imageFirst: true,
+  } },
+  { id: "cm-linkedin", platform: "LinkedIn", settings: {
+    tone: "Professionnel", paragraphs: "Court (1-2 lignes)", cta: "En savoir plus",
+    hashtagStrategy: "3-5 ciblés", audience: "Cadres & décideurs",
+  } },
+  { id: "cm-youtube", platform: "YouTube", settings: {
+    titleStyle: "Accrocheur", descriptionLength: "Long", tags: "RH, formation, leadership",
+    thumbnailPrompt: "Style corporate premium éclairage doré", ctaPlacement: "Début & fin",
+  } },
+];
+export const cmConfigStore = createStore<CmPlatformConfig>(defaultCmConfigs);
+
+// ---------- Community Manager: AI Post Ideas ----------
+export type PostIdea = {
+  id: string; titre: string; description: string; suggestedCaption: string;
+  mediaConcept: string; hashtags: string[]; platforms: SocialPlatform[];
+  suggestedDate: string; saved?: boolean;
+};
+const seedIdeas: PostIdea[] = [
+  { id: uid(), titre: "5 signaux d'un manager en burnout", description: "Sensibiliser les DRH aux signaux faibles du burnout managérial.", suggestedCaption: "Reconnaissez-vous ces 5 signaux d'alerte chez vos managers ? Un thread pour agir avant qu'il ne soit trop tard 🧠", mediaConcept: "Carousel de 5 slides infographiques, palette sobre.", hashtags: ["#Burnout", "#Management", "#RH"], platforms: ["LinkedIn", "Instagram"], suggestedDate: d(-3) },
+  { id: uid(), titre: "Coulisses — préparation d'un assessment", description: "Behind-the-scenes de notre process assessment center.", suggestedCaption: "Ce que vous ne voyez pas d'un assessment center chez Be One ✨", mediaConcept: "Reel 30s ambiance workshop, coupes rapides.", hashtags: ["#BeOne", "#Assessment", "#Coulisses"], platforms: ["Instagram", "Facebook"], suggestedDate: d(-5) },
+  { id: uid(), titre: "Étude — Rémunération 2026 au Maroc", description: "Chiffres clés de l'étude rémunération marché marocain.", suggestedCaption: "Notre étude Rémunération 2026 est disponible : découvrez les tendances par secteur au Maroc 📊", mediaConcept: "Image cover + graphique barres.", hashtags: ["#Remuneration", "#Maroc", "#Etude"], platforms: ["LinkedIn"], suggestedDate: d(-7) },
+  { id: uid(), titre: "Interview — Directeur Talent Cosumar", description: "Format vidéo interview client sur la transformation RH.", suggestedCaption: "« La donnée RH n'est utile que si elle sert la décision. » Rencontre avec le Directeur Talent de Cosumar 🎥", mediaConcept: "Vidéo interview 2min + miniature portrait.", hashtags: ["#Interview", "#TalentManagement"], platforms: ["YouTube", "LinkedIn"], suggestedDate: d(-10) },
+  { id: uid(), titre: "Webinaire : réussir l'onboarding hybride", description: "Promotion du webinaire onboarding hybride.", suggestedCaption: "Save the date : notre webinaire onboarding hybride, jeudi prochain à 14h — inscription gratuite.", mediaConcept: "Visuel événementiel + compte à rebours.", hashtags: ["#Webinaire", "#Onboarding"], platforms: ["LinkedIn", "Facebook"], suggestedDate: d(-2) },
+  { id: uid(), titre: "Chiffres clés — engagement collaborateur", description: "Micro-carousel data sur l'engagement.", suggestedCaption: "Seulement 21% des collaborateurs se disent engagés au travail. Voici ce que la data nous apprend 👇", mediaConcept: "Carousel data 4 slides.", hashtags: ["#Engagement", "#DataRH"], platforms: ["LinkedIn", "Instagram"], suggestedDate: d(-4) },
+];
+export const postIdeasStore = createStore<PostIdea>(seedIdeas);
