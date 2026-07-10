@@ -907,11 +907,15 @@ function postToneFor(p: SocialPost) {
 function WeekView({
   cursor,
   byDay,
+  postsByDay,
   onArticleClick,
+  onPostClick,
 }: {
   cursor: Date;
   byDay: Map<string, Article[]>;
+  postsByDay: Map<string, SocialPost[]>;
   onArticleClick: (a: Article) => void;
+  onPostClick: (p: SocialPost) => void;
 }) {
   const start = startOfWeek(cursor);
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -923,7 +927,13 @@ function WeekView({
   return (
     <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
       {days.map((d) => {
-        const evs = byDay.get(dateKey(d)) ?? [];
+        const key = dateKey(d);
+        const evs = byDay.get(key) ?? [];
+        const dayPosts = postsByDay.get(key) ?? [];
+        const merged = [
+          ...evs.map((a) => ({ kind: "article" as const, id: a.id, entity: a })),
+          ...dayPosts.map((p) => ({ kind: "post" as const, id: p.id, entity: p })),
+        ].sort((a, b) => ((a.entity.heure ?? "") + a.entity.titre).localeCompare((b.entity.heure ?? "") + b.entity.titre));
         const isToday = d.toDateString() === today.toDateString();
         return (
           <Card key={d.toISOString()} className="p-3 min-h-[280px]">
@@ -944,20 +954,18 @@ function WeekView({
               </span>
             </div>
             <div className="space-y-1.5">
-              {evs.length === 0 && (
+              {merged.length === 0 && (
                 <div className="text-[10px] text-muted-foreground italic">Aucune publication</div>
               )}
-              {evs.map((a) => (
-                <button
-                  key={a.id}
-                  onClick={() => onArticleClick(a)}
-                  className={cn(
-                    "w-full text-left text-[11px] px-2 py-1.5 rounded border hover:brightness-95 transition",
-                    toneFor(a),
-                  )}
-                >
-                  {a.heure && <div className="text-[9px] opacity-70">{a.heure}</div>}
-                  <div className="font-medium line-clamp-2">{a.titre}</div>
+              {merged.map((ev) => ev.kind === "article" ? (
+                <button key={`a-${ev.id}`} onClick={() => onArticleClick(ev.entity)} className={cn("w-full text-left text-[11px] px-2 py-1.5 rounded border hover:brightness-95 transition", toneFor(ev.entity))}>
+                  {ev.entity.heure && <div className="text-[9px] opacity-70">{ev.entity.heure}</div>}
+                  <div className="font-medium line-clamp-2 flex items-start gap-1"><GlobeIcon className="h-3 w-3 mt-0.5 shrink-0" /> {ev.entity.titre}</div>
+                </button>
+              ) : (
+                <button key={`p-${ev.id}`} onClick={() => onPostClick(ev.entity)} className={cn("w-full text-left text-[11px] px-2 py-1.5 rounded border hover:brightness-95 transition", postToneFor(ev.entity))}>
+                  {ev.entity.heure && <div className="text-[9px] opacity-70">{ev.entity.heure}</div>}
+                  <div className="font-medium line-clamp-2 flex items-start gap-1"><Send className="h-3 w-3 mt-0.5 shrink-0" /> {ev.entity.titre}</div>
                 </button>
               ))}
             </div>
@@ -971,31 +979,43 @@ function WeekView({
 function DayView({
   cursor,
   byDay,
+  postsByDay,
   onArticleClick,
+  onPostClick,
 }: {
   cursor: Date;
   byDay: Map<string, Article[]>;
+  postsByDay: Map<string, SocialPost[]>;
   onArticleClick: (a: Article) => void;
+  onPostClick: (p: SocialPost) => void;
 }) {
   const evs = (byDay.get(dateKey(cursor)) ?? [])
     .slice()
     .sort((a, b) => (a.heure ?? "").localeCompare(b.heure ?? ""));
+  const postEvs = (postsByDay.get(dateKey(cursor)) ?? [])
+    .slice()
+    .sort((a, b) => (a.heure ?? "").localeCompare(b.heure ?? ""));
   const hours = Array.from({ length: 12 }, (_, i) => 8 + i); // 8h → 19h
-  const byHour = new Map<number, Article[]>();
+  const byHour = new Map<number, Array<{ kind: "article"; entity: Article } | { kind: "post"; entity: SocialPost }>>();
   for (const a of evs) {
     const h = parseInt((a.heure ?? "09:00").slice(0, 2), 10);
     if (!byHour.has(h)) byHour.set(h, []);
-    byHour.get(h)!.push(a);
+    byHour.get(h)!.push({ kind: "article", entity: a });
+  }
+  for (const p of postEvs) {
+    const h = parseInt((p.heure ?? "09:00").slice(0, 2), 10);
+    if (!byHour.has(h)) byHour.set(h, []);
+    byHour.get(h)!.push({ kind: "post", entity: p });
   }
   return (
     <Card className="p-0 overflow-hidden">
-      {evs.length === 0 && (
+      {evs.length + postEvs.length === 0 && (
         <div className="p-16 text-center text-muted-foreground">
           <CalendarDays className="h-10 w-10 mx-auto mb-2 opacity-40" />
           Aucune publication ce jour.
         </div>
       )}
-      {evs.length > 0 && (
+      {evs.length + postEvs.length > 0 && (
         <div className="divide-y">
           {hours.map((h) => {
             const items = byHour.get(h) ?? [];
@@ -1005,23 +1025,15 @@ function DayView({
                   {String(h).padStart(2, "0")}:00
                 </div>
                 <div className="p-2 space-y-1.5">
-                  {items.map((a) => (
-                    <button
-                      key={a.id}
-                      onClick={() => onArticleClick(a)}
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition",
-                        toneFor(a),
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono opacity-70">{a.heure}</span>
-                        <span className="font-medium">{a.titre}</span>
-                        <StatusBadge status={a.statut} />
-                      </div>
-                      <div className="text-[11px] opacity-80 mt-0.5">
-                        {a.thematique} · {a.auteur}
-                      </div>
+                  {items.map((item) => item.kind === "article" ? (
+                    <button key={`a-${item.entity.id}`} onClick={() => onArticleClick(item.entity)} className={cn("w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition", toneFor(item.entity))}>
+                      <div className="flex items-center gap-2"><GlobeIcon className="h-3.5 w-3.5" /><span className="text-xs font-mono opacity-70">{item.entity.heure}</span><span className="font-medium">{item.entity.titre}</span><StatusBadge status={item.entity.statut} /></div>
+                      <div className="text-[11px] opacity-80 mt-0.5">{item.entity.thematique} · {item.entity.auteur}</div>
+                    </button>
+                  ) : (
+                    <button key={`p-${item.entity.id}`} onClick={() => onPostClick(item.entity)} className={cn("w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition", postToneFor(item.entity))}>
+                      <div className="flex items-center gap-2"><Send className="h-3.5 w-3.5" /><span className="text-xs font-mono opacity-70">{item.entity.heure}</span><span className="font-medium">{item.entity.titre}</span><StatusBadge status={item.entity.statut} /></div>
+                      <div className="text-[11px] opacity-80 mt-0.5">{item.entity.platforms.join(" · ")} · {item.entity.auteur}</div>
                     </button>
                   ))}
                 </div>
@@ -1036,18 +1048,23 @@ function DayView({
 
 function AgendaView({
   rows,
+  posts,
   onArticleClick,
+  onPostClick,
 }: {
   rows: Article[];
+  posts: SocialPost[];
   onArticleClick: (a: Article) => void;
+  onPostClick: (p: SocialPost) => void;
 }) {
-  const sorted = rows
-    .slice()
-    .sort((a, b) => (a.date + (a.heure ?? "")).localeCompare(b.date + (b.heure ?? "")));
-  const groups = new Map<string, Article[]>();
-  for (const a of sorted) {
-    if (!groups.has(a.date)) groups.set(a.date, []);
-    groups.get(a.date)!.push(a);
+  const sorted = [
+    ...rows.map((a) => ({ kind: "article" as const, id: a.id, entity: a, date: a.date, heure: a.heure ?? "" })),
+    ...posts.map((p) => ({ kind: "post" as const, id: p.id, entity: p, date: p.date, heure: p.heure ?? "" })),
+  ].sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure));
+  const groups = new Map<string, typeof sorted>();
+  for (const item of sorted) {
+    if (!groups.has(item.date)) groups.set(item.date, []);
+    groups.get(item.date)!.push(item);
   }
   return (
     <div className="space-y-3">
@@ -1055,18 +1072,13 @@ function AgendaView({
         <Card key={date} className="p-4">
           <div className="text-sm font-semibold mb-2">{date}</div>
           <div className="space-y-1.5">
-            {items.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => onArticleClick(a)}
-                className={cn(
-                  "w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition flex items-center gap-3",
-                  toneFor(a),
-                )}
-              >
-                <span className="text-xs font-mono opacity-70 w-12">{a.heure ?? "—"}</span>
-                <span className="flex-1 font-medium truncate">{a.titre}</span>
-                <StatusBadge status={a.statut} />
+            {items.map((item) => item.kind === "article" ? (
+              <button key={`a-${item.id}`} onClick={() => onArticleClick(item.entity)} className={cn("w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition flex items-center gap-3", toneFor(item.entity))}>
+                <GlobeIcon className="h-3.5 w-3.5 shrink-0" /><span className="text-xs font-mono opacity-70 w-12">{item.entity.heure ?? "—"}</span><span className="flex-1 font-medium truncate">{item.entity.titre}</span><StatusBadge status={item.entity.statut} />
+              </button>
+            ) : (
+              <button key={`p-${item.id}`} onClick={() => onPostClick(item.entity)} className={cn("w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition flex items-center gap-3", postToneFor(item.entity))}>
+                <Send className="h-3.5 w-3.5 shrink-0" /><span className="text-xs font-mono opacity-70 w-12">{item.entity.heure ?? "—"}</span><span className="flex-1 font-medium truncate">{item.entity.titre}</span><StatusBadge status={item.entity.statut} />
               </button>
             ))}
           </div>
