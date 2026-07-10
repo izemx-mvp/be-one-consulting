@@ -1318,11 +1318,11 @@ function PostIdeasSection() {
         <Button onClick={regenerate} disabled={generating} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><Sparkles className={cn("h-4 w-4 mr-1.5", generating && "animate-spin")} /> Générer de nouvelles idées</Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {ideas.map((idea) => (
+        {ideas.map((idea, i) => (
           <Card key={idea.id} className="p-0 overflow-hidden hover-lift cursor-pointer fade-up card-elevated group relative" onClick={() => setDetail(idea)}>
-            <div className="h-40 bg-muted relative grid place-items-center text-muted-foreground">
-              <div className="text-center px-4">
-                <ImageIcon className="h-8 w-8 mx-auto opacity-40 mb-1" />
+            <div className="h-40 bg-muted relative overflow-hidden text-muted-foreground">
+              <img src={POST_IMAGES[(idea.titre.length + i) % POST_IMAGES.length]} alt={idea.titre} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+              <div className="absolute inset-x-0 bottom-0 bg-black/55 text-white px-3 py-2 backdrop-blur-sm">
                 <div className="text-[11px] italic line-clamp-2">{idea.mediaConcept}</div>
               </div>
               <div className="absolute top-2 left-2 flex gap-1">
@@ -1358,6 +1358,7 @@ function PostIdeasSection() {
                 <div className="text-xs text-muted-foreground">Date suggérée : {detail.suggestedDate}</div>
               </SheetHeader>
               <div className="py-4 space-y-4">
+                <img src={POST_IMAGES[detail.titre.length % POST_IMAGES.length]} alt={detail.titre} className="w-full h-56 object-cover rounded-lg" />
                 <section>
                   <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Description</h4>
                   <p className="text-sm">{detail.description}</p>
