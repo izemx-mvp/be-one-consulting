@@ -182,7 +182,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
             <img src={LOGO_URL} alt="Be One Consulting" className={cn("object-contain", collapsed ? "h-8 w-8" : "h-11 w-auto max-w-full")} />
           </div>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto scroll-fancy min-h-0">
           {visibleNav.map((item) => {
             const active = pathname === item.to || pathname.startsWith(item.to + "/");
             return (
