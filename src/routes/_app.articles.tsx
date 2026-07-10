@@ -710,13 +710,13 @@ function CalendarTab({ onArticleClick }: { onArticleClick: (a: Article) => void 
         <MonthView
           cursor={cursor}
           byDay={byDay}
+          postsByDay={postsByDay}
           onArticleClick={onArticleClick}
-          onDay={(d) => {
-            setCursor(d);
-            setView("day");
-          }}
+          onPostClick={setPostDetail}
+          onDay={(d) => { setCursor(d); setView("day"); }}
         />
       )}
+
       {view === "week" && (
         <WeekView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />
       )}
