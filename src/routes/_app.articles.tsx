@@ -801,6 +801,21 @@ function GridTab({
           setConfirmDel(null);
         }}
       />
+
+      <ScheduleDialog
+        open={!!scheduleForArticle}
+        onOpenChange={(v) => !v && setScheduleForArticle(null)}
+        initialDate={scheduleForArticle?.date}
+        initialTime={scheduleForArticle?.heure}
+        onConfirm={({ date, time }) => {
+          if (scheduleForArticle) {
+            articlesStore.update(scheduleForArticle.id, { statut: "Planifié", date, heure: time });
+            toast.success(`Article planifié pour le ${date} à ${time}`);
+            setScheduleForArticle(null);
+            setDetail(null);
+          }
+        }}
+      />
     </div>
   );
 }
