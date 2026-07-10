@@ -1446,6 +1446,8 @@ function PostsTab() {
       <PostWizard open={postOpen} onOpenChange={setPostOpen} editing={editing} />
       <ScheduleDialog open={!!scheduleFor} onOpenChange={(v) => !v && setScheduleFor(null)} initialDate={scheduleFor?.date} initialTime={scheduleFor?.heure} onConfirm={({ date, time }) => { if (scheduleFor) { postsStore.update(scheduleFor.id, { statut: "Planifié", date, heure: time }); toast.success(`Post planifié pour le ${date} à ${time}`); setScheduleFor(null); } }} />
 
+      <PostIdeasSection />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {posts.map((p) => (
           <Card key={p.id} className="p-0 overflow-hidden hover-lift cursor-pointer fade-up card-elevated" onClick={() => setDetail(p)}>
