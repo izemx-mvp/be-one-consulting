@@ -1,77 +1,58 @@
-# Platform Upgrade — Enterprise SaaS Polish
+## Scope
+Finish pending items from the previous pass, add branded scrollbars for forms/modals, fix the sidebar so it stays fixed while page content scrolls, simplify the "Nouveau document" modal in the knowledge base, and simplify the candidate table actions.
 
-Scope is large. I'll extend the existing architecture (TanStack Router routes, `mock-data.ts` stores, shadcn components) — no rewrites. Delivered in one pass, module by module.
+## 1. Sidebar scroll fix
+In `src/components/app-shell.tsx`:
+- Change the outer wrapper from `min-h-screen flex` to `h-screen flex overflow-hidden`.
+- `<aside>` stays as-is (flex column) — it will now stay fixed while only `<main>` scrolls.
+- Header remains sticky inside the main column.
 
-## 1. User Management & Permissions (new module)
+## 2. Custom scrollbar design
+In `src/styles.css`:
+- Add a `.scroll-fancy` utility (webkit + Firefox): 8px thin thumb, rounded, transparent track, gold-tinted thumb using `--gold`, brighter on hover.
+- Apply `.scroll-fancy` to:
+  - Main app scroll area, notifications popover, global search popover.
+  - Dialog/Sheet scroll containers in every form (Articles, Recrutement, Enquêtes, Head-hunting, Utilisateurs, FAQ).
+- Wrap long form modals with `max-h-[85vh] overflow-y-auto scroll-fancy`.
 
-- New route `_app.utilisateurs.tsx` + sidebar entry "Gestion des utilisateurs" (icon: `UserCog`).
-- New stores in `mock-data.ts`: `usersStore`, `PermissionMap` per user.
-- `User` type: `{ id, nom, email, role: "Administrator" | "Collaborator", actif, avatar?, permissions: Record<Module, {c,r,u,d}> }`.
-- Admin table: create / edit / delete / activate-deactivate / reset password (mock toast) / role change.
-- Collaborator edit drawer: per-module CRUD checkbox matrix (Qualification AI, Recrutement AI, Enquêtes AI, Articles AI, Base de connaissance, Utilisateurs). Dashboard always allowed, not in matrix.
-- `PermissionsProvider` (React context) reading the "current user" (demo admin by default; switchable via a user-menu "Voir en tant que…" submenu for demo purposes).
-- `usePermission(module, action)` hook. Applied to:
-  - Sidebar (hide modules with no `r`).
-  - Route guards in each `_app.*` route (`beforeLoad` redirect to /dashboard if no read).
-  - Action buttons (New / Edit / Delete) hidden or disabled per `c/u/d`.
+## 3. Base de connaissance — simplify "Nouveau document"
+In `src/routes/_app.faq.tsx`:
+- The "Nouveau document" modal keeps ONLY the drag-and-drop import zone + progress bar.
+- Remove all other fields (title, category, tags, description, etc.). File name and metadata are inferred from the uploaded file.
 
-## 2. Recrutement — Mission form + candidate details
+## 4. Recrutement — Candidats table actions
+In `src/routes/_app.recrutement.tsx` (and headhunting details table if applicable):
+- Remove all row action buttons (edit, delete, contact, etc.) from the candidates table.
+- Keep only a single "Voir détails" action (icon or row-click) that opens the candidate detail sheet.
 
-- Refactor mission creation (in `head-hunting.tsx`) into sectioned form:
-  1. Brief · 2. Profil · 3. **Critères d'évaluation IA** · 4. Package · 5. Planning.
-- New `EvaluationCriterion { id, nom, description, poids, requis }` array on `HuntingMission`. Preset criteria + "+ Ajouter un critère personnalisé". Weight slider, sum indicator, required toggle.
-- Extend `Candidat` with: linkedin, portfolio, github, certifications[], experiences[], education[], languages[], skills[], salaire, preavis, dispo, adresse, workType, notes.
-- Candidate detail sheet: collapsible cards (Coordonnées / Parcours / Compétences / Attentes / Notes). Scores computed from mission criteria weights.
+## 5. Pending features from previous pass
 
-## 3. Articles AI — 3-step wizard + status actions
+### 5a. Articles AI — 3-step wizard (New / Edit brouillon)
+Refactor the article dialog in `src/routes/_app.articles.tsx` into a stepper:
+- Step 1 — Idée: thématique, angle, mots-clés, ton, audience.
+- Step 2 — Contenu: titre, extrait, contenu (RichEditor), tags, image de couverture.
+- Step 3 — Publication: statut (Brouillon/Planifié/Publié), date+heure (only Planifié/Publié), canal, auteur, récap.
+- Progress bar, Précédent/Suivant/Enregistrer, per-step validation; Brouillon savable at any step.
 
-- Replace edit dialog with `<ArticleWizard>` (Steps: Génération IA → Aperçu & Édition → Publication).
-- Step 1: image (optional), description, mots-clés, langue, longueur, ton (select). "Générer" fills content with mock IA text + skeleton animation.
-- Step 2: full edit (titre, contenu via `RichEditor`, tags, cover, SEO title/desc) + live preview panel.
-- Step 3: Publish now / Schedule (date+time) / Save draft.
-- Row actions by status:
-  - Brouillon: Éditer, Publier, Planifier (inline date popover — no full edit), Supprimer.
-  - Planifié: Éditer, Modifier date, Publier maintenant, Annuler planification.
-  - Publié: Voir, Dupliquer, Supprimer. Edit disabled.
-- Calendar click → open full article detail sheet (cover, titre, statut, date planifiée, auteur, contenu, tags, SEO) — same as Articles module.
+### 5b. Recrutement — Nouvelle mission: AI scoring criteria block
+In `src/routes/_app.recrutement.tsx` new/edit mission form:
+- "Critères de scoring IA" section with rows: label + poids (slider 0–100) + type (Compétence / Expérience / Formation / Soft skill / Localisation).
+- Add/remove rows, live total-weight indicator (target 100).
+- Persist to `mission.scoringCriteria` in `src/lib/mock-data.ts`.
 
-## 4. Base de connaissance
+### 5c. Enquêtes — response-type detection + per-question analytics
+In `src/routes/_app.enquetes.tsx`:
+- Builder: auto-suggest response type (choix unique/multiple, échelle, texte, note) from question keywords; user can override.
+- Results: per-question analytics card — bar chart for choix, histogram for échelle/note, top-terms list for texte. Use existing Recharts.
 
-- "Nouveau document" opens directly the Import modal (Drag & drop, browse, per-file progress bar, validation of type/size, multi-file). Remove the always-visible import panel below the list.
+## 6. Verification
+Playwright checks: scrolling dashboard keeps sidebar fixed; scrollbars styled in modals; FAQ modal shows only drop zone; candidate table has only "Voir détails"; article wizard 3 steps render; scoring block appears in new mission; per-question chart in survey results.
 
-## 5. Enquêtes — analytics + question types
-
-- `Question` gains `type: "yesno"|"numeric"|"rating5"|"rating10"|"percent"|"currency"|"text"|"date"|"single"|"multi"` and options.
-- Builder: type selector per question with "IA a suggéré: X" hint (auto-detect from wording keywords: "combien"→numeric, "note"→rating, "êtes-vous"→yesno…). User can override.
-- Detail page: replace raw answer list with analytics grid:
-  - yesno/single/multi → Pie + %.
-  - rating/numeric/percent/currency → Bar + moyenne + distribution.
-  - text → sample answers list + count.
-  - Global KPIs: réponses, taux, moyenne satisfaction.
-
-## 6. Global UI / Branding
-
-- **Dark mode default**: `ThemeProvider` reads `localStorage("theme")` in `useEffect` (SSR-safe), defaults to `"dark"` on first visit, persists on toggle.
-- **Favicon**: use existing Be One logo — write `public/favicon.png` (copy from LOGO_URL asset) + apple-touch-icon `<link>` in `__root.tsx`. Delete `public/favicon.ico`.
-- Polish pass on: tables (sticky header, zebra hover), cards (consistent shadow), sidebar (active glow already in place — extend to submenus), modals (unified padding/header), buttons, empty states (icon + copy + CTA), skeletons, tooltips.
-- Global unsaved-changes guard hook `useUnsavedGuard(dirty)` wired into all edit forms.
-- Form primitives upgraded: searchable `<Combobox>`, multi-select chip input, better date picker (already shadcn), toggle switches, textarea autosize, inline field errors via zod + react-hook-form where forms are non-trivial.
-
-## Technical Notes
-
-- No backend changes — everything persists via existing `createStore` in `mock-data.ts` (localStorage).
-- Route guards: add `beforeLoad` in each `_app.*` route reading permissions from a module-level `permissionsStore`.
-- Zod added for form validation (already viable via existing deps or `bun add zod react-hook-form @hookform/resolvers`).
-- Keep purple/magenta brand tokens and gold accent unchanged.
-
-## Files touched (high-level)
-
-- New: `src/routes/_app.utilisateurs.tsx`, `src/lib/permissions.tsx`, `src/components/article-wizard.tsx`, `src/components/analytics-question.tsx`, `src/components/import-documents-dialog.tsx`, `src/hooks/use-unsaved-guard.ts`, `public/favicon.png`.
-- Edited: `src/lib/mock-data.ts` (users, permissions, extended Candidat/Mission/Question/Article), `src/lib/theme.tsx` (dark default + persist), `src/components/app-shell.tsx` (permission-aware nav, user switch), `src/routes/__root.tsx` (favicon + apple icon), `src/routes/_app.articles.tsx` (wizard + status actions + calendar detail), `src/routes/_app.enquetes.tsx` (analytics + types), `src/routes/_app.faq.tsx` (import modal), `src/components/head-hunting.tsx` (sectioned form + AI criteria + candidate cards), `src/routes/_app.recrutement.tsx` (permission gates), plus small polish to `data-table.tsx` and `status-badge.tsx`.
-
-## Out of scope
-
-- Real auth / backend — remains front-end mock.
-- Mobile phone layouts (desktop + tablet as requested).
-
-Reply "go" and I'll implement in one pass.
+## Files touched
+- `src/components/app-shell.tsx`
+- `src/styles.css`
+- `src/routes/_app.faq.tsx`
+- `src/routes/_app.recrutement.tsx`
+- `src/routes/_app.articles.tsx`
+- `src/routes/_app.enquetes.tsx`
+- `src/lib/mock-data.ts`
