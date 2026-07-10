@@ -17,6 +17,7 @@ import { Route as AppRecrutementRouteImport } from './routes/_app.recrutement'
 import { Route as AppEnquetesRouteImport } from './routes/_app.enquetes'
 import { Route as AppDemandesRouteImport } from './routes/_app.demandes'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppArticlesRouteImport } from './routes/_app.articles'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -57,10 +58,16 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppArticlesRoute = AppArticlesRouteImport.update({
+  id: '/articles',
+  path: '/articles',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/articles': typeof AppArticlesRoute
   '/dashboard': typeof AppDashboardRoute
   '/demandes': typeof AppDemandesRoute
   '/enquetes': typeof AppEnquetesRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/articles': typeof AppArticlesRoute
   '/dashboard': typeof AppDashboardRoute
   '/demandes': typeof AppDemandesRoute
   '/enquetes': typeof AppEnquetesRoute
@@ -81,6 +89,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/articles': typeof AppArticlesRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/demandes': typeof AppDemandesRoute
   '/_app/enquetes': typeof AppEnquetesRoute
@@ -92,6 +101,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/articles'
     | '/dashboard'
     | '/demandes'
     | '/enquetes'
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/articles'
     | '/dashboard'
     | '/demandes'
     | '/enquetes'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/articles'
     | '/_app/dashboard'
     | '/_app/demandes'
     | '/_app/enquetes'
@@ -182,10 +194,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/articles': {
+      id: '/_app/articles'
+      path: '/articles'
+      fullPath: '/articles'
+      preLoaderRoute: typeof AppArticlesRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppArticlesRoute: typeof AppArticlesRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDemandesRoute: typeof AppDemandesRoute
   AppEnquetesRoute: typeof AppEnquetesRoute
@@ -194,6 +214,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppArticlesRoute: AppArticlesRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDemandesRoute: AppDemandesRoute,
   AppEnquetesRoute: AppEnquetesRoute,
