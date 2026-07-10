@@ -189,16 +189,9 @@ function Page() {
               { header: "Statut", cell: (r) => <StatusBadge status={r.statut} dot /> },
             ]}
             rowActions={(r) => (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setDetail(r)}><Eye className="h-4 w-4 mr-2" /> Voir détails</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="h-4 w-4 mr-2" /> Modifier</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => scheduleInterview(r)}><Calendar className="h-4 w-4 mr-2" /> Programmer entretien</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDel(r)}><Trash2 className="h-4 w-4 mr-2" /> Supprimer</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setDetail(r); }}>
+                <Eye className="h-4 w-4 mr-1.5" /> Voir détails
+              </Button>
             )}
           />
         </TabsContent>
