@@ -677,3 +677,19 @@ const seedIdeas: PostIdea[] = [
   { id: uid(), titre: "Chiffres clés — engagement collaborateur", description: "Micro-carousel data sur l'engagement.", suggestedCaption: "Seulement 21% des collaborateurs se disent engagés au travail. Voici ce que la data nous apprend 👇", mediaConcept: "Carousel data 4 slides.", hashtags: ["#Engagement", "#DataRH"], platforms: ["LinkedIn", "Instagram"], suggestedDate: d(-4) },
 ];
 export const postIdeasStore = createStore<PostIdea>(seedIdeas);
+
+// ---------- Community Manager: AI Article Ideas ----------
+export type ArticleIdea = {
+  id: string; titre: string; description: string; suggestedExtrait: string;
+  angle: string; keywords: string[]; thematique: string; longueur: string;
+  suggestedDate: string; saved?: boolean;
+};
+const seedArticleIdeas: ArticleIdea[] = [
+  { id: uid(), titre: "Leadership de proximité : le nouveau standard managérial", description: "Article de fond sur l'évolution du rôle du manager de proximité au Maroc.", suggestedExtrait: "Comment les managers de proximité deviennent le pivot silencieux de la performance et de l'engagement en 2026.", angle: "Analytique — décryptage tendances + cas terrain marocains.", keywords: ["Leadership", "Management", "Proximité", "Maroc"], thematique: "Leadership", longueur: "Long (1500+)", suggestedDate: d(-2) },
+  { id: uid(), titre: "IA et RH : 7 usages concrets déjà déployés chez nos clients", description: "Tour d'horizon des cas d'usage IA en RH au Maroc.", suggestedExtrait: "De la présélection CV à la prédiction du turnover, l'IA n'est plus un buzzword — voici 7 usages concrets.", angle: "Retour d'expérience — cas clients anonymisés.", keywords: ["IA", "RH", "Automatisation", "Analytics"], thematique: "Innovation RH", longueur: "Moyen (700-1200)", suggestedDate: d(-4) },
+  { id: uid(), titre: "Rémunération 2026 : les nouvelles règles du jeu", description: "Décryptage de l'étude annuelle rémunération Be One.", suggestedExtrait: "Inflation, guerre des talents, transparence salariale : comment ajuster votre politique de rémunération.", angle: "Étude chiffrée — extraits de notre étude marché.", keywords: ["Rémunération", "Benchmark", "Maroc", "Talents"], thematique: "Compensation & Benefits", longueur: "Long (1500+)", suggestedDate: d(-6) },
+  { id: uid(), titre: "Onboarding hybride : le guide en 30 jours", description: "Guide pratique onboarding hybride.", suggestedExtrait: "Un plan jour par jour pour transformer les 30 premiers jours en levier de fidélisation.", angle: "Pédagogique — guide actionnable étape par étape.", keywords: ["Onboarding", "Hybride", "Expérience collaborateur"], thematique: "Expérience collaborateur", longueur: "Moyen (700-1200)", suggestedDate: d(-3) },
+  { id: uid(), titre: "Prévenir le burnout managérial : 5 signaux à ne pas ignorer", description: "Article sensibilisation burnout des managers.", suggestedExtrait: "Reconnaître les signaux faibles chez vos managers avant qu'il ne soit trop tard.", angle: "Inspirationnel — témoignages + recommandations.", keywords: ["Burnout", "Bien-être", "Management"], thematique: "Bien-être au travail", longueur: "Moyen (700-1200)", suggestedDate: d(-5) },
+  { id: uid(), titre: "Marque employeur : ce que la génération Z attend vraiment", description: "Étude comportementale Gen Z au travail.", suggestedExtrait: "Sens, flexibilité, apprentissage : les 3 piliers non-négociables de la Gen Z marocaine.", angle: "Analytique — data étude + verbatims.", keywords: ["Marque employeur", "Gen Z", "Attractivité"], thematique: "Marque employeur", longueur: "Long (1500+)", suggestedDate: d(-8) },
+];
+export const articleIdeasStore = createStore<ArticleIdea>(seedArticleIdeas);
