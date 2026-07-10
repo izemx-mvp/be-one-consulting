@@ -565,12 +565,11 @@ export type SocialPost = {
   aiParams?: Record<string, string | number>;
 };
 
-const POST_IMAGES = [
-  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=70",
-  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=70",
-  "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=800&q=70",
-  "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=70",
-];
+import postImage1 from "@/assets/post-1.jpg.asset.json";
+import postImage2 from "@/assets/post-2.jpg.asset.json";
+import postImage3 from "@/assets/post-3.jpg.asset.json";
+import postImage4 from "@/assets/post-4.jpg.asset.json";
+const POST_IMAGES = [postImage1.url, postImage2.url, postImage3.url, postImage4.url];
 const seedPosts: SocialPost[] = [
   { id: uid(), titre: "Lancement programme leadership", caption: "Fiers de lancer notre nouveau programme Leadership de proximité 🚀 8 jours pour transformer vos managers.", hashtags: ["#Leadership", "#RH", "#Maroc"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[0] }], platforms: ["LinkedIn", "Facebook"], platformConfig: { LinkedIn: { tone: "Professionnel", cta: "En savoir plus", paragraphes: "Court" }, Facebook: { style: "Storytelling", cta: "Contactez-nous" } }, statut: "Publié", date: d(2), heure: "10:00", auteur: "IA", langue: "Français", ton: "Professionnel" },
   { id: uid(), titre: "Coulisses de notre équipe", caption: "Retour en images sur notre séminaire annuel — merci à toute l'équipe Be One ! ✨", hashtags: ["#TeamSpirit", "#BeOne", "#Consulting"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[1] }, { id: uid(), kind: "image", url: POST_IMAGES[2] }], platforms: ["Instagram", "Facebook"], platformConfig: { Instagram: { captionLength: 120, emojiDensity: "Élevée", hashtagCount: 12 }, Facebook: { style: "Conversationnel" } }, statut: "Planifié", date: d(-3), heure: "18:30", auteur: "Manuel", langue: "Français", ton: "Chaleureux" },
