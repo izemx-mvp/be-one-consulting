@@ -1598,37 +1598,37 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
                   </div>
                 </section>
               </div>
-              {detail.statut !== "Publié" && (
-                <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
-                  {detail.statut === "Brouillon" && (
-                    <>
-                      <Button onClick={() => publish(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1">
-                        <Send className="h-4 w-4 mr-2" /> Publier
-                      </Button>
-                      <Button variant="outline" onClick={() => setScheduleFor(detail)} className="flex-1">
-                        <Clock className="h-4 w-4 mr-2" /> Planifier
-                      </Button>
-                    </>
-                  )}
-                  {detail.statut === "Planifié" && (
-                    <>
-                      <Button onClick={() => publish(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1">
-                        <Send className="h-4 w-4 mr-2" /> Publier maintenant
-                      </Button>
-                      <Button variant="outline" onClick={() => setScheduleFor(detail)} className="flex-1">
-                        <Clock className="h-4 w-4 mr-2" /> Replanifier
-                      </Button>
-                      <Button variant="outline" onClick={() => setDraft(detail)}>Retour brouillon</Button>
-                    </>
-                  )}
+              <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
+                {detail.statut === "Brouillon" && (
+                  <>
+                    <Button onClick={() => publish(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1">
+                      <Send className="h-4 w-4 mr-2" /> Publier
+                    </Button>
+                    <Button variant="outline" onClick={() => setScheduleFor(detail)} className="flex-1">
+                      <Clock className="h-4 w-4 mr-2" /> Planifier
+                    </Button>
+                  </>
+                )}
+                {detail.statut === "Planifié" && (
+                  <>
+                    <Button onClick={() => publish(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1">
+                      <Send className="h-4 w-4 mr-2" /> Publier maintenant
+                    </Button>
+                    <Button variant="outline" onClick={() => setScheduleFor(detail)} className="flex-1">
+                      <Clock className="h-4 w-4 mr-2" /> Replanifier
+                    </Button>
+                    <Button variant="outline" onClick={() => setDraft(detail)}>Retour brouillon</Button>
+                  </>
+                )}
+                {detail.statut !== "Publié" && (
                   <Button variant="outline" onClick={() => { openEdit(detail); setDetail(null); }}>
                     <Pencil className="h-4 w-4 mr-2" /> Modifier
                   </Button>
-                  <Button variant="outline" className="text-destructive border-destructive/30" onClick={() => setConfirmDel(detail)}>
-                    <Trash2 className="h-4 w-4 mr-2" /> Supprimer
-                  </Button>
-                </div>
-              )}
+                )}
+                <Button variant="outline" className={cn("text-destructive border-destructive/30", detail.statut === "Publié" && "ml-auto")} onClick={() => setConfirmDel(detail)}>
+                  <Trash2 className="h-4 w-4 mr-2" /> Supprimer
+                </Button>
+              </div>
             </>
           )}
         </SheetContent>
