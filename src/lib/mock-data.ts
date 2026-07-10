@@ -82,6 +82,9 @@ export type Article = {
   extrait: string;
   tags: string[];
   heure?: string;
+  cover?: string;
+  seoTitle?: string;
+  seoDescription?: string;
 };
 
 export type FaqItem = {
