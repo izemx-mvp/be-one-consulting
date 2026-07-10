@@ -37,6 +37,25 @@ const QUESTIONNAIRES_TYPES = [
   { id: "audit", nom: "Audit organisationnel", questions: 25, desc: "Structure, process, culture" },
 ];
 
+type QuestionType = "Choix unique" | "Choix multiple" | "Échelle" | "Note" | "Texte libre";
+
+function detectQuestionType(q: string): QuestionType {
+  const t = q.toLowerCase();
+  if (/\b(0\s*[-àa]\s*10|note|noter|score|évaluer|évaluation)\b/.test(t)) return "Note";
+  if (/\b(échelle|de\s*1\s*à|de\s*0\s*à|niveau de|degré)\b/.test(t)) return "Échelle";
+  if (/\b(cochez|plusieurs|multiples?|parmi|sélectionnez)\b/.test(t)) return "Choix multiple";
+  if (/\b(oui\s*\/\s*non|est-ce que|recommanderiez|avez-vous|préférez-vous|le|la|les)\b.*\?/.test(t) && t.length < 90) return "Choix unique";
+  return "Texte libre";
+}
+
+const typeColor: Record<QuestionType, string> = {
+  "Choix unique": "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30",
+  "Choix multiple": "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-500/30",
+  "Échelle": "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30",
+  "Note": "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+  "Texte libre": "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/30",
+};
+
 function empty(): Enquete {
   return {
     id: "", nom: "", client: "", type: "Enquête satisfaction",
