@@ -361,6 +361,14 @@ export type HuntingMission = {
   livrablesAttendus?: string;
   criteresExclusion?: string;
   notesInternes?: string;
+  scoringCriteria?: ScoringCriterion[];
+};
+
+export type ScoringCriterion = {
+  id: string;
+  label: string;
+  poids: number; // 0-100
+  type: "Compétence" | "Expérience" | "Formation" | "Soft skill" | "Localisation";
 };
 
 const seedHunting: HuntingMission[] = [
