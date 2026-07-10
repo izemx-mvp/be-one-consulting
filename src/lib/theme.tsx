@@ -7,8 +7,8 @@ const Ctx = createContext<{ theme: Theme; toggle: () => void; setTheme: (t: Them
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Dark by default on first visit (SSR-safe).
-  const [theme, setThemeState] = useState<Theme>("dark");
+  // Light by default on first visit (SSR-safe).
+  const [theme, setThemeState] = useState<Theme>("light");
 
   // Hydrate from localStorage on the client only.
   useEffect(() => {

@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/faq")({
-  head: () => ({ meta: [{ title: "Base de connaissance — Be One Consulting" }] }),
+  head: () => ({ meta: [{ title: "Service Client AI — Be One Consulting" }] }),
   component: Page,
 });
 
@@ -39,7 +39,7 @@ function highlight(text: string, needle: string) {
 
 function Page() {
   return (
-    <AppShell title="Base de connaissance" subtitle="Contenu structuré alimentant l'agent de service client — FAQ, documents, réseaux sociaux et catalogue de services">
+    <AppShell title="Service Client AI" subtitle="Contenu structuré alimentant l'agent de service client — FAQ, documents, réseaux sociaux et catalogue de services">
       <Tabs defaultValue="faq">
         <TabsList className="mb-4">
           <TabsTrigger value="faq"><HelpCircle className="h-4 w-4 mr-2" /> FAQ</TabsTrigger>

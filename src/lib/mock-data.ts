@@ -37,6 +37,7 @@ export type Demande = {
   chatLog: { from: "agent" | "client"; text: string; at: string }[];
 };
 
+export type CandidatCV = { name: string; uploadedAt: string; type: "PDF" | "DOCX" | "Image"; url: string; size: string };
 export type Candidat = {
   id: string; nom: string; poste: string;
   source: "LinkedIn" | "Facebook" | "Instagram";
@@ -48,6 +49,7 @@ export type Candidat = {
   email: string; telephone: string;
   date: string;
   resume: string;
+  cv?: CandidatCV;
 };
 
 export type EnqueteDest = { id: string; nom: string; email: string; statut: "Envoyé" | "Ouvert" | "Répondu" | "Relancé" | "Non répondu" };
@@ -80,6 +82,9 @@ export type Article = {
   extrait: string;
   tags: string[];
   heure?: string;
+  cover?: string;
+  seoTitle?: string;
+  seoDescription?: string;
 };
 
 export type FaqItem = {
@@ -173,6 +178,13 @@ const seedCandidats: Candidat[] = Array.from({ length: 32 }, (_, i) => {
     telephone: `+2126${String(20000000 + i * 33333).slice(0, 8)}`,
     date: d(i),
     resume: `Professionnel expérimenté au poste de ${p}, avec ${2 + (i % 15)} ans d'expérience dans le secteur. Cherche à évoluer dans une structure à forte culture d'entreprise. Formation ISCAE / ENCG. Maîtrise des outils modernes et bonne gestion d'équipe.`,
+    cv: i % 4 === 3 ? undefined : {
+      name: `CV_${noms[(i + 4) % noms.length].replace(/\s+/g, "_")}_${p.replace(/\s+/g, "_")}.pdf`,
+      uploadedAt: d(i),
+      type: (i % 5 === 0 ? "DOCX" : "PDF") as "PDF" | "DOCX",
+      url: "#",
+      size: `${(180 + (i * 47) % 700)} Ko`,
+    },
   };
 });
 
@@ -468,7 +480,7 @@ export function demandeResumeIA(d: Demande): { resume: string; infos: { label: s
 }
 
 // ---------- User management & permissions ----------
-export const MODULES = ["dashboard", "demandes", "recrutement", "enquetes", "articles", "faq", "utilisateurs"] as const;
+export const MODULES = ["dashboard", "demandes", "recrutement", "enquetes", "articles", "faq", "assistant", "utilisateurs"] as const;
 export type ModuleKey = typeof MODULES[number];
 export type CrudPerm = { read: boolean; create: boolean; update: boolean; delete: boolean };
 export type Permissions = Record<ModuleKey, CrudPerm>;
@@ -478,8 +490,9 @@ export const MODULE_LABELS: Record<ModuleKey, string> = {
   demandes: "Qualification AI",
   recrutement: "Recrutement AI",
   enquetes: "Enquêtes AI",
-  articles: "Articles AI",
-  faq: "Base de connaissance",
+  articles: "Community Manager AI",
+  faq: "Service Client AI",
+  assistant: "Assistant AI",
   utilisateurs: "Utilisateurs",
 };
 
@@ -499,10 +512,10 @@ export type AppUser = {
 
 const seedUsers: AppUser[] = [
   { id: uid(), nom: "Fatima Zahra Abbadi", email: "admin@beone-consulting.com", role: "Admin", fonction: "Directrice Générale", actif: true, dateAjout: d(180), permissions: allPerms(true) },
-  { id: uid(), nom: "Meriem Bennis", email: "m.bennis@beone-consulting.com", role: "Collaborateur", fonction: "Consultante Senior Recrutement", actif: true, dateAjout: d(90), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, recrutement: allPerms(true).recrutement, demandes: { read: true, create: false, update: true, delete: false } } },
-  { id: uid(), nom: "Karim Hilali", email: "k.hilali@beone-consulting.com", role: "Collaborateur", fonction: "Chef de projet Conseil", actif: true, dateAjout: d(45), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, enquetes: allPerms(true).enquetes, demandes: { read: true, create: false, update: true, delete: false } } },
-  { id: uid(), nom: "Sara Chraibi", email: "s.chraibi@beone-consulting.com", role: "Collaborateur", fonction: "Community Manager", actif: true, dateAjout: d(30), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, articles: allPerms(true).articles, faq: { read: true, create: true, update: true, delete: false } } },
-  { id: uid(), nom: "Anas Idrissi", email: "a.idrissi@beone-consulting.com", role: "Collaborateur", fonction: "Chargé service client", actif: false, dateAjout: d(15), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, faq: allPerms(true).faq, demandes: { read: true, create: false, update: false, delete: false } } },
+  { id: uid(), nom: "Meriem Bennis", email: "m.bennis@beone-consulting.com", role: "Collaborateur", fonction: "Consultante Senior Recrutement", actif: true, dateAjout: d(90), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, assistant: { read: true, create: true, update: true, delete: true }, recrutement: allPerms(true).recrutement, demandes: { read: true, create: false, update: true, delete: false } } },
+  { id: uid(), nom: "Karim Hilali", email: "k.hilali@beone-consulting.com", role: "Collaborateur", fonction: "Chef de projet Conseil", actif: true, dateAjout: d(45), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, assistant: { read: true, create: true, update: true, delete: true }, enquetes: allPerms(true).enquetes, demandes: { read: true, create: false, update: true, delete: false } } },
+  { id: uid(), nom: "Sara Chraibi", email: "s.chraibi@beone-consulting.com", role: "Collaborateur", fonction: "Community Manager", actif: true, dateAjout: d(30), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, assistant: { read: true, create: true, update: true, delete: true }, articles: allPerms(true).articles, faq: { read: true, create: true, update: true, delete: false } } },
+  { id: uid(), nom: "Anas Idrissi", email: "a.idrissi@beone-consulting.com", role: "Collaborateur", fonction: "Chargé service client", actif: false, dateAjout: d(15), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, assistant: { read: true, create: true, update: true, delete: true }, faq: allPerms(true).faq, demandes: { read: true, create: false, update: false, delete: false } } },
 ];
 export const usersStore = createStore<AppUser>(seedUsers);
 
@@ -523,4 +536,97 @@ export const DEFAULT_EVAL_CRITERIA: EvaluationCriterion[] = [
   { id: uid(), nom: "Soft skills", description: "Leadership, communication, capacité d'influence.", poids: 20, requis: false },
   { id: uid(), nom: "Formation & langues", description: "Diplôme, école, maîtrise linguistique.", poids: 20, requis: false },
 ];
+
+
+// ---------- Community Manager: Social Posts ----------
+export type SocialPlatform = "LinkedIn" | "Facebook" | "Instagram" | "YouTube";
+export type PostMedia = { id: string; kind: "image" | "video"; url: string; alt?: string };
+export type PostPlatformConfig = Record<string, string | number>;
+export type SocialPost = {
+  id: string;
+  titre: string;
+  caption: string;
+  hashtags: string[];
+  media: PostMedia[];
+  platforms: SocialPlatform[];
+  platformConfig: Partial<Record<SocialPlatform, PostPlatformConfig>>;
+  statut: "Brouillon" | "Planifié" | "Publié";
+  date: string;
+  heure?: string;
+  auteur: "IA" | "Manuel";
+  langue: string;
+  ton: string;
+  aiParams?: Record<string, string | number>;
+};
+
+const POST_IMAGES = [
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=70",
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=70",
+  "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=800&q=70",
+  "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=70",
+];
+const seedPosts: SocialPost[] = [
+  { id: uid(), titre: "Lancement programme leadership", caption: "Fiers de lancer notre nouveau programme Leadership de proximité 🚀 8 jours pour transformer vos managers.", hashtags: ["#Leadership", "#RH", "#Maroc"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[0] }], platforms: ["LinkedIn", "Facebook"], platformConfig: { LinkedIn: { tone: "Professionnel", cta: "En savoir plus", paragraphes: "Court" }, Facebook: { style: "Storytelling", cta: "Contactez-nous" } }, statut: "Publié", date: d(2), heure: "10:00", auteur: "IA", langue: "Français", ton: "Professionnel" },
+  { id: uid(), titre: "Coulisses de notre équipe", caption: "Retour en images sur notre séminaire annuel — merci à toute l'équipe Be One ! ✨", hashtags: ["#TeamSpirit", "#BeOne", "#Consulting"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[1] }, { id: uid(), kind: "image", url: POST_IMAGES[2] }], platforms: ["Instagram", "Facebook"], platformConfig: { Instagram: { captionLength: 120, emojiDensity: "Élevée", hashtagCount: 12 }, Facebook: { style: "Conversationnel" } }, statut: "Planifié", date: d(-3), heure: "18:30", auteur: "Manuel", langue: "Français", ton: "Chaleureux" },
+  { id: uid(), titre: "Webinaire transformation RH", caption: "Rejoignez notre webinaire exclusif sur la transformation RH — inscription ouverte !", hashtags: ["#Webinaire", "#TransformationRH"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[3] }], platforms: ["LinkedIn", "YouTube"], platformConfig: { LinkedIn: { tone: "Expert", cta: "S'inscrire" }, YouTube: { titre: "Webinaire — Transformation RH 2026", description: "Session complète", tags: "RH,transformation,2026", thumbnailPrompt: "Podium moderne, éclairage doré" } }, statut: "Brouillon", date: d(0), auteur: "IA", langue: "Français", ton: "Expert" },
+];
+export const postsStore = createStore<SocialPost>(seedPosts);
+
+export const PLATFORM_META: Record<SocialPlatform, { color: string; bg: string }> = {
+  LinkedIn: { color: "text-sky-700 dark:text-sky-300", bg: "bg-sky-500/15 border-sky-500/30" },
+  Facebook: { color: "text-blue-700 dark:text-blue-300", bg: "bg-blue-500/15 border-blue-500/30" },
+  Instagram: { color: "text-pink-700 dark:text-pink-300", bg: "bg-pink-500/15 border-pink-500/30" },
+  YouTube: { color: "text-red-700 dark:text-red-300", bg: "bg-red-500/15 border-red-500/30" },
+};
+
+// ---------- Assistant AI: meetings & reminders ----------
+export type MeetingProvider = "Google Meet" | "Zoom" | "Microsoft Teams";
+export type Meeting = {
+  id: string;
+  titre: string;
+  description: string;
+  participants: string[];
+  dateHeure: string; // ISO local minute
+  duree: number; // minutes
+  provider: MeetingProvider;
+  meetingLink: string;
+  notes: string;
+  attachments: string[];
+  reminderStatus: "Programmé" | "Envoyé" | "Confirmé" | "Manqué";
+  reminders: string[]; // ["5min", "1h", "1j"]
+  importance: "Normale" | "Haute" | "Critique";
+  source: "Manuel" | "Email" | "WhatsApp";
+};
+
+function isoMin(days: number, h: number, m: number) {
+  const dt = new Date();
+  dt.setDate(dt.getDate() + days);
+  dt.setHours(h, m, 0, 0);
+  return dt.toISOString().slice(0, 16);
+}
+
+const seedMeetings: Meeting[] = [
+  { id: uid(), titre: "Kick-off mission OCP", description: "Cadrage et validation du planning de la mission audit organisationnel.", participants: ["F.Z. Abbadi", "Karim Hilali", "S. Bennani (OCP)"], dateHeure: isoMin(0, 14, 0), duree: 60, provider: "Microsoft Teams", meetingLink: "https://teams.microsoft.com/l/meetup-join/xyz", notes: "Préparer la présentation cadrage.", attachments: ["Cadrage_OCP.pdf"], reminderStatus: "Programmé", reminders: ["30min", "1h"], importance: "Haute", source: "Email" },
+  { id: uid(), titre: "Entretien candidat DRH Cosumar", description: "Second entretien candidate présélectionnée.", participants: ["M. Bennis", "N. Alaoui"], dateHeure: isoMin(1, 10, 30), duree: 45, provider: "Google Meet", meetingLink: "https://meet.google.com/abc-defg-hij", notes: "Focus sur la conduite de changement.", attachments: [], reminderStatus: "Programmé", reminders: ["15min"], importance: "Normale", source: "Manuel" },
+  { id: uid(), titre: "Restitution enquête satisfaction", description: "Restitution des résultats au comité de pilotage.", participants: ["F.Z. Abbadi", "K. Hilali", "Comité OCP"], dateHeure: isoMin(2, 15, 0), duree: 90, provider: "Zoom", meetingLink: "https://zoom.us/j/1234567890", notes: "Slides V3 à envoyer 24h avant.", attachments: ["Rapport_enquete_v3.pdf"], reminderStatus: "Programmé", reminders: ["1j", "1h"], importance: "Critique", source: "WhatsApp" },
+  { id: uid(), titre: "Point suivi hebdo équipe", description: "Point d'équipe hebdomadaire.", participants: ["Toute l'équipe"], dateHeure: isoMin(-1, 9, 0), duree: 30, provider: "Google Meet", meetingLink: "https://meet.google.com/team-weekly", notes: "", attachments: [], reminderStatus: "Manqué", reminders: ["10min"], importance: "Normale", source: "Manuel" },
+  { id: uid(), titre: "RDV client Attijariwafa", description: "Présentation de la proposition commerciale.", participants: ["F.Z. Abbadi", "Client Attijariwafa"], dateHeure: isoMin(3, 11, 0), duree: 60, provider: "Microsoft Teams", meetingLink: "https://teams.microsoft.com/l/attijari", notes: "Vérifier la disponibilité de la salle.", attachments: ["Proposition_v2.pdf"], reminderStatus: "Confirmé", reminders: ["1j", "1h", "15min"], importance: "Haute", source: "Email" },
+  // Duplicate detector demo
+  { id: uid(), titre: "RDV client Attijariwafa", description: "Doublon à supprimer.", participants: ["F.Z. Abbadi"], dateHeure: isoMin(3, 11, 0), duree: 60, provider: "Zoom", meetingLink: "https://zoom.us/dup", notes: "", attachments: [], reminderStatus: "Programmé", reminders: ["1h"], importance: "Normale", source: "Manuel" },
+];
+export const meetingsStore = createStore<Meeting>(seedMeetings);
+
+export type AssistantConfig = {
+  id: string;
+  langue: "Français" | "English" | "العربية";
+  timings: string[];
+  provider: MeetingProvider;
+  notifyAll: boolean;
+  whatsappDelivery: boolean;
+  autoFromEmail: boolean;
+  autoFromWhatsapp: boolean;
+};
+export const assistantConfigStore = createStore<AssistantConfig>([
+  { id: "assistant", langue: "Français", timings: ["10min", "1h", "1j"], provider: "Google Meet", notifyAll: true, whatsappDelivery: true, autoFromEmail: true, autoFromWhatsapp: true },
+]);
 

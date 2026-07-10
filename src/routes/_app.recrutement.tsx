@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, Linkedin, Facebook, Instagram, Calendar, MessageSquare, XCircle, ArrowRight, Target } from "lucide-react";
-import { candidatsStore, POSTES, rdvStore, uid, useStore, type Candidat } from "@/lib/mock-data";
+import { MoreHorizontal, Eye, Pencil, Trash2, Linkedin, Facebook, Instagram, Calendar, MessageSquare, XCircle, ArrowRight, Target, FileText, Download, Eye as EyeIcon, Upload, FileType2 } from "lucide-react";
+import { candidatsStore, POSTES, rdvStore, uid, useStore, type Candidat, type CandidatCV } from "@/lib/mock-data";
 import { HeadHuntingPanel } from "@/components/head-hunting";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "sonner";
@@ -337,6 +337,8 @@ function Page() {
                   </div>
                 </section>
 
+                <CvSection candidat={detail} onChange={(cv) => { candidatsStore.update(detail.id, { cv }); setDetail({ ...detail, cv }); }} />
+
                 <section>
                   <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">CV résumé</h4>
                   <p className="text-sm text-muted-foreground leading-relaxed">{detail.resume}</p>
@@ -372,5 +374,59 @@ function Page() {
         onConfirm={() => { if (confirmDel) { candidatsStore.remove(confirmDel.id); toast.success("Candidat supprimé"); } setConfirmDel(null); }}
       />
     </AppShell>
+  );
+}
+
+function CvSection({ candidat, onChange }: { candidat: Candidat; onChange: (cv: CandidatCV | undefined) => void }) {
+  const [preview, setPreview] = useState(false);
+  const cv = candidat.cv;
+  return (
+    <section>
+      <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> CV du candidat</h4>
+      {cv ? (
+        <div className="rounded-lg border p-3 flex items-start gap-3 hover-lift">
+          <div className={cn("h-11 w-11 rounded-lg grid place-items-center shrink-0 border", cv.type === "PDF" ? "bg-red-500/10 border-red-500/30 text-red-600" : cv.type === "DOCX" ? "bg-sky-500/10 border-sky-500/30 text-sky-600" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-600")}>
+            <FileType2 className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium truncate">{cv.name}</div>
+            <div className="text-xs text-muted-foreground">{cv.type} · {cv.size} · Ajouté le {cv.uploadedAt}</div>
+            <div className="mt-2 flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setPreview(true)}><EyeIcon className="h-3.5 w-3.5 mr-1.5" /> Aperçu</Button>
+              <Button size="sm" variant="outline" onClick={() => toast.success("Téléchargement démarré", { description: cv.name })}><Download className="h-3.5 w-3.5 mr-1.5" /> Télécharger</Button>
+              <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={() => { onChange(undefined); toast.success("CV supprimé"); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed p-6 text-center">
+          <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+          <div className="text-sm font-medium">Aucun CV disponible</div>
+          <div className="text-xs text-muted-foreground mb-3">Importez un fichier PDF, DOCX ou image.</div>
+          <Button size="sm" variant="outline" onClick={() => {
+            onChange({ name: `CV_${candidat.nom.replace(/\s+/g, "_")}.pdf`, uploadedAt: new Date().toISOString().slice(0, 10), type: "PDF", url: "#", size: `${Math.floor(200 + Math.random() * 800)} Ko` });
+            toast.success("CV importé");
+          }}><Upload className="h-3.5 w-3.5 mr-1.5" /> Importer un CV</Button>
+        </div>
+      )}
+
+      <Dialog open={preview} onOpenChange={setPreview}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><FileText className="h-4 w-4" /> Aperçu — {cv?.name}</DialogTitle></DialogHeader>
+          <div className="aspect-[3/4] bg-muted rounded-lg border grid place-items-center overflow-hidden">
+            <div className="text-center p-6">
+              <FileType2 className="h-16 w-16 mx-auto text-muted-foreground/40 mb-3" />
+              <div className="text-sm font-semibold">{cv?.name}</div>
+              <div className="text-xs text-muted-foreground mt-1">Aperçu {cv?.type} · {cv?.size}</div>
+              <div className="text-xs text-muted-foreground mt-4 max-w-sm mx-auto">L'aperçu complet est disponible via téléchargement. En production, le PDF s'affichera ici via un lecteur intégré.</div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreview(false)}>Fermer</Button>
+            <Button onClick={() => toast.success("Téléchargement démarré")}><Download className="h-4 w-4 mr-2" /> Télécharger</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </section>
   );
 }
