@@ -36,6 +36,29 @@ const discretionColor: Record<NonNullable<HuntingMission["discretion"]>, string>
   "Ultra-confidentielle": "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
 };
 
+// Deterministic pseudo-random pick of candidates for a mission — mixes matches by poste keywords + a seeded sample.
+function candidatesForMission(mission: HuntingMission, all: Candidat[]): Candidat[] {
+  const kw = mission.poste.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+  const scored = all.map((c) => {
+    const t = (c.poste + " " + c.competences.join(" ")).toLowerCase();
+    const kwHits = kw.reduce((n, w) => n + (t.includes(w) ? 1 : 0), 0);
+    // deterministic jitter per (mission,candidat)
+    let h = 0; const s = mission.id + c.id;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    const jitter = (h % 20) - 10; // -10..+9
+    return { c, rank: kwHits * 100 + c.score + jitter };
+  });
+  scored.sort((a, b) => b.rank - a.rank);
+  const n = Math.max(6, Math.min(10, mission.profilsQualifies || 8));
+  return scored.slice(0, n).map((x) => x.c);
+}
+
+const sourceIcon: Record<Candidat["source"], JSX.Element> = {
+  LinkedIn: <Linkedin className="h-3 w-3" />,
+  Facebook: <Facebook className="h-3 w-3" />,
+  Instagram: <Instagram className="h-3 w-3" />,
+};
+
 function empty(): HuntingMission {
   return {
     id: "", poste: "", entreprise: "", seniorite: "Directeur", secteur: SECTEURS[0], localisation: "Casablanca",
