@@ -52,17 +52,19 @@ import {
   editorialConfigStore,
   cmConfigStore,
   postIdeasStore,
+  articleIdeasStore,
   uid,
   useStore,
   type Article,
   type CmPlatform,
   type CmPlatformConfig,
   type PostIdea,
+  type ArticleIdea,
 } from "@/lib/mock-data";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PostWizard, ContentTypePicker, type PostWizardPrefill } from "@/components/post-wizard";
-import { ArticleWizard } from "@/components/article-wizard";
+import { ArticleWizard, type ArticleWizardPrefill } from "@/components/article-wizard";
 import { ScheduleDialog } from "@/components/schedule-dialog";
 import { postsStore, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
 import { Linkedin, Facebook, Instagram, Youtube, Globe as GlobeIcon, Send, Lightbulb, RefreshCw, Bookmark, Copy } from "lucide-react";
