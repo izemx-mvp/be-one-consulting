@@ -1124,13 +1124,14 @@ function MonthView({
                         key={a.id}
                         onClick={() => onArticleClick(a)}
                         className={cn(
-                          "w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border truncate hover:brightness-95 transition",
+                          "w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border truncate hover:brightness-95 transition flex items-center gap-1",
                           toneFor(a),
                         )}
                         title={a.titre}
                       >
-                        {a.heure && <span className="opacity-70 mr-1">{a.heure}</span>}
-                        {a.titre}
+                        <GlobeIcon className="h-2.5 w-2.5 shrink-0" />
+                        {a.heure && <span className="opacity-70 tabular-nums text-[9px]">{a.heure}</span>}
+                        <span className="truncate">{a.titre}</span>
                       </button>
                     ))}
                     {evs.length > 3 && (
