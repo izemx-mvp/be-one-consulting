@@ -75,7 +75,7 @@ function Page() {
   const [step, setStep] = useState(1);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiQuestions, setAiQuestions] = useState<string[]>([]);
+  const [aiQuestions, setAiQuestions] = useState<{ q: string; type: QuestionType }[]>([]);
   const [planTime, setPlanTime] = useState("09:00");
   const [selectedTemplate, setSelectedTemplate] = useState("nps");
   const [detail, setDetail] = useState<Enquete | null>(null);
