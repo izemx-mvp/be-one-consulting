@@ -1280,6 +1280,7 @@ function PostIdeasSection() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [prefill, setPrefill] = useState<PostWizardPrefill | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [detail, setDetail] = useState<PostIdea | null>(null);
 
   const regenerate = () => {
     setGenerating(true);
@@ -1297,12 +1298,12 @@ function PostIdeasSection() {
 
   const createPost = (idea: PostIdea) => {
     setPrefill({ titre: idea.titre, caption: idea.suggestedCaption, hashtags: idea.hashtags, platforms: idea.platforms, idea: idea.description, date: idea.suggestedDate });
+    setDetail(null);
     setWizardOpen(true);
   };
 
   return (
     <div className="mb-6">
-
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div>
           <div className="text-sm font-semibold flex items-center gap-1.5"><Lightbulb className="h-4 w-4 text-[color:var(--gold)]" /> Idées de posts générées par l'IA</div>
@@ -1312,7 +1313,7 @@ function PostIdeasSection() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {ideas.map((idea) => (
-          <Card key={idea.id} className="p-0 overflow-hidden hover-lift cursor-pointer fade-up card-elevated group relative" onClick={() => createPost(idea)}>
+          <Card key={idea.id} className="p-0 overflow-hidden hover-lift cursor-pointer fade-up card-elevated group relative" onClick={() => setDetail(idea)}>
             <div className="h-40 bg-muted relative grid place-items-center text-muted-foreground">
               <div className="text-center px-4">
                 <ImageIcon className="h-8 w-8 mx-auto opacity-40 mb-1" />
@@ -1337,6 +1338,46 @@ function PostIdeasSection() {
         ))}
       </div>
 
+      <Sheet open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto scroll-fancy">
+          {detail && (
+            <>
+              <SheetHeader className="border-b pb-4">
+                <div className="flex flex-wrap gap-2 mb-2 items-center">
+                  {detail.platforms.map((pl) => { const Icon = PLATFORM_ICONS[pl]; return <span key={pl} className={cn("text-[10px] px-2 py-0.5 rounded-full border inline-flex items-center gap-1", PLATFORM_META[pl].bg, PLATFORM_META[pl].color)}><Icon className="h-3 w-3" /> {pl}</span>; })}
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/20 text-[color:var(--gold)] inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> Idée IA</span>
+                  <StatusBadge status="Brouillon" dot />
+                </div>
+                <SheetTitle>{detail.titre}</SheetTitle>
+                <div className="text-xs text-muted-foreground">Date suggérée : {detail.suggestedDate}</div>
+              </SheetHeader>
+              <div className="py-4 space-y-4">
+                <section>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Description</h4>
+                  <p className="text-sm">{detail.description}</p>
+                </section>
+                <section>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Média suggéré</h4>
+                  <div className="rounded-lg border bg-muted/30 p-4 text-sm italic text-muted-foreground flex items-start gap-2"><ImageIcon className="h-4 w-4 mt-0.5 shrink-0" /> {detail.mediaConcept}</div>
+                </section>
+                <section>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Caption proposée</h4>
+                  <p className="text-sm whitespace-pre-line rounded-lg border bg-muted/30 p-3">{detail.suggestedCaption}</p>
+                </section>
+                <section>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Hashtags</h4>
+                  <div className="flex flex-wrap gap-1">{detail.hashtags.map((h) => <span key={h} className="text-[11px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div>
+                </section>
+              </div>
+              <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
+                <Button onClick={() => createPost(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><Send className="h-4 w-4 mr-2" /> Créer le post</Button>
+                <Button variant="outline" className="text-destructive border-destructive/30" onClick={() => { postIdeasStore.remove(detail.id); toast.success("Idée supprimée"); setDetail(null); }}><Trash2 className="h-4 w-4 mr-2" /> Supprimer</Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
       <PostWizard open={wizardOpen} onOpenChange={(v) => { setWizardOpen(v); if (!v) setPrefill(null); }} prefill={prefill} />
     </div>
   );
@@ -1347,6 +1388,7 @@ function ArticleIdeasSection() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [prefill, setPrefill] = useState<ArticleWizardPrefill | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [detail, setDetail] = useState<{ idea: ArticleIdea; index: number } | null>(null);
 
   const regenerate = () => {
     setGenerating(true);
@@ -1364,6 +1406,7 @@ function ArticleIdeasSection() {
 
   const createArticle = (idea: ArticleIdea) => {
     setPrefill({ titre: idea.titre, description: idea.description, keywords: idea.keywords, thematique: idea.thematique, longueur: idea.longueur, extrait: idea.suggestedExtrait });
+    setDetail(null);
     setWizardOpen(true);
   };
 
@@ -1379,7 +1422,7 @@ function ArticleIdeasSection() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {ideas.map((idea, i) => (
-          <Card key={idea.id} className="p-0 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all fade-up cursor-pointer group relative" onClick={() => createArticle(idea)}>
+          <Card key={idea.id} className="p-0 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all fade-up cursor-pointer group relative" onClick={() => setDetail({ idea, index: i })}>
             <div className="h-40 bg-muted overflow-hidden relative">
               <img src={ARTICLE_IMAGES[(idea.titre.length + i) % ARTICLE_IMAGES.length]} alt={idea.titre} className="w-full h-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
               <div className="absolute top-2 left-2 flex gap-1.5">
@@ -1400,6 +1443,48 @@ function ArticleIdeasSection() {
           </Card>
         ))}
       </div>
+
+      <Sheet open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto">
+          {detail && (
+            <>
+              <SheetHeader className="border-b pb-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary uppercase">{detail.idea.thematique}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/20 text-[color:var(--gold)] inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> Idée IA</span>
+                  <StatusBadge status="Brouillon" dot />
+                </div>
+                <SheetTitle className="text-2xl mt-2">{detail.idea.titre}</SheetTitle>
+                <div className="text-xs text-muted-foreground">Date suggérée : {detail.idea.suggestedDate} · Format : {detail.idea.longueur}</div>
+                <TagChips tags={detail.idea.keywords} />
+              </SheetHeader>
+              <div className="py-4 space-y-4">
+                <img src={ARTICLE_IMAGES[(detail.idea.titre.length + detail.index) % ARTICLE_IMAGES.length]} alt={detail.idea.titre} className="w-full h-56 object-cover rounded-lg" />
+                <section>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Description</h4>
+                  <p className="text-sm">{detail.idea.description}</p>
+                </section>
+                <section>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Extrait proposé</h4>
+                  <p className="text-sm italic rounded-lg border bg-muted/30 p-3">"{detail.idea.suggestedExtrait}"</p>
+                </section>
+                <section>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Angle éditorial</h4>
+                  <p className="text-sm">{detail.idea.angle}</p>
+                </section>
+                <section>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Mots-clés</h4>
+                  <div className="flex flex-wrap gap-1">{detail.idea.keywords.map((h) => <span key={h} className="text-[11px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">#{h}</span>)}</div>
+                </section>
+              </div>
+              <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
+                <Button onClick={() => createArticle(detail.idea)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><FileText className="h-4 w-4 mr-2" /> Créer l'article</Button>
+                <Button variant="outline" className="text-destructive border-destructive/30" onClick={() => { articleIdeasStore.remove(detail.idea.id); toast.success("Idée supprimée"); setDetail(null); }}><Trash2 className="h-4 w-4 mr-2" /> Supprimer</Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <ArticleWizard open={wizardOpen} onOpenChange={(v) => { setWizardOpen(v); if (!v) setPrefill(null); }} prefill={prefill} />
     </div>
