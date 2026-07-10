@@ -158,11 +158,16 @@ function ThemeToggle() {
 export function AppShell({ children, title, subtitle }: { children: ReactNode; title: string; subtitle?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useAuth();
+  const currentAppUser = useCurrentUser();
+  const can = useCan();
+  const allUsers = useStore(usersStore);
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
   const segments = pathname.split("/").filter(Boolean);
   const crumbs = segments.map((s) => routeLabels[s] ?? s);
+
+  const visibleNav = nav.filter((n) => can(n.module, "read"));
 
   const handleLogout = () => {
     auth.logout();
@@ -178,7 +183,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
           </div>
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          {nav.map((item) => {
+          {visibleNav.map((item) => {
             const active = pathname === item.to || pathname.startsWith(item.to + "/");
             return (
               <Link
@@ -198,6 +203,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
             );
           })}
         </nav>
+
         <button
           onClick={() => setCollapsed((v) => !v)}
           className="mx-3 mb-3 h-9 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground flex items-center justify-center transition-colors"
