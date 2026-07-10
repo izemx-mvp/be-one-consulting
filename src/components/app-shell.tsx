@@ -253,7 +253,9 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
             </DropdownMenu>
           </div>
         </header>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto app-bg relative">
+          <div className="absolute inset-x-0 top-0 h-72 grid-bg pointer-events-none" />
+          <div className="relative">
           <div className="p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
             <div className="mb-6 fade-up">
               <div className="flex items-start justify-between gap-4">
