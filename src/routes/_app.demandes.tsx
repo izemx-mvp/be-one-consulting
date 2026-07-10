@@ -288,14 +288,6 @@ function Page() {
                       <Label className="text-xs">Notes internes</Label>
                       <Textarea rows={3} value={detail.notes ?? ""} onChange={(e) => { const notes = e.target.value; setDetail({ ...detail, notes }); demandesStore.update(detail.id, { notes }); }} />
                     </div>
-                    {detail.type === "Recrutement" && detail.statut !== "Redirigé" && (
-                      <Button onClick={() => rediriger(detail)} className="w-full bg-primary text-primary-foreground">
-                        <ArrowRightCircle className="h-4 w-4 mr-2" /> Rediriger vers Recrutement
-                      </Button>
-                    )}
-                    <Button variant="outline" className="w-full" onClick={() => toast.success("Réponse WhatsApp envoyée")}>
-                      <Send className="h-4 w-4 mr-2" /> Répondre au client
-                    </Button>
                   </div>
                 </section>
               </div>
