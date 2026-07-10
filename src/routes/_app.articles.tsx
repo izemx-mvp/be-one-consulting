@@ -71,7 +71,7 @@ function TagChips({ tags }: { tags: string[] }) {
   return (
     <div className="flex flex-wrap gap-1 mt-2">
       {tags.map((t) => (
-        <span key={t} className="text-[10px] inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/35 font-medium">
+        <span key={t} className="text-[10px] inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/35 font-medium shadow-sm">
           <Hash className="h-2.5 w-2.5" />{t}
         </span>
       ))}
