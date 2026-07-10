@@ -257,20 +257,16 @@ function DocsTab() {
   const [cat, setCat] = useState("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<KbDocument>(emptyDoc());
-  const [tagsInput, setTagsInput] = useState("");
   const [confirmDel, setConfirmDel] = useState<KbDocument | null>(null);
 
   const filtered = rows.filter((r) => (cat === "all" || r.categorie === cat) && (!q || r.nom.toLowerCase().includes(q.toLowerCase()) || r.tags.some((t) => t.toLowerCase().includes(q.toLowerCase()))));
 
   const save = () => {
-    if (!editing.nom) { toast.error("Nom du document requis"); return; }
-    const tags = tagsInput.split(",").map((s) => s.trim()).filter(Boolean);
-    if (editing.id) { documentsStore.update(editing.id, { ...editing, tags }); toast.success("Document mis à jour"); }
-    else { documentsStore.add({ ...editing, id: uid(), tags }); toast.success("Document ajouté"); }
+    if (!editing.nom) { toast.error("Veuillez importer un fichier"); return; }
+    documentsStore.add({ ...editing, id: uid() });
+    toast.success("Document importé");
     setOpen(false);
   };
-
-  const openEdit = (d: KbDocument) => { setEditing(d); setTagsInput(d.tags.join(", ")); setOpen(true); };
 
   return (
     <div className="space-y-4">
