@@ -63,7 +63,7 @@ import {
 } from "@/lib/mock-data";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { PostWizard, ContentTypePicker, type PostWizardPrefill } from "@/components/post-wizard";
+import { PostWizard, type PostWizardPrefill } from "@/components/post-wizard";
 import { ArticleWizard, type ArticleWizardPrefill } from "@/components/article-wizard";
 import { ScheduleDialog } from "@/components/schedule-dialog";
 import { postsStore, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
@@ -168,8 +168,6 @@ function GridTab({
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [confirmDel, setConfirmDel] = useState<Article | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [postOpen, setPostOpen] = useState(false);
   const [scheduleForArticle, setScheduleForArticle] = useState<Article | null>(null);
 
   const detail = externalDetail;
@@ -294,12 +292,10 @@ function GridTab({
             </button>
           ))}
         </div>
-        <Button onClick={() => setPickerOpen(true)} className="ml-auto btn-premium hover:[&]:btn-premium-hover">
-          <Plus className="h-4 w-4 mr-1" /> Nouveau contenu
+        <Button onClick={openNew} className="ml-auto btn-premium hover:[&]:btn-premium-hover">
+          <Plus className="h-4 w-4 mr-1" /> Nouvel article
         </Button>
       </div>
-      <ContentTypePicker open={pickerOpen} onOpenChange={setPickerOpen} onPick={(t) => { if (t === "article") openNew(); else setPostOpen(true); }} />
-      <PostWizard open={postOpen} onOpenChange={setPostOpen} />
       {pageItems.length === 0 ? (
         <Card className="p-16 text-center text-muted-foreground">
           <FileText className="h-10 w-10 mx-auto mb-2 opacity-40" />
@@ -1314,35 +1310,33 @@ function PostIdeasSection() {
         </div>
         <Button onClick={regenerate} disabled={generating} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><Sparkles className={cn("h-4 w-4 mr-1.5", generating && "animate-spin")} /> Générer de nouvelles idées</Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {ideas.map((idea) => (
-          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3 border-[color:var(--gold)]/40 bg-gradient-to-br from-[color:var(--gold)]/5 to-transparent">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/40 font-semibold mb-1"><Sparkles className="h-3 w-3" /> Idée IA</span>
-                <h3 className="font-semibold text-sm leading-tight">{idea.titre}</h3>
-                <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{idea.description}</div>
+          <Card key={idea.id} className="p-0 overflow-hidden hover-lift cursor-pointer fade-up card-elevated group relative" onClick={() => createPost(idea)}>
+            <div className="h-40 bg-muted relative grid place-items-center text-muted-foreground">
+              <div className="text-center px-4">
+                <ImageIcon className="h-8 w-8 mx-auto opacity-40 mb-1" />
+                <div className="text-[11px] italic line-clamp-2">{idea.mediaConcept}</div>
               </div>
-              {idea.saved && <Bookmark className="h-4 w-4 text-[color:var(--gold)] shrink-0" />}
+              <div className="absolute top-2 left-2 flex gap-1">
+                {idea.platforms.map((pl) => { const Icon = IDEA_PLATFORM_ICON[pl]; return <span key={pl} className="text-white bg-black/60 backdrop-blur rounded-full h-6 w-6 grid place-items-center"><Icon className="h-3 w-3" /></span>; })}
+              </div>
+              <span className="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/90 text-[color:var(--gold-foreground)] backdrop-blur inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> IA</span>
+              <button className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-black/60 text-white grid place-items-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive" onClick={(e) => { e.stopPropagation(); postIdeasStore.remove(idea.id); toast.success("Idée supprimée"); }}><X className="h-3.5 w-3.5" /></button>
             </div>
-            <div className="rounded-lg border bg-muted/30 p-2 text-xs italic text-muted-foreground line-clamp-3">"{idea.suggestedCaption}"</div>
-            <div className="text-[11px] text-muted-foreground"><b className="text-foreground">Média :</b> {idea.mediaConcept}</div>
-            <div className="flex flex-wrap gap-1">{idea.hashtags.map((h) => <span key={h} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-muted-foreground">Plateformes :</span>
-              <div className="flex gap-1">{idea.platforms.map((p) => { const Icon = IDEA_PLATFORM_ICON[p]; return <span key={p} className={cn("h-6 w-6 rounded-full grid place-items-center border", PLATFORM_META[p].bg, PLATFORM_META[p].color)}><Icon className="h-3 w-3" /></span>; })}</div>
-            </div>
-            <div className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> Date suggérée : {idea.suggestedDate}</div>
-            <div className="flex gap-1.5 mt-auto pt-2 border-t flex-wrap">
-              <Button size="sm" onClick={() => createPost(idea)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><Send className="h-3.5 w-3.5 mr-1" /> Créer le post</Button>
-              <Button size="sm" variant="outline" onClick={() => { postIdeasStore.update(idea.id, { saved: !idea.saved }); toast.success(idea.saved ? "Retiré des favoris" : "Idée sauvegardée"); }}><Bookmark className="h-3.5 w-3.5" /></Button>
-              <Button size="sm" variant="outline" onClick={() => { toast.success("Idée régénérée"); }}><RefreshCw className="h-3.5 w-3.5" /></Button>
-              <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => { postIdeasStore.remove(idea.id); toast.success("Idée supprimée"); }}><X className="h-3.5 w-3.5" /></Button>
+            <div className="p-4">
+              <h3 className="font-semibold line-clamp-1">{idea.titre}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{idea.suggestedCaption}</p>
+              <div className="flex flex-wrap gap-1 mt-2">{idea.hashtags.slice(0, 3).map((h) => <span key={h} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div>
+              <div className="flex items-center justify-between mt-3">
+                <StatusBadge status="Brouillon" dot />
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {idea.suggestedDate}</span>
+              </div>
             </div>
           </Card>
         ))}
-        {ideas.length === 0 && <Card className="p-16 text-center text-muted-foreground col-span-full">Aucune idée. Cliquez sur "Générer" pour commencer.</Card>}
       </div>
+
       <PostWizard open={wizardOpen} onOpenChange={(v) => { setWizardOpen(v); if (!v) setPrefill(null); }} prefill={prefill} />
     </div>
   );
@@ -1383,38 +1377,30 @@ function ArticleIdeasSection() {
         </div>
         <Button onClick={regenerate} disabled={generating} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><Sparkles className={cn("h-4 w-4 mr-1.5", generating && "animate-spin")} /> Générer de nouvelles idées</Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {ideas.map((idea) => (
-          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3 border-[color:var(--gold)]/40 bg-gradient-to-br from-[color:var(--gold)]/5 to-transparent">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/40 font-semibold"><Sparkles className="h-3 w-3" /> Idée IA</span>
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{idea.thematique}</span>
-                </div>
-                <h3 className="font-semibold text-sm leading-tight">{idea.titre}</h3>
-                <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{idea.description}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        {ideas.map((idea, i) => (
+          <Card key={idea.id} className="p-0 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all fade-up cursor-pointer group relative" onClick={() => createArticle(idea)}>
+            <div className="h-40 bg-muted overflow-hidden relative">
+              <img src={ARTICLE_IMAGES[(idea.titre.length + i) % ARTICLE_IMAGES.length]} alt={idea.titre} className="w-full h-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+              <div className="absolute top-2 left-2 flex gap-1.5">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur uppercase tracking-wide">{idea.thematique}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/90 text-[color:var(--gold-foreground)] backdrop-blur inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> IA</span>
               </div>
-              {idea.saved && <Bookmark className="h-4 w-4 text-[color:var(--gold)] shrink-0" />}
+              <button className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-black/60 text-white grid place-items-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive" onClick={(e) => { e.stopPropagation(); articleIdeasStore.remove(idea.id); toast.success("Idée supprimée"); }}><X className="h-3.5 w-3.5" /></button>
             </div>
-            <div className="rounded-lg border bg-muted/30 p-2 text-xs italic text-muted-foreground line-clamp-3">"{idea.suggestedExtrait}"</div>
-            <div className="text-[11px] text-muted-foreground"><b className="text-foreground">Angle :</b> {idea.angle}</div>
-            <div className="flex flex-wrap gap-1">{idea.keywords.map((h) => <span key={h} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">#{h}</span>)}</div>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-muted-foreground">Format :</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25 flex items-center gap-1"><GlobeIcon className="h-3 w-3" /> {idea.longueur}</span>
-            </div>
-            <div className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> Date suggérée : {idea.suggestedDate}</div>
-            <div className="flex gap-1.5 mt-auto pt-2 border-t flex-wrap">
-              <Button size="sm" onClick={() => createArticle(idea)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><FileText className="h-3.5 w-3.5 mr-1" /> Créer l'article</Button>
-              <Button size="sm" variant="outline" onClick={() => { articleIdeasStore.update(idea.id, { saved: !idea.saved }); toast.success(idea.saved ? "Retiré des favoris" : "Idée sauvegardée"); }}><Bookmark className="h-3.5 w-3.5" /></Button>
-              <Button size="sm" variant="outline" onClick={() => { toast.success("Idée régénérée"); }}><RefreshCw className="h-3.5 w-3.5" /></Button>
-              <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => { articleIdeasStore.remove(idea.id); toast.success("Idée supprimée"); }}><X className="h-3.5 w-3.5" /></Button>
+            <div className="p-4">
+              <h3 className="font-semibold line-clamp-2 min-h-[44px]">{idea.titre}</h3>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{idea.suggestedExtrait}</p>
+              <TagChips tags={idea.keywords} />
+              <div className="flex items-center justify-between mt-3">
+                <StatusBadge status="Brouillon" dot />
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {idea.suggestedDate}</span>
+              </div>
             </div>
           </Card>
         ))}
-        {ideas.length === 0 && <Card className="p-16 text-center text-muted-foreground col-span-full">Aucune idée. Cliquez sur "Générer" pour commencer.</Card>}
       </div>
+
       <ArticleWizard open={wizardOpen} onOpenChange={(v) => { setWizardOpen(v); if (!v) setPrefill(null); }} prefill={prefill} />
     </div>
   );
@@ -1427,7 +1413,6 @@ const PLATFORM_ICONS: Record<SocialPlatform, typeof Linkedin> = { LinkedIn: Link
 
 function PostsTab() {
   const posts = useStore(postsStore);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [postOpen, setPostOpen] = useState(false);
   const [editing, setEditing] = useState<SocialPost | null>(null);
   const [detail, setDetail] = useState<SocialPost | null>(null);
@@ -1444,11 +1429,10 @@ function PostsTab() {
     <div>
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div className="text-sm text-muted-foreground">{posts.length} publication{posts.length > 1 ? "s" : ""}</div>
-        <Button onClick={() => setPickerOpen(true)} className="ml-auto btn-premium hover:[&]:btn-premium-hover">
-          <Plus className="h-4 w-4 mr-1" /> Nouveau contenu
+        <Button onClick={openNew} className="ml-auto btn-premium hover:[&]:btn-premium-hover">
+          <Plus className="h-4 w-4 mr-1" /> Nouveau post
         </Button>
       </div>
-      <ContentTypePicker open={pickerOpen} onOpenChange={setPickerOpen} onPick={(t) => { if (t === "post") openNew(); else toast.info("Passez à l'onglet Articles"); }} />
       <PostWizard open={postOpen} onOpenChange={setPostOpen} editing={editing} />
       <ScheduleDialog open={!!scheduleFor} onOpenChange={(v) => !v && setScheduleFor(null)} initialDate={scheduleFor?.date} initialTime={scheduleFor?.heure} onConfirm={({ date, time }) => { if (scheduleFor) { postsStore.update(scheduleFor.id, { statut: "Planifié", date, heure: time }); toast.success(`Post planifié pour le ${date} à ${time}`); setScheduleFor(null); } }} />
 
