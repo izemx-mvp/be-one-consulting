@@ -62,6 +62,8 @@ function Page() {
   const [detail, setDetail] = useState<Enquete | null>(null);
   const [destPage, setDestPage] = useState(1);
   const [confirmDel, setConfirmDel] = useState<Enquete | null>(null);
+  const [selectedBases, setSelectedBases] = useState<string[]>([]);
+  const bases = useStore(contactBasesStore);
 
   const filtered = rows.filter((r) =>
     (type === "all" || r.type === type) &&
