@@ -800,12 +800,16 @@ function YearView({
 function MonthView({
   cursor,
   byDay,
+  postsByDay,
   onArticleClick,
+  onPostClick,
   onDay,
 }: {
   cursor: Date;
   byDay: Map<string, Article[]>;
+  postsByDay?: Map<string, SocialPost[]>;
   onArticleClick: (a: Article) => void;
+  onPostClick?: (p: SocialPost) => void;
   onDay: (d: Date) => void;
 }) {
   const y = cursor.getFullYear();
@@ -821,61 +825,41 @@ function MonthView({
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
       <div className="grid grid-cols-7 border-b bg-muted/30 text-[11px] font-semibold text-muted-foreground">
-        {DOW_FR.map((d) => (
-          <div key={d} className="p-2 text-center">
-            {d}
-          </div>
-        ))}
+        {DOW_FR.map((d) => (<div key={d} className="p-2 text-center">{d}</div>))}
       </div>
-      <div className="grid grid-cols-7 auto-rows-[minmax(120px,1fr)]">
+      <div className="grid grid-cols-7 auto-rows-[minmax(130px,1fr)]">
         {cells.map((d, i) => {
           const isToday = d && d.toDateString() === today.toDateString();
           const key = d ? dateKey(d) : "";
-          const evs = key ? (byDay.get(key) ?? []) : [];
+          const articles = key ? (byDay.get(key) ?? []) : [];
+          const dayPosts = key ? (postsByDay?.get(key) ?? []) : [];
+          const total = articles.length + dayPosts.length;
+          const merged = [
+            ...articles.map((a) => ({ kind: "article" as const, id: a.id, entity: a })),
+            ...dayPosts.map((p) => ({ kind: "post" as const, id: p.id, entity: p })),
+          ];
           return (
-            <div
-              key={i}
-              className={cn(
-                "border-r border-b p-1.5 last:border-r-0",
-                i % 7 === 6 && "border-r-0",
-                !d && "bg-muted/20",
-              )}
-            >
+            <div key={i} className={cn("border-r border-b p-1.5 last:border-r-0", i % 7 === 6 && "border-r-0", !d && "bg-muted/20")}>
               {d && (
                 <>
-                  <button
-                    onClick={() => onDay(d)}
-                    className={cn(
-                      "text-xs font-medium mb-1 h-6 w-6 grid place-items-center rounded-full hover:bg-muted",
-                      isToday && "bg-primary text-primary-foreground hover:bg-primary",
-                    )}
-                  >
-                    {d.getDate()}
-                  </button>
+                  <button onClick={() => onDay(d)} className={cn("text-xs font-medium mb-1 h-6 w-6 grid place-items-center rounded-full hover:bg-muted", isToday && "bg-primary text-primary-foreground hover:bg-primary")}>{d.getDate()}</button>
                   <div className="space-y-1">
-                    {evs.slice(0, 3).map((a) => (
-                      <button
-                        key={a.id}
-                        onClick={() => onArticleClick(a)}
-                        className={cn(
-                          "w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border truncate hover:brightness-95 transition flex items-center gap-1",
-                          toneFor(a),
-                        )}
-                        title={a.titre}
-                      >
-                        <GlobeIcon className="h-2.5 w-2.5 shrink-0" />
-                        {a.heure && <span className="opacity-70 tabular-nums text-[9px]">{a.heure}</span>}
-                        <span className="truncate">{a.titre}</span>
+                    {merged.slice(0, 3).map((ev) => ev.kind === "article" ? (
+                      <button key={"a-" + ev.id} onClick={() => onArticleClick(ev.entity)} className={cn("w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border truncate hover:brightness-95 transition flex items-center gap-1", toneFor(ev.entity))} title={ev.entity.titre}>
+                        <GlobeIcon className="h-2.5 w-2.5 shrink-0 text-[color:var(--gold)]" />
+                        {ev.entity.heure && <span className="opacity-70 tabular-nums text-[9px]">{ev.entity.heure}</span>}
+                        <span className="truncate">{ev.entity.titre}</span>
+                      </button>
+                    ) : (
+                      <button key={"p-" + ev.id} onClick={() => onPostClick?.(ev.entity)} className={cn("w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border truncate hover:brightness-95 transition flex items-center gap-1", postToneFor(ev.entity))} title={ev.entity.titre}>
+                        <div className="flex -space-x-1 shrink-0">
+                          {ev.entity.platforms.slice(0, 3).map((pl) => { const Icon = PLATFORM_ICONS[pl]; return <Icon key={pl} className={cn("h-2.5 w-2.5", PLATFORM_META[pl].color)} />; })}
+                        </div>
+                        {ev.entity.heure && <span className="opacity-70 tabular-nums text-[9px]">{ev.entity.heure}</span>}
+                        <span className="truncate">{ev.entity.titre}</span>
                       </button>
                     ))}
-                    {evs.length > 3 && (
-                      <button
-                        onClick={() => onDay(d)}
-                        className="text-[10px] text-muted-foreground pl-1 hover:text-foreground"
-                      >
-                        +{evs.length - 3} autres
-                      </button>
-                    )}
+                    {total > 3 && (<button onClick={() => onDay(d)} className="text-[10px] text-muted-foreground pl-1 hover:text-foreground">+{total - 3} autres</button>)}
                   </div>
                 </>
               )}
@@ -886,6 +870,13 @@ function MonthView({
     </div>
   );
 }
+
+function postToneFor(p: SocialPost) {
+  if (p.statut === "Publié") return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40";
+  if (p.statut === "Brouillon") return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40";
+  return "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/40";
+}
+
 
 function WeekView({
   cursor,
