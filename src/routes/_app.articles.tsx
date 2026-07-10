@@ -114,32 +114,19 @@ function Page() {
     >
       <Tabs defaultValue="grid">
         <TabsList className="mb-4">
-          <TabsTrigger value="grid">
-            <LayoutGrid className="h-4 w-4 mr-2" /> Articles
-          </TabsTrigger>
-          <TabsTrigger value="posts">
-            <Send className="h-4 w-4 mr-2" /> Posts sociaux
-          </TabsTrigger>
-          <TabsTrigger value="calendar">
-            <CalendarDays className="h-4 w-4 mr-2" /> Calendrier
-          </TabsTrigger>
-          <TabsTrigger value="config">
-            <Settings2 className="h-4 w-4 mr-2" /> Configuration IA
-          </TabsTrigger>
+          <TabsTrigger value="grid"><LayoutGrid className="h-4 w-4 mr-2" /> Articles</TabsTrigger>
+          <TabsTrigger value="posts"><Send className="h-4 w-4 mr-2" /> Posts sociaux</TabsTrigger>
+          <TabsTrigger value="ideas"><Lightbulb className="h-4 w-4 mr-2" /> Idées AI</TabsTrigger>
+          <TabsTrigger value="calendar"><CalendarDays className="h-4 w-4 mr-2" /> Calendrier</TabsTrigger>
+          <TabsTrigger value="config"><Settings2 className="h-4 w-4 mr-2" /> Configuration IA</TabsTrigger>
         </TabsList>
-        <TabsContent value="grid">
-          <GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} />
-        </TabsContent>
-        <TabsContent value="posts">
-          <PostsTab />
-        </TabsContent>
-        <TabsContent value="calendar">
-          <CalendarTab onArticleClick={setDetailArticle} />
-        </TabsContent>
-        <TabsContent value="config">
-          <ConfigTab />
-        </TabsContent>
+        <TabsContent value="grid"><GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} /></TabsContent>
+        <TabsContent value="posts"><PostsTab /></TabsContent>
+        <TabsContent value="ideas"><IdeasTab /></TabsContent>
+        <TabsContent value="calendar"><CalendarTab onArticleClick={setDetailArticle} /></TabsContent>
+        <TabsContent value="config"><ConfigTab /></TabsContent>
       </Tabs>
+
     </AppShell>
   );
 }
