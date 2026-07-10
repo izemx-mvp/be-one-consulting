@@ -75,7 +75,7 @@ export type RendezVous = {
 export type Article = {
   id: string; titre: string; thematique: string;
   auteur: "IA" | "Manuel"; contenu: string;
-  statut: "Brouillon" | "En attente de validation" | "Planifié" | "Publié";
+  statut: "Brouillon" | "Planifié" | "Publié";
   date: string;
   extrait: string;
   tags: string[];
