@@ -109,6 +109,7 @@ function empty(cfg: { thematiques: string[] }): Article {
 
 function Page() {
   const [detailArticle, setDetailArticle] = useState<Article | null>(null);
+  const [detailPost, setDetailPost] = useState<SocialPost | null>(null);
   return (
     <AppShell
       title="Community Manager AI"
@@ -122,8 +123,8 @@ function Page() {
           <TabsTrigger value="config"><Settings2 className="h-4 w-4 mr-2" /> Configuration IA</TabsTrigger>
         </TabsList>
         <TabsContent value="grid"><GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} /></TabsContent>
-        <TabsContent value="posts"><PostsTab /></TabsContent>
-        <TabsContent value="calendar"><CalendarTab onArticleClick={setDetailArticle} /></TabsContent>
+        <TabsContent value="posts"><PostsTab externalDetail={detailPost} setExternalDetail={setDetailPost} /></TabsContent>
+        <TabsContent value="calendar"><CalendarTab onArticleClick={setDetailArticle} onPostClick={setDetailPost} /></TabsContent>
         <TabsContent value="config"><ConfigTab /></TabsContent>
       </Tabs>
 
