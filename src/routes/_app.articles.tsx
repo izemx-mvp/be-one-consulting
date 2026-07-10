@@ -347,6 +347,7 @@ function GridTab({
             </Card>
           ))}
         </div>
+        </>
       )}
       <div className="flex items-center justify-between text-sm mt-4">
         <span className="text-muted-foreground">
