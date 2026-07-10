@@ -732,7 +732,7 @@ function CalendarTab({ onArticleClick, onPostClick }: { onArticleClick: (a: Arti
           byDay={byDay}
           postsByDay={postsByDay}
           onArticleClick={onArticleClick}
-          onPostClick={setPostDetail}
+          onPostClick={onPostClick}
           onDay={(d) => { setCursor(d); setView("day"); }}
         />
       )}
@@ -742,7 +742,6 @@ function CalendarTab({ onArticleClick, onPostClick }: { onArticleClick: (a: Arti
       )}
       {view === "day" && <DayView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />}
       {view === "agenda" && <AgendaView rows={rows} onArticleClick={onArticleClick} />}
-      <CalendarPostDetail post={postDetail} onOpenChange={(v) => !v && setPostDetail(null)} />
     </div>
   );
 }
