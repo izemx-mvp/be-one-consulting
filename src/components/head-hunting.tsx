@@ -556,3 +556,67 @@ export function HeadHuntingPanel() {
     </div>
   );
 }
+
+const SCORING_TYPES: ScoringCriterion["type"][] = ["Compétence", "Expérience", "Formation", "Soft skill", "Localisation"];
+
+function ScoringCriteriaBlock({ value, onChange }: { value: ScoringCriterion[]; onChange: (v: ScoringCriterion[]) => void }) {
+  const total = value.reduce((s, c) => s + c.poids, 0);
+  const okay = total === 100;
+  const update = (id: string, patch: Partial<ScoringCriterion>) =>
+    onChange(value.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  const add = () =>
+    onChange([...value, { id: uid(), label: "Nouveau critère", poids: 0, type: "Compétence" }]);
+  const remove = (id: string) => onChange(value.filter((c) => c.id !== id));
+  const normalize = () => {
+    if (total === 0) return;
+    const scaled = value.map((c) => ({ ...c, poids: Math.round((c.poids / total) * 100) }));
+    const diff = 100 - scaled.reduce((s, c) => s + c.poids, 0);
+    if (scaled.length > 0) scaled[0] = { ...scaled[0], poids: scaled[0].poids + diff };
+    onChange(scaled);
+  };
+  return (
+    <div className="rounded-xl border p-4 bg-gradient-to-br from-[color:var(--gold)]/8 to-transparent border-[color:var(--gold)]/25 space-y-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-[color:var(--gold)]/20 grid place-items-center">
+            <Gauge className="h-4 w-4 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold">Critères de scoring IA</div>
+            <div className="text-[11px] text-muted-foreground">Pondération utilisée pour classer les candidats.</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={cn(
+            "text-xs font-semibold tabular-nums px-2 py-1 rounded-md",
+            okay ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" : "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+          )}>
+            Total : {total} / 100
+          </span>
+          {!okay && total > 0 && (
+            <Button type="button" size="sm" variant="outline" onClick={normalize}>Normaliser</Button>
+          )}
+        </div>
+      </div>
+      <div className="space-y-2">
+        {value.map((c) => (
+          <div key={c.id} className="grid grid-cols-[1fr_140px_1fr_60px_28px] gap-2 items-center bg-background/60 rounded-lg border p-2">
+            <Input value={c.label} onChange={(e) => update(c.id, { label: e.target.value })} className="h-9" />
+            <Select value={c.type} onValueChange={(v) => update(c.id, { type: v as ScoringCriterion["type"] })}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>{SCORING_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+            <Slider min={0} max={100} step={5} value={[c.poids]} onValueChange={(v) => update(c.id, { poids: v[0] })} />
+            <span className="text-xs tabular-nums font-semibold text-right">{c.poids}%</span>
+            <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => remove(c.id)}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ))}
+      </div>
+      <Button type="button" size="sm" variant="outline" onClick={add}>
+        <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter un critère
+      </Button>
+    </div>
+  );
+}
