@@ -108,8 +108,11 @@ function Page() {
           <TabsTrigger value="grid">
             <LayoutGrid className="h-4 w-4 mr-2" /> Articles
           </TabsTrigger>
+          <TabsTrigger value="posts">
+            <Send className="h-4 w-4 mr-2" /> Posts sociaux
+          </TabsTrigger>
           <TabsTrigger value="calendar">
-            <CalendarDays className="h-4 w-4 mr-2" /> Calendrier éditorial
+            <CalendarDays className="h-4 w-4 mr-2" /> Calendrier
           </TabsTrigger>
           <TabsTrigger value="config">
             <Settings2 className="h-4 w-4 mr-2" /> Configuration IA
@@ -117,6 +120,9 @@ function Page() {
         </TabsList>
         <TabsContent value="grid">
           <GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} />
+        </TabsContent>
+        <TabsContent value="posts">
+          <PostsTab />
         </TabsContent>
         <TabsContent value="calendar">
           <CalendarTab onArticleClick={setDetailArticle} />
