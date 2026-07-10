@@ -628,10 +628,11 @@ function CalendarTab({ onArticleClick }: { onArticleClick: (a: Article) => void 
     <div className="space-y-4">
       <Card className="p-4 flex items-center gap-3 flex-wrap">
         <div>
-          <div className="font-semibold text-sm">Calendrier éditorial</div>
+          <div className="font-semibold text-sm">Calendrier éditorial & social</div>
           <div className="text-xs text-muted-foreground">
-            Cliquez un article pour ouvrir ses détails.
+            Articles 🌐 et posts sociaux 📱 — cliquez un événement pour ouvrir ses détails.
           </div>
+
         </div>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
           <div className="inline-flex rounded-lg border p-0.5 bg-muted/40">
