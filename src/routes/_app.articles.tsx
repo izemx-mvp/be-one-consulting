@@ -578,8 +578,10 @@ function dateKey(d: Date) {
 
 function CalendarTab({ onArticleClick }: { onArticleClick: (a: Article) => void }) {
   const rows = useStore(articlesStore);
+  const posts = useStore(postsStore);
   const [view, setView] = useState<View>("month");
   const [cursor, setCursor] = useState<Date>(new Date());
+  const [postDetail, setPostDetail] = useState<SocialPost | null>(null);
 
   const byDay = useMemo(() => {
     const m = new Map<string, Article[]>();
@@ -589,6 +591,15 @@ function CalendarTab({ onArticleClick }: { onArticleClick: (a: Article) => void 
     }
     return m;
   }, [rows]);
+  const postsByDay = useMemo(() => {
+    const m = new Map<string, SocialPost[]>();
+    for (const p of posts) {
+      if (!m.has(p.date)) m.set(p.date, []);
+      m.get(p.date)!.push(p);
+    }
+    return m;
+  }, [posts]);
+
 
   const label = useMemo(() => {
     if (view === "year") return `${cursor.getFullYear()}`;
