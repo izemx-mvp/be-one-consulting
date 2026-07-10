@@ -115,7 +115,7 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
   const openNew = () => { setEditing(empty(cfg)); setTagsInput(""); setOpen(true); };
   const openEdit = (a: Article) => { setEditing(a); setTagsInput(a.tags.join(", ")); setOpen(true); };
 
-  // A Brouillon must be approved (via the detail sheet) before it can be planned or published.
+  // Brouillon must be reviewed (approved) before it can be scheduled or published.
   const isBrouillon = editing.statut === "Brouillon";
   const availableStatuts: Article["statut"][] = isBrouillon ? ["Brouillon"] : STATUTS;
 
@@ -127,7 +127,12 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
     else { articlesStore.add({ ...item, id: uid() }); toast.success("Article créé"); }
     setOpen(false);
   };
-  const approve = (a: Article) => { articlesStore.update(a.id, { statut: "Publié" }); burstConfetti(); toast.success("Article approuvé et publié !", { description: a.titre }); setDetail(null); };
+
+  // Lifecycle actions from the detail sheet.
+  const approveToPlanified = (a: Article) => { articlesStore.update(a.id, { statut: "Planifié" }); toast.success("Article approuvé et planifié", { description: a.titre }); setDetail(null); };
+  const publishNow = (a: Article) => { articlesStore.update(a.id, { statut: "Publié" }); burstConfetti(); toast.success("Article publié !", { description: a.titre }); setDetail(null); };
+  const unschedule = (a: Article) => { articlesStore.update(a.id, { statut: "Planifié" }); toast.success("Article redéplanifié", { description: a.titre }); setDetail(null); };
+  const unpublish = (a: Article) => { articlesStore.update(a.id, { statut: "Brouillon" }); toast.success("Article retiré en brouillon", { description: a.titre }); setDetail(null); };
   const reject = (a: Article) => { articlesStore.update(a.id, { statut: "Brouillon" }); toast.success("Article renvoyé en brouillon", { description: rejectComment || "Sans commentaire" }); setRejectOpen(false); setRejectComment(""); setDetail(null); };
 
   return (
