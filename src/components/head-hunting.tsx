@@ -53,7 +53,7 @@ function candidatesForMission(mission: HuntingMission, all: Candidat[]): Candida
   return scored.slice(0, n).map((x) => x.c);
 }
 
-const sourceIcon: Record<Candidat["source"], JSX.Element> = {
+const sourceIcon: Record<Candidat["source"], React.ReactNode> = {
   LinkedIn: <Linkedin className="h-3 w-3" />,
   Facebook: <Facebook className="h-3 w-3" />,
   Instagram: <Instagram className="h-3 w-3" />,
