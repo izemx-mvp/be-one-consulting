@@ -312,3 +312,112 @@ export const THEMATIQUES = thematiques;
 export const POSTES = postes;
 export const CONSULTANTS = consultants;
 export const ENTREPRISES = entreprises;
+
+// ---------- Head Hunting missions ----------
+export type HuntingMission = {
+  id: string;
+  poste: string;
+  entreprise: string;
+  seniorite: "Manager" | "Directeur" | "C-level" | "Expert";
+  secteur: string;
+  localisation: string;
+  languages: string[];
+  competencesCles: string[];
+  entreprisesCibles: string[];
+  entreprisesExclues: string[];
+  fourchetteRemu: string;
+  sources: { linkedin: boolean; facebook: boolean; web: boolean };
+  motsClesLinkedin: string;
+  urgence: "Standard" | "Prioritaire" | "Critique";
+  statut: "En sourcing" | "En qualification" | "Shortlist" | "Livrée";
+  profilsIdentifies: number;
+  profilsQualifies: number;
+  consultant: string;
+  dateOuverture: string;
+  echeance: string;
+  briefing: string;
+};
+
+const seedHunting: HuntingMission[] = [
+  { id: uid(), poste: "Directeur Financier", entreprise: "OCP Group", seniorite: "Directeur", secteur: "Industrie / Mines", localisation: "Casablanca", languages: ["Français", "Anglais"], competencesCles: ["IFRS", "M&A", "Reporting groupe", "SAP FI"], entreprisesCibles: ["Managem", "Cosumar", "Lafarge", "Holcim"], entreprisesExclues: ["Attijariwafa"], fourchetteRemu: "80-110k MAD brut/mois", sources: { linkedin: true, facebook: false, web: true }, motsClesLinkedin: "CFO DAF Groupe Maroc IFRS", urgence: "Prioritaire", statut: "En qualification", profilsIdentifies: 47, profilsQualifies: 12, consultant: "F.Z. Abbadi", dateOuverture: d(21), echeance: d(-30), briefing: "Recherche discrète — remplacement stratégique. Profil ayant piloté une fonction Finance dans un groupe multi-sites au Maroc." },
+  { id: uid(), poste: "Directrice Marketing Digital", entreprise: "Inwi", seniorite: "Directeur", secteur: "Télécoms", localisation: "Casablanca / Rabat", languages: ["Français", "Anglais", "Arabe"], competencesCles: ["Growth", "Data marketing", "Brand", "Adtech"], entreprisesCibles: ["Orange", "Maroc Telecom", "L'Oréal", "Unilever"], entreprisesExclues: [], fourchetteRemu: "60-90k MAD brut/mois", sources: { linkedin: true, facebook: true, web: true }, motsClesLinkedin: "CMO Marketing Digital Growth Telecom FMCG", urgence: "Standard", statut: "Shortlist", profilsIdentifies: 63, profilsQualifies: 8, consultant: "M. Bennis", dateOuverture: d(35), echeance: d(-15), briefing: "Profil hybride marketing + data. Anglais courant obligatoire." },
+  { id: uid(), poste: "CTO", entreprise: "FinTech Casablanca", seniorite: "C-level", secteur: "FinTech", localisation: "Casablanca", languages: ["Français", "Anglais"], competencesCles: ["Architecture cloud", "Scalabilité", "Cybersécurité", "Team building"], entreprisesCibles: ["CashPlus", "M2M", "HPS", "Attijariwafa Tech"], entreprisesExclues: [], fourchetteRemu: "100-140k MAD + BSPCE", sources: { linkedin: true, facebook: false, web: true }, motsClesLinkedin: "CTO VP Engineering FinTech AWS Kubernetes", urgence: "Critique", statut: "En sourcing", profilsIdentifies: 19, profilsQualifies: 3, consultant: "K. Hilali", dateOuverture: d(7), echeance: d(-45), briefing: "Startup en scale-up. Recherche profil ayant scalé une équipe tech de 5 à 40 personnes." },
+  { id: uid(), poste: "DRH Groupe", entreprise: "Groupe agroalimentaire", seniorite: "Directeur", secteur: "Agroalimentaire", localisation: "Casablanca", languages: ["Français", "Anglais"], competencesCles: ["Transformation RH", "Négociation sociale", "SIRH", "Change"], entreprisesCibles: ["Centrale Danone", "Lesieur", "Cosumar", "Marjane"], entreprisesExclues: [], fourchetteRemu: "70-95k MAD brut/mois", sources: { linkedin: true, facebook: false, web: true }, motsClesLinkedin: "DRH HR Director Agro Industrie Maroc", urgence: "Standard", statut: "Livrée", profilsIdentifies: 89, profilsQualifies: 15, consultant: "F.Z. Abbadi", dateOuverture: d(60), echeance: d(-20), briefing: "Mission clôturée avec succès — 3 shortlistés, 1 recruté." },
+  { id: uid(), poste: "Responsable Business Development Afrique", entreprise: "Cabinet international", seniorite: "Manager", secteur: "Conseil", localisation: "Casablanca (mobilité Afrique)", languages: ["Français", "Anglais"], competencesCles: ["BD B2B", "Afrique francophone", "Grands comptes", "Négociation"], entreprisesCibles: ["EY", "Deloitte", "KPMG", "Mazars"], entreprisesExclues: [], fourchetteRemu: "50-75k MAD + variable", sources: { linkedin: true, facebook: false, web: true }, motsClesLinkedin: "Business Development Manager Afrique Consulting", urgence: "Prioritaire", statut: "En sourcing", profilsIdentifies: 28, profilsQualifies: 6, consultant: "M. Bennis", dateOuverture: d(14), echeance: d(-30), briefing: "Mobilité fréquente Afrique de l'Ouest. Portefeuille clients existant apprécié." },
+];
+
+// ---------- Documents (base de connaissance) ----------
+export type KbDocument = { id: string; nom: string; type: "PDF" | "DOCX" | "XLSX" | "PPTX"; taille: string; categorie: string; date: string; tags: string[] };
+const seedDocs: KbDocument[] = [
+  { id: uid(), nom: "Plaquette commerciale Be One 2026.pdf", type: "PDF", taille: "2.4 Mo", categorie: "Commercial", date: d(12), tags: ["plaquette", "présentation"] },
+  { id: uid(), nom: "Méthodologie audit organisationnel.docx", type: "DOCX", taille: "845 Ko", categorie: "Méthodologie", date: d(30), tags: ["audit", "process"] },
+  { id: uid(), nom: "Grille tarifaire Consulting 2026.xlsx", type: "XLSX", taille: "112 Ko", categorie: "Tarification", date: d(5), tags: ["tarif", "devis"] },
+  { id: uid(), nom: "Charte engagements clients.pdf", type: "PDF", taille: "620 Ko", categorie: "Commercial", date: d(45), tags: ["charte", "qualité"] },
+  { id: uid(), nom: "Catalogue formations certifiantes.pdf", type: "PDF", taille: "3.1 Mo", categorie: "Formation", date: d(20), tags: ["formation", "CSF"] },
+  { id: uid(), nom: "Process bilan de compétences.docx", type: "DOCX", taille: "410 Ko", categorie: "Méthodologie", date: d(60), tags: ["bilan"] },
+  { id: uid(), nom: "Kit onboarding nouveaux clients.pptx", type: "PPTX", taille: "5.8 Mo", categorie: "Commercial", date: d(3), tags: ["onboarding"] },
+  { id: uid(), nom: "CGV Be One Consulting.pdf", type: "PDF", taille: "180 Ko", categorie: "Juridique", date: d(90), tags: ["CGV", "contrat"] },
+];
+export const documentsStore = createStore<KbDocument>(seedDocs);
+
+// ---------- Social profiles ----------
+export type SocialProfile = { id: string; reseau: "LinkedIn" | "Facebook" | "Instagram" | "YouTube" | "TikTok" | "Site web"; handle: string; url: string; abonnes: number; engagement: number; actif: boolean; description: string };
+const seedSocial: SocialProfile[] = [
+  { id: uid(), reseau: "LinkedIn", handle: "@beone-consulting", url: "https://linkedin.com/company/beone-consulting", abonnes: 4820, engagement: 6.2, actif: true, description: "Page entreprise officielle — publications hebdomadaires sur les tendances RH & Business Performance." },
+  { id: uid(), reseau: "Facebook", handle: "@BeOneConsulting.ma", url: "https://facebook.com/BeOneConsulting.ma", abonnes: 12400, engagement: 3.8, actif: true, description: "Page grand public — offres d'emploi et articles de blog." },
+  { id: uid(), reseau: "Instagram", handle: "@beone_consulting", url: "https://instagram.com/beone_consulting", abonnes: 3120, engagement: 5.1, actif: true, description: "Vie du cabinet, événements, marque employeur." },
+  { id: uid(), reseau: "YouTube", handle: "Be One Consulting", url: "https://youtube.com/@beoneconsulting", abonnes: 640, engagement: 2.4, actif: true, description: "Interviews d'experts, webinaires enregistrés." },
+  { id: uid(), reseau: "Site web", handle: "beone-consulting.com", url: "https://beone-consulting.com", abonnes: 0, engagement: 0, actif: true, description: "Site vitrine — formulaires de contact reliés à l'agent de qualification." },
+];
+export const socialStore = createStore<SocialProfile>(seedSocial);
+
+// ---------- Services ----------
+export type Service = { id: string; nom: string; famille: "Conseil" | "Recrutement" | "Formation" | "Assessment" | "Enquêtes"; description: string; duree: string; livrables: string[]; tarifIndicatif: string; actif: boolean };
+const seedServices: Service[] = [
+  { id: uid(), nom: "Audit organisationnel", famille: "Conseil", description: "Diagnostic complet de l'organisation, identification des leviers de performance et recommandations concrètes.", duree: "6 à 10 semaines", livrables: ["Rapport de diagnostic", "Plan d'action priorisé", "Restitution CoDir"], tarifIndicatif: "150-400k MAD", actif: true },
+  { id: uid(), nom: "Chasse de tête cadres dirigeants", famille: "Recrutement", description: "Sourcing ciblé de profils rares et confidentiels via LinkedIn Recruiter et notre réseau propriétaire.", duree: "6 à 12 semaines", livrables: ["Shortlist 3-5 candidats", "Rapports d'entretien", "Assessment optionnel"], tarifIndicatif: "20-30% du package annuel", actif: true },
+  { id: uid(), nom: "Recrutement par annonce", famille: "Recrutement", description: "Publication multicanal, tri, présélection et entretiens de qualification.", duree: "4 à 8 semaines", livrables: ["Shortlist", "CV commentés", "Rapports d'entretien"], tarifIndicatif: "15-20% du package annuel", actif: true },
+  { id: uid(), nom: "Bilan de compétences", famille: "Assessment", description: "Accompagnement individuel en 3 phases pour clarifier un projet professionnel. Éligible CPF/CSF.", duree: "8 à 12 semaines (24h)", livrables: ["Document de synthèse", "Plan d'action personnel"], tarifIndicatif: "12-18k MAD / personne", actif: true },
+  { id: uid(), nom: "Assessment center", famille: "Assessment", description: "Évaluation de potentiel via tests psychométriques, mises en situation et entretien approfondi.", duree: "1 journée + restitution", livrables: ["Rapport individuel", "Restitution manager"], tarifIndicatif: "8-15k MAD / candidat", actif: true },
+  { id: uid(), nom: "Formation Leadership de proximité", famille: "Formation", description: "Parcours certifiant destiné aux managers de terrain — 4 modules de 2 jours.", duree: "8 jours répartis sur 3 mois", livrables: ["Certification", "Support pédagogique", "Coaching individuel 2h"], tarifIndicatif: "12-18k MAD / participant", actif: true },
+  { id: uid(), nom: "Enquête de satisfaction client", famille: "Enquêtes", description: "Conception, diffusion, relance et synthèse d'enquêtes NPS / satisfaction B2B.", duree: "3 à 6 semaines", livrables: ["Rapport de synthèse", "Verbatims", "Recommandations"], tarifIndicatif: "50-120k MAD", actif: true },
+  { id: uid(), nom: "Étude de marché sectorielle", famille: "Enquêtes", description: "Analyse concurrentielle, cartographie d'acteurs, insights terrain.", duree: "6 à 10 semaines", livrables: ["Rapport 40-80 pages", "Base concurrents", "Restitution"], tarifIndicatif: "180-450k MAD", actif: true },
+];
+export const servicesStore = createStore<Service>(seedServices);
+
+export const huntingStore = createStore<HuntingMission>(seedHunting);
+
+// ---------- Article cover images (Unsplash keywords) ----------
+export const ARTICLE_IMAGES = [
+  "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=70",
+  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=70",
+  "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=70",
+  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=70",
+  "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=800&q=70",
+  "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=70",
+  "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=70",
+  "https://images.unsplash.com/photo-1590650046871-92c887180603?w=800&q=70",
+  "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&q=70",
+  "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&q=70",
+  "https://images.unsplash.com/photo-1552581234-26160f608093?w=800&q=70",
+  "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&q=70",
+];
+
+// ---------- Demande AI qualification summary ----------
+export function demandeResumeIA(d: Demande): { resume: string; infos: { label: string; value: string }[] } {
+  const infos = [
+    { label: "Type de prestation", value: d.type },
+    { label: "Entreprise", value: d.entreprise },
+    { label: "Canal d'entrée", value: d.canal },
+    { label: "Budget indicatif", value: d.budget ?? "Non communiqué" },
+    { label: "Horizon souhaité", value: d.delai ?? "Non précisé" },
+    { label: "Décideur identifié", value: d.nom },
+  ];
+  if (d.posteRecherche) infos.push({ label: "Poste ciblé", value: d.posteRecherche });
+  const resume = d.type === "Recrutement"
+    ? `${d.nom} (${d.entreprise}) recherche un profil ${d.posteRecherche ?? "à définir"}. Budget ${d.budget ?? "à cadrer"}, démarrage ${d.delai ?? "à confirmer"}. Contact qualifié par l'agent IA — à rediriger vers l'équipe Recrutement.`
+    : d.type === "Enquête"
+      ? `Demande d'accompagnement pour une ${d.type.toLowerCase()} auprès de la base ${d.entreprise}. Budget estimé ${d.budget ?? "à définir"}. L'agent a identifié un besoin sur ${d.delai ?? "un trimestre"}.`
+      : `Demande de ${d.type.toLowerCase()} de ${d.entreprise}. L'agent IA a qualifié le besoin : budget ${d.budget ?? "à définir"}, échéance ${d.delai ?? "flexible"}. Priorité ${d.priorite}.`;
+  return { resume, infos };
+}
