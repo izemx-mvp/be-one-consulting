@@ -115,15 +115,12 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
   const openNew = () => { setEditing(empty(cfg)); setTagsInput(""); setOpen(true); };
   const openEdit = (a: Article) => { setEditing(a); setTagsInput(a.tags.join(", ")); setOpen(true); };
 
-  // Planifié requires the article to have been reviewed at least once (not Brouillon)
-  const canPlan = editing.statut !== "Brouillon" || Boolean(editing.id && rows.find((r) => r.id === editing.id && r.statut !== "Brouillon"));
+  // A Brouillon must be approved (via the detail sheet) before it can be planned or published.
+  const isBrouillon = editing.statut === "Brouillon";
+  const availableStatuts: Article["statut"][] = isBrouillon ? ["Brouillon"] : STATUTS;
 
   const save = () => {
     if (!editing.titre) { toast.error("Titre requis"); return; }
-    if (editing.statut === "Planifié" && !canPlan) {
-      toast.error("Impossible de planifier un brouillon", { description: "Passez d'abord en « En attente de validation »." });
-      return;
-    }
     const tags = tagsInput.split(",").map((s) => s.trim()).filter(Boolean);
     const item = { ...editing, tags };
     if (editing.id) { articlesStore.update(editing.id, item); toast.success("Article mis à jour"); }
