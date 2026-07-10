@@ -474,6 +474,66 @@ export function HeadHuntingPanel() {
         </SheetContent>
       </Sheet>
 
+      {/* Candidate detail (nested) */}
+      <Sheet open={!!candidatDetail} onOpenChange={(v) => !v && setCandidatDetail(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+          {candidatDetail && (() => {
+            const c = candidatDetail;
+            const initials = c.nom.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+            return (
+              <>
+                <SheetHeader className="border-b pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-[color:var(--gold)] text-primary-foreground grid place-items-center font-semibold">{initials}</div>
+                    <div className="flex-1 min-w-0">
+                      <SheetTitle className="text-lg truncate">{c.nom}</SheetTitle>
+                      <div className="text-xs text-muted-foreground truncate">{c.poste} · {c.experience} ans d'expérience</div>
+                      <div className="flex gap-1.5 mt-1.5">
+                        <StatusBadge status={c.statut} dot />
+                        <span className="text-[10px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted">{sourceIcon[c.source]}{c.source}</span>
+                      </div>
+                    </div>
+                  </div>
+                </SheetHeader>
+                <div className="py-4 space-y-4">
+                  <Card className="p-4 bg-gradient-to-br from-[color:var(--gold)]/10 to-transparent border-[color:var(--gold)]/25">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-xs uppercase tracking-wide font-semibold text-muted-foreground inline-flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-[color:var(--gold)]" /> Score IA global</div>
+                      <div className="text-3xl font-bold text-[color:var(--gold)] tabular-nums">{c.score}</div>
+                    </div>
+                    <div className="space-y-2">
+                      {[
+                        { label: "Adéquation poste", val: c.scoreAdequation },
+                        { label: "Expérience", val: c.scoreExperience },
+                        { label: "Soft skills", val: c.scoreSoftSkills },
+                      ].map((s) => (
+                        <div key={s.label}>
+                          <div className="flex justify-between text-[11px] mb-0.5"><span className="text-muted-foreground">{s.label}</span><span className="font-semibold tabular-nums">{s.val}</span></div>
+                          <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-primary" style={{ width: `${s.val}%` }} /></div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                  <section className="grid grid-cols-1 gap-2 text-sm">
+                    <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /><a href={`mailto:${c.email}`} className="hover:underline break-all">{c.email}</a></div>
+                    <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{c.telephone}</div>
+                    <div className="flex items-center gap-2"><CalendarIcon className="h-4 w-4 text-muted-foreground" /> Ajouté le {c.date}</div>
+                  </section>
+                  <section>
+                    <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Compétences</h4>
+                    <div className="flex flex-wrap gap-1.5">{c.competences.map((k) => <span key={k} className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">{k}</span>)}</div>
+                  </section>
+                  <section>
+                    <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Résumé IA</h4>
+                    <p className="text-sm leading-relaxed text-foreground/90">{c.resume}</p>
+                  </section>
+                </div>
+              </>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
+
       <ConfirmDialog open={!!confirmDel} onOpenChange={(v) => !v && setConfirmDel(null)} title="Supprimer cette mission ?" destructive confirmLabel="Supprimer" onConfirm={() => { if (confirmDel) { huntingStore.remove(confirmDel.id); toast.success("Mission supprimée"); setDetail(null); } setConfirmDel(null); }} />
     </div>
   );
