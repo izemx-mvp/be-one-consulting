@@ -266,6 +266,12 @@ export function HeadHuntingPanel() {
                 </div>
                 <div className="col-span-2 space-y-1.5"><Label className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><Award className="h-3.5 w-3.5" /> Compétences clés (séparées par virgules)</Label><Textarea rows={2} value={compInput} onChange={(e) => setCompInput(e.target.value)} placeholder="Ex: IFRS, M&A, SAP FI, Reporting groupe, Management d'équipe 20+" /></div>
                 <div className="col-span-2 space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Critères d'exclusion (soft)</Label><Textarea rows={2} value={editing.criteresExclusion || ""} onChange={(e) => setEditing({ ...editing, criteresExclusion: e.target.value })} placeholder="Ex: pas de profil ayant travaillé en cabinet Big 4 uniquement, éviter les profils multi-turnover" /></div>
+                <div className="col-span-2">
+                  <ScoringCriteriaBlock
+                    value={editing.scoringCriteria ?? defaultScoringCriteria()}
+                    onChange={(cr) => setEditing({ ...editing, scoringCriteria: cr })}
+                  />
+                </div>
               </div>
             )}
             {step === 3 && (
