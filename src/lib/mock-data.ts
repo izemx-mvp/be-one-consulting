@@ -338,7 +338,7 @@ export type HuntingMission = {
   entreprisesCibles: string[];
   entreprisesExclues: string[];
   fourchetteRemu: string;
-  sources: { linkedin: boolean; facebook: boolean; web: boolean; rekrute: boolean; indeed: boolean; reseau: boolean };
+  sources: { linkedin: boolean; facebook: boolean; web: boolean; rekrute?: boolean; indeed?: boolean; reseau?: boolean };
   motsClesLinkedin: string;
   urgence: "Standard" | "Prioritaire" | "Critique";
   statut: "En sourcing" | "En qualification" | "Shortlist" | "Livrée";
