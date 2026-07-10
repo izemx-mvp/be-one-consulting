@@ -12,22 +12,20 @@ import { notificationsStore, useStore, demandesStore, candidatsStore, articlesSt
 
 const nav = [
   { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-  { to: "/demandes", label: "Demandes Clients", icon: Inbox },
-  { to: "/recrutement", label: "Recrutement", icon: Users },
-  { to: "/enquetes", label: "Enquêtes & Études", icon: ClipboardList },
-  { to: "/rendezvous", label: "Rendez-vous", icon: CalendarClock },
-  { to: "/articles", label: "Articles & Blog", icon: Newspaper },
-  { to: "/faq", label: "Service Client", icon: HelpCircle },
+  { to: "/demandes", label: "Qualification AI", icon: Inbox },
+  { to: "/recrutement", label: "Recrutement AI", icon: Users },
+  { to: "/enquetes", label: "Enquêtes AI", icon: ClipboardList },
+  { to: "/articles", label: "Articles AI", icon: Newspaper },
+  { to: "/faq", label: "Base de connaissance", icon: HelpCircle },
 ] as const;
 
 const routeLabels: Record<string, string> = {
   dashboard: "Tableau de bord",
-  demandes: "Demandes Clients",
-  recrutement: "Recrutement",
-  enquetes: "Enquêtes & Études",
-  rendezvous: "Rendez-vous & Rappels",
-  articles: "Articles & Blog",
-  faq: "Service Client",
+  demandes: "Qualification AI",
+  recrutement: "Recrutement AI",
+  enquetes: "Enquêtes AI",
+  articles: "Articles AI",
+  faq: "Base de connaissance",
 };
 
 function GlobalSearch() {

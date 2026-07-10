@@ -13,14 +13,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, Linkedin, Facebook, Instagram, Rocket, Calendar, MessageSquare, XCircle, ArrowRight } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, Linkedin, Facebook, Instagram, Rocket, Calendar, MessageSquare, XCircle, ArrowRight, Target } from "lucide-react";
 import { candidatsStore, POSTES, rdvStore, uid, useStore, type Candidat } from "@/lib/mock-data";
+import { HeadHuntingPanel } from "@/components/head-hunting";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/recrutement")({
-  head: () => ({ meta: [{ title: "Recrutement — Be One Consulting" }] }),
+  head: () => ({ meta: [{ title: "Recrutement AI — Be One Consulting" }] }),
   component: Page,
 });
 
@@ -118,17 +119,19 @@ function Page() {
   };
 
   return (
-    <AppShell title="Recrutement — CVthèque" subtitle="Sourcing, qualification IA et pipeline candidats">
+    <AppShell title="Recrutement AI" subtitle="CVthèque intelligente + chasse de tête ciblée sur LinkedIn, Facebook et le web">
       <Tabs defaultValue="table">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
           <TabsList>
-            <TabsTrigger value="table">Tableau</TabsTrigger>
+            <TabsTrigger value="table">CVthèque — Tableau</TabsTrigger>
             <TabsTrigger value="kanban">Pipeline</TabsTrigger>
+            <TabsTrigger value="hunting"><Target className="h-4 w-4 mr-1.5" /> Head Hunting</TabsTrigger>
           </TabsList>
           <Button onClick={() => setCampaignOpen(true)} variant="outline" className="border-[color:var(--gold)]/40 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]">
             <Rocket className="h-4 w-4 mr-2" /> Lancer une campagne de sourcing
           </Button>
         </div>
+
 
         <TabsContent value="table">
           <DataTable<Candidat>
@@ -252,7 +255,12 @@ function Page() {
             })}
           </div>
         </TabsContent>
+
+        <TabsContent value="hunting">
+          <HeadHuntingPanel />
+        </TabsContent>
       </Tabs>
+
 
       {/* Add/Edit */}
       <Dialog open={open} onOpenChange={setOpen}>

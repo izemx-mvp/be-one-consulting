@@ -10,21 +10,32 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { MoreHorizontal, Eye, Pencil, Trash2, Send, ChevronLeft, ChevronRight, LayoutList, CalendarDays, Sparkles, Wand2, Plus, X } from "lucide-react";
 import { enquetesStore, ENTREPRISES, uid, useStore, type Enquete, type EnqueteDest } from "@/lib/mock-data";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { MiniCalendar, type CalendarEvent } from "@/components/mini-calendar";
 import { toast } from "sonner";
 import { CountUp } from "@/components/count-up";
 
 export const Route = createFileRoute("/_app/enquetes")({
-  head: () => ({ meta: [{ title: "Enquêtes & Études — Be One Consulting" }] }),
+  head: () => ({ meta: [{ title: "Enquêtes AI — Be One Consulting" }] }),
   component: Page,
 });
 
 const TYPES: Enquete["type"][] = ["Enquête satisfaction", "Étude de marché", "Audit organisationnel"];
 const STATUTS: Enquete["statut"][] = ["Brouillon", "En cours", "Relance en cours", "Terminé"];
+
+const QUESTIONNAIRES_TYPES = [
+  { id: "nps", nom: "Satisfaction NPS", questions: 10, desc: "Score de recommandation + verbatims" },
+  { id: "engagement", nom: "Baromètre engagement collaborateur", questions: 22, desc: "Motivation, environnement, management" },
+  { id: "b2b", nom: "Étude marché B2B", questions: 15, desc: "Concurrence, besoins, freins d'achat" },
+  { id: "audit", nom: "Audit organisationnel", questions: 25, desc: "Structure, process, culture" },
+];
 
 function empty(): Enquete {
   return {
@@ -43,6 +54,11 @@ function Page() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Enquete>(empty());
   const [step, setStep] = useState(1);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiQuestions, setAiQuestions] = useState<string[]>([]);
+  const [planTime, setPlanTime] = useState("09:00");
+  const [selectedTemplate, setSelectedTemplate] = useState("nps");
   const [detail, setDetail] = useState<Enquete | null>(null);
   const [destPage, setDestPage] = useState(1);
   const [confirmDel, setConfirmDel] = useState<Enquete | null>(null);
@@ -61,8 +77,27 @@ function Page() {
   const save = () => {
     if (!editing.nom || !editing.client) { toast.error("Nom et client requis"); return; }
     if (editing.id) { enquetesStore.update(editing.id, editing); toast.success("Enquête mise à jour"); }
-    else { enquetesStore.add({ ...editing, id: uid() }); toast.success("Enquête créée"); }
-    setOpen(false); setStep(1);
+    else { enquetesStore.add({ ...editing, id: uid() }); toast.success("Enquête planifiée", { description: `Envoi programmé le ${editing.dateLancement} à ${planTime}` }); }
+    setOpen(false); setStep(1); setAiQuestions([]);
+  };
+
+  const generateWithAI = () => {
+    setAiLoading(true);
+    setTimeout(() => {
+      const base = [
+        "Quel est votre niveau global de satisfaction ?",
+        "Recommanderiez-vous nos services (0-10) ?",
+        "Quels sont les points forts que vous avez appréciés ?",
+        "Quels sont les axes d'amélioration prioritaires ?",
+        "La communication avec l'équipe a-t-elle été claire ?",
+        "Les délais annoncés ont-ils été respectés ?",
+        "Le rapport qualité / prix vous semble-t-il juste ?",
+        "Un mot pour l'équipe ?",
+      ];
+      setAiQuestions(base);
+      setAiLoading(false);
+      toast.success("Questionnaire généré par l'IA", { description: `${base.length} questions proposées, éditables.` });
+    }, 900);
   };
 
   const relancerNonRepondants = (e: Enquete) => {
@@ -99,85 +134,106 @@ function Page() {
   const destTotalPages = detail ? Math.max(1, Math.ceil(detail.destinataires.length / destPageSize)) : 1;
   const destSlice = detail ? detail.destinataires.slice((destPage - 1) * destPageSize, destPage * destPageSize) : [];
 
+  const calendarEvents: CalendarEvent[] = rows.flatMap((e) => [
+    { id: `${e.id}-launch`, date: e.dateLancement, title: `▶ ${e.nom}`, tone: (e.statut === "Terminé" ? "muted" : "primary") as CalendarEvent["tone"], onClick: () => { setDetail(e); setDestPage(1); } },
+    { id: `${e.id}-close`, date: e.dateCloture, title: `⏹ ${e.nom} (clôture)`, tone: "warn" as CalendarEvent["tone"], onClick: () => { setDetail(e); setDestPage(1); } },
+  ]);
+
   return (
-    <AppShell title="Enquêtes & Études" subtitle="Envois automatisés, relances et synthèse des résultats">
-      <DataTable<Enquete>
-        data={filtered}
-        searchKeys={["nom", "client"]}
-        searchPlaceholder="Rechercher une enquête, un client..."
-        addLabel="Nouvelle enquête"
-        onAdd={() => { setEditing(empty()); setStep(1); setOpen(true); }}
-        onRowClick={(r) => { setDetail(r); setDestPage(1); }}
-        filterChips={chips}
-        filters={
-          <>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger className="w-[220px]"><SelectValue placeholder="Type" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les types</SelectItem>
-                {TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={client} onValueChange={setClient}>
-              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Client" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous clients</SelectItem>
-                {ENTREPRISES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={statut} onValueChange={setStatut}>
-              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Statut" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous statuts</SelectItem>
-                {STATUTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </>
-        }
-        columns={[
-          { header: "Enquête", sortKey: "nom", cell: (r) => <span className="font-medium">{r.nom}</span> },
-          { header: "Client", sortKey: "client", cell: (r) => r.client },
-          { header: "Type", cell: (r) => <span className="text-xs">{r.type}</span> },
-          { header: "Réponses", sortKey: "reponses", cell: (r) => (
-            <div className="min-w-[140px]">
-              <div className="text-sm"><span className="font-medium">{r.reponses}</span> <span className="text-muted-foreground">/ {r.envoyees}</span> <span className="text-xs text-muted-foreground">({Math.round((r.reponses / r.envoyees) * 100)}%)</span></div>
-              <div className="w-32 h-1.5 rounded-full bg-muted mt-1 overflow-hidden">
-                <div className="h-full bg-[color:var(--gold)] transition-all" style={{ width: `${(r.reponses / r.envoyees) * 100}%` }} />
-              </div>
-            </div>
-          ) },
-          { header: "Lancement", sortKey: "dateLancement", cell: (r) => <span className="text-sm text-muted-foreground">{r.dateLancement}</span> },
-          { header: "Statut", cell: (r) => <StatusBadge status={r.statut} dot /> },
-        ]}
-        rowActions={(r) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => { setDetail(r); setDestPage(1); }}><Eye className="h-4 w-4 mr-2" /> Voir résultats</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setEditing(r); setStep(1); setOpen(true); }}><Pencil className="h-4 w-4 mr-2" /> Modifier</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDel(r)}><Trash2 className="h-4 w-4 mr-2" /> Supprimer</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      />
+    <AppShell title="Enquêtes AI" subtitle="Agent Études — génération IA du questionnaire, envoi et relance automatisés, synthèse visuelle">
+      <Tabs defaultValue="list">
+        <TabsList className="mb-4">
+          <TabsTrigger value="list"><LayoutList className="h-4 w-4 mr-2" /> Enquêtes</TabsTrigger>
+          <TabsTrigger value="calendar"><CalendarDays className="h-4 w-4 mr-2" /> Calendrier des envois</TabsTrigger>
+        </TabsList>
+        <TabsContent value="list">
+          <DataTable<Enquete>
+            data={filtered}
+            searchKeys={["nom", "client"]}
+            searchPlaceholder="Rechercher une enquête, un client..."
+            addLabel="Nouvelle enquête"
+            onAdd={() => { setEditing(empty()); setStep(1); setAiQuestions([]); setOpen(true); }}
+            onRowClick={(r) => { setDetail(r); setDestPage(1); }}
+            filterChips={chips}
+            filters={
+              <>
+                <Select value={type} onValueChange={setType}>
+                  <SelectTrigger className="w-[220px]"><SelectValue placeholder="Type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les types</SelectItem>
+                    {TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={client} onValueChange={setClient}>
+                  <SelectTrigger className="w-[200px]"><SelectValue placeholder="Client" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous clients</SelectItem>
+                    {ENTREPRISES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={statut} onValueChange={setStatut}>
+                  <SelectTrigger className="w-[200px]"><SelectValue placeholder="Statut" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous statuts</SelectItem>
+                    {STATUTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </>
+            }
+            columns={[
+              { header: "Enquête", sortKey: "nom", cell: (r) => <span className="font-medium">{r.nom}</span> },
+              { header: "Client", sortKey: "client", cell: (r) => r.client },
+              { header: "Type", cell: (r) => <span className="text-xs">{r.type}</span> },
+              { header: "Réponses", sortKey: "reponses", cell: (r) => (
+                <div className="min-w-[140px]">
+                  <div className="text-sm"><span className="font-medium">{r.reponses}</span> <span className="text-muted-foreground">/ {r.envoyees}</span> <span className="text-xs text-muted-foreground">({Math.round((r.reponses / r.envoyees) * 100)}%)</span></div>
+                  <div className="w-32 h-1.5 rounded-full bg-muted mt-1 overflow-hidden">
+                    <div className="h-full bg-[color:var(--gold)] transition-all" style={{ width: `${(r.reponses / r.envoyees) * 100}%` }} />
+                  </div>
+                </div>
+              ) },
+              { header: "Lancement", sortKey: "dateLancement", cell: (r) => <span className="text-sm text-muted-foreground">{r.dateLancement}</span> },
+              { header: "Statut", cell: (r) => <StatusBadge status={r.statut} dot /> },
+            ]}
+            rowActions={(r) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => { setDetail(r); setDestPage(1); }}><Eye className="h-4 w-4 mr-2" /> Voir résultats</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setEditing(r); setStep(1); setOpen(true); }}><Pencil className="h-4 w-4 mr-2" /> Modifier</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDel(r)}><Trash2 className="h-4 w-4 mr-2" /> Supprimer</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          />
+        </TabsContent>
+        <TabsContent value="calendar">
+          <div className="mb-3 text-xs text-muted-foreground flex gap-4 flex-wrap">
+            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" /> Lancement d'enquête</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" /> Clôture prévue</span>
+          </div>
+          <MiniCalendar events={calendarEvents} title="Planning d'envoi et de clôture" />
+        </TabsContent>
+      </Tabs>
+
 
       {/* Multi-step create/edit */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing.id ? "Modifier l'enquête" : "Nouvelle enquête"}</DialogTitle>
             <div className="flex items-center gap-2 pt-2 text-xs">
-              {[1, 2, 3].map((s) => (
+              {[1, 2, 3, 4].map((s) => (
                 <span key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-[color:var(--gold)]" : "bg-muted"}`} />
               ))}
             </div>
-            <div className="text-xs text-muted-foreground pt-1">Étape {step} sur 3 — {["Infos générales", "Base destinataires", "Questionnaire"][step - 1]}</div>
+            <div className="text-xs text-muted-foreground pt-1">Étape {step} sur 4 — {["Infos générales", "Base destinataires", "Questionnaire (IA)", "Planification"][step - 1]}</div>
           </DialogHeader>
           {step === 1 && (
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 space-y-1"><Label>Nom de l'enquête</Label><Input value={editing.nom} onChange={(e) => setEditing({ ...editing, nom: e.target.value })} /></div>
-              <div className="col-span-2 space-y-1"><Label>Client</Label><Input value={editing.client} onChange={(e) => setEditing({ ...editing, client: e.target.value })} /></div>
+              <div className="col-span-2 space-y-1"><Label>Nom de l'enquête</Label><Input value={editing.nom} onChange={(e) => setEditing({ ...editing, nom: e.target.value })} placeholder="Ex: Satisfaction B2B Q1 2026" /></div>
+              <div className="col-span-2 space-y-1"><Label>Client</Label><Input value={editing.client} onChange={(e) => setEditing({ ...editing, client: e.target.value })} placeholder="Ex: OCP Group" /></div>
               <div className="space-y-1">
                 <Label>Type</Label>
                 <Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as Enquete["type"] })}>
@@ -186,35 +242,79 @@ function Page() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Statut</Label>
+                <Label>Statut initial</Label>
                 <Select value={editing.statut} onValueChange={(v) => setEditing({ ...editing, statut: v as Enquete["statut"] })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{STATUTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1"><Label>Date lancement</Label><Input type="date" value={editing.dateLancement} onChange={(e) => setEditing({ ...editing, dateLancement: e.target.value })} /></div>
-              <div className="space-y-1"><Label>Date clôture</Label><Input type="date" value={editing.dateCloture} onChange={(e) => setEditing({ ...editing, dateCloture: e.target.value })} /></div>
             </div>
           )}
           {step === 2 && (
             <div className="space-y-3">
-              <div className="space-y-1"><Label>Nombre de destinataires (base importée)</Label><Input type="number" value={editing.envoyees} onChange={(e) => setEditing({ ...editing, envoyees: Number(e.target.value) })} /></div>
-              <div className="rounded-lg border-2 border-dashed p-6 text-center text-sm text-muted-foreground">
-                📎 Glissez ici un fichier CSV/Excel pour importer la base<br />
-                <span className="text-xs">(démo — chargement simulé)</span>
+              <div className="space-y-1"><Label>Nombre de destinataires</Label><Input type="number" value={editing.envoyees} onChange={(e) => setEditing({ ...editing, envoyees: Number(e.target.value) })} /></div>
+              <div className="rounded-lg border-2 border-dashed border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 p-6 text-center text-sm">
+                <div className="text-2xl mb-2">📎</div>
+                <div className="font-medium">Glissez votre base CSV / Excel</div>
+                <div className="text-xs text-muted-foreground mt-1">Colonnes attendues : Nom, Email, Entreprise, Fonction</div>
               </div>
             </div>
           )}
           {step === 3 && (
-            <div className="space-y-2">
-              <Label>Questionnaire type</Label>
-              <div className="space-y-2">
-                {["Satisfaction NPS (10 questions)", "Baromètre engagement collaborateur", "Étude marché B2B (15 questions)", "Audit organisationnel (25 questions)"].map((q) => (
-                  <label key={q} className="flex items-center gap-2 border rounded-lg p-3 cursor-pointer hover:bg-muted/50">
-                    <input type="radio" name="q" defaultChecked={q.startsWith("Satisfaction")} />
-                    <span className="text-sm">{q}</span>
-                  </label>
-                ))}
+            <div className="space-y-3">
+              <div>
+                <Label>Modèle de questionnaire</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {QUESTIONNAIRES_TYPES.map((q) => (
+                    <button key={q.id} type="button" onClick={() => setSelectedTemplate(q.id)} className={cn("text-left border rounded-lg p-3 transition-all", selectedTemplate === q.id ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:bg-muted/50")}>
+                      <div className="text-sm font-medium">{q.nom}</div>
+                      <div className="text-[11px] text-muted-foreground">{q.questions} questions · {q.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border p-3 bg-gradient-to-br from-[color:var(--gold)]/10 to-transparent border-[color:var(--gold)]/25">
+                <div className="flex items-center gap-2 mb-2">
+                  <Wand2 className="h-4 w-4 text-[color:var(--gold)]" />
+                  <div className="font-semibold text-sm">Ou générer avec l'IA</div>
+                </div>
+                <Textarea rows={2} value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="Ex: enquête de satisfaction post-mission d'audit RH, 8 questions courtes, ton professionnel" />
+                <Button size="sm" onClick={generateWithAI} disabled={aiLoading} className="mt-2 bg-primary text-primary-foreground">
+                  <Sparkles className={cn("h-3.5 w-3.5 mr-1", aiLoading && "animate-spin")} /> {aiLoading ? "Génération..." : "Générer le questionnaire"}
+                </Button>
+                {aiQuestions.length > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    {aiQuestions.map((q, i) => (
+                      <div key={i} className="flex items-start gap-2 text-sm bg-background rounded-md border p-2">
+                        <span className="text-[10px] font-bold text-muted-foreground bg-muted rounded px-1.5 py-0.5 shrink-0 mt-0.5">Q{i + 1}</span>
+                        <input className="flex-1 bg-transparent focus:outline-none" defaultValue={q} />
+                        <button className="text-muted-foreground hover:text-destructive" onClick={() => setAiQuestions(aiQuestions.filter((_, j) => j !== i))}><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ))}
+                    <Button size="sm" variant="ghost" onClick={() => setAiQuestions([...aiQuestions, "Nouvelle question..."])}><Plus className="h-3.5 w-3.5 mr-1" /> Ajouter une question</Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          {step === 4 && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label>Date d'envoi</Label><Input type="date" value={editing.dateLancement} onChange={(e) => setEditing({ ...editing, dateLancement: e.target.value })} /></div>
+                <div className="space-y-1"><Label>Heure d'envoi</Label><Input type="time" value={planTime} onChange={(e) => setPlanTime(e.target.value)} /></div>
+                <div className="space-y-1"><Label>Date de clôture</Label><Input type="date" value={editing.dateCloture} onChange={(e) => setEditing({ ...editing, dateCloture: e.target.value })} /></div>
+                <div className="space-y-1"><Label>Fréquence de relance</Label>
+                  <Select defaultValue="3j">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="1j">Chaque jour</SelectItem><SelectItem value="3j">Tous les 3 jours</SelectItem><SelectItem value="7j">Hebdomadaire</SelectItem><SelectItem value="none">Pas de relance</SelectItem></SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="rounded-lg border p-3 bg-muted/30 text-sm">
+                <div className="font-medium mb-1">Récapitulatif</div>
+                <div className="text-xs text-muted-foreground">
+                  L'agent enverra <b>{editing.envoyees}</b> invitations par email et WhatsApp le <b>{editing.dateLancement}</b> à <b>{planTime}</b>, relancera les non-répondants jusqu'au <b>{editing.dateCloture}</b>, puis générera la synthèse.
+                </div>
               </div>
             </div>
           )}
@@ -222,9 +322,10 @@ function Page() {
             <Button variant="outline" onClick={() => step > 1 ? setStep(step - 1) : setOpen(false)}>
               {step > 1 ? "Précédent" : "Annuler"}
             </Button>
-            {step < 3 ? (
+            {step < 4 ? (
               <Button onClick={() => setStep(step + 1)} className="bg-primary text-primary-foreground">Suivant</Button>
             ) : (
+
               <Button onClick={save} className="bg-primary text-primary-foreground">Enregistrer</Button>
             )}
           </DialogFooter>

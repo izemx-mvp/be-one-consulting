@@ -11,14 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, ArrowRightCircle, Globe, MessageCircle, Mail, Send } from "lucide-react";
-import { demandesStore, candidatsStore, uid, useStore, type Demande, type DemandeType } from "@/lib/mock-data";
+import { MoreHorizontal, Eye, Pencil, Trash2, ArrowRightCircle, Globe, MessageCircle, Mail, Send, Sparkles, CheckCircle2 } from "lucide-react";
+import { demandesStore, candidatsStore, uid, useStore, demandeResumeIA, type Demande, type DemandeType } from "@/lib/mock-data";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/demandes")({
-  head: () => ({ meta: [{ title: "Demandes Clients — Be One Consulting" }] }),
+  head: () => ({ meta: [{ title: "Qualification AI — Be One Consulting" }] }),
   component: Page,
 });
 
@@ -89,7 +89,7 @@ function Page() {
   const searchTerm = ""; // handled by DataTable internally; highlight applied via wrapper below
 
   return (
-    <AppShell title="Demandes Clients" subtitle="Point d'entrée unique — qualification et routage des demandes entrantes">
+    <AppShell title="Qualification AI" subtitle="Agent Accueil — capte, qualifie et route les demandes entrantes vers le bon service">
       <DataTable<Demande>
         data={filtered}
         searchKeys={["nom", "entreprise", "email", "message"]}
@@ -236,29 +236,43 @@ function Page() {
                   </div>
                 </section>
 
-                <section>
-                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Qualification</h4>
-                  <div className="rounded-lg border p-3 text-sm space-y-2 bg-muted/30">
-                    <div><span className="text-muted-foreground">Budget indicatif :</span> {detail.budget}</div>
-                    <div><span className="text-muted-foreground">Délai souhaité :</span> {detail.delai}</div>
-                    <div><span className="text-muted-foreground">Message initial :</span></div>
-                    <div className="italic">« {detail.message} »</div>
-                  </div>
-                </section>
-
-                <section>
-                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Historique de qualification (agent IA)</h4>
-                  <div className="space-y-2">
-                    {detail.chatLog.map((m, i) => (
-                      <div key={i} className={cn("flex", m.from === "agent" ? "justify-start" : "justify-end")}>
-                        <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-sm", m.from === "agent" ? "bg-primary text-primary-foreground rounded-bl-none" : "bg-muted rounded-br-none")}>
-                          <div>{m.text}</div>
-                          <div className={cn("text-[10px] mt-1", m.from === "agent" ? "text-primary-foreground/60" : "text-muted-foreground")}>{m.at}</div>
+                {(() => {
+                  const { resume, infos } = demandeResumeIA(detail);
+                  return (
+                    <>
+                      <section>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sparkles className="h-4 w-4 text-[color:var(--gold)]" />
+                          <h4 className="text-xs font-semibold uppercase text-muted-foreground">Résumé IA</h4>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                        <div className="rounded-xl border p-4 text-sm leading-relaxed bg-gradient-to-br from-[color:var(--gold)]/10 to-transparent border-[color:var(--gold)]/25">
+                          {resume}
+                        </div>
+                      </section>
+
+                      <section>
+                        <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Informations collectées</h4>
+                        <div className="rounded-lg border overflow-hidden">
+                          {infos.map((i, idx) => (
+                            <div key={idx} className={cn("flex items-start justify-between gap-3 px-3 py-2 text-sm", idx > 0 && "border-t")}>
+                              <div className="inline-flex items-center gap-2 text-muted-foreground">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                                {i.label}
+                              </div>
+                              <div className="font-medium text-right">{i.value}</div>
+                            </div>
+                          ))}
+                        </div>
+                        {detail.message && (
+                          <div className="mt-3 rounded-lg border p-3 text-sm italic bg-muted/30">
+                            « {detail.message} »
+                          </div>
+                        )}
+                      </section>
+                    </>
+                  );
+                })()}
+
 
                 <section>
                   <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Actions</h4>
