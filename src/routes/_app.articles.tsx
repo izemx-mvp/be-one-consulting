@@ -88,7 +88,12 @@ function coverFor(a: Article, i: number) {
 }
 
 function postMediaFor(p: SocialPost, i = 0) {
-  return p.media[0]?.url ?? POST_IMAGES[(p.titre.length + i) % POST_IMAGES.length];
+  const first = p.media[0];
+  if (first) {
+    if (first.kind === "video") return first.poster ?? POST_IMAGES[(p.titre.length + i) % POST_IMAGES.length];
+    return first.url;
+  }
+  return POST_IMAGES[(p.titre.length + i) % POST_IMAGES.length];
 }
 
 function useConfig() {
