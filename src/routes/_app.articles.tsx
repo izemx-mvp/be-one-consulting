@@ -248,15 +248,11 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
                   <Select value={editing.statut} onValueChange={(v) => setEditing({ ...editing, statut: v as Article["statut"] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {STATUTS.map((s) => (
-                        <SelectItem key={s} value={s} disabled={s === "Planifié" && !canPlan}>
-                          {s}{s === "Planifié" && !canPlan ? " — validez d'abord" : ""}
-                        </SelectItem>
-                      ))}
+                      {availableStatuts.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  {!canPlan && (
-                    <p className="text-[11px] text-muted-foreground pt-0.5">Un brouillon doit passer par « En attente de validation » avant d'être planifié.</p>
+                  {isBrouillon && (
+                    <p className="text-[11px] text-muted-foreground pt-0.5">Approuvez le brouillon depuis sa fiche pour le planifier ou le publier.</p>
                   )}
                 </div>
                 <div className="space-y-1"><Label>Date de publication</Label><Input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} /></div>
