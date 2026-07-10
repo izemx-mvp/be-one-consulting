@@ -208,6 +208,49 @@ const docCategories = ["Commercial", "Méthodologie", "Tarification", "Formation
 function emptyDoc(): KbDocument {
   return { id: "", nom: "", type: "PDF", taille: "0 Ko", categorie: docCategories[0], date: new Date().toISOString().slice(0, 10), tags: [] };
 }
+
+function DocDropZone({ onFile }: { onFile: (f: File) => void }) {
+  const [over, setOver] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const handleFile = (f: File) => {
+    setFileName(f.name);
+    setProgress(0);
+    onFile(f);
+    let p = 0;
+    const t = setInterval(() => {
+      p += 12 + Math.random() * 18;
+      if (p >= 100) { p = 100; clearInterval(t); }
+      setProgress(Math.round(p));
+    }, 120);
+  };
+  return (
+    <div
+      onDragOver={(e) => { e.preventDefault(); setOver(true); }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
+      className={cn(
+        "col-span-2 border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer",
+        over ? "border-[color:var(--gold)] bg-[color:var(--gold)]/15" : "border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 hover:bg-[color:var(--gold)]/10",
+      )}
+      onClick={() => document.getElementById("kb-doc-input")?.click()}
+    >
+      <input id="kb-doc-input" type="file" accept=".pdf,.docx,.xlsx,.pptx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+      <UploadCloud className="h-8 w-8 mx-auto mb-2 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]" />
+      <div className="text-sm font-semibold">{fileName ?? "Glissez ici votre fichier ou cliquez pour parcourir"}</div>
+      <div className="text-xs text-muted-foreground mt-1">PDF, DOCX, XLSX ou PPTX — jusqu'à 20 Mo</div>
+      {progress !== null && (
+        <div className="mt-3 max-w-xs mx-auto">
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className="h-full bg-[color:var(--gold)] transition-all duration-150" style={{ width: `${progress}%` }} />
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-1 tabular-nums">{progress}% {progress === 100 && "· prêt à importer"}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DocsTab() {
   const rows = useStore(documentsStore);
   const [q, setQ] = useState("");
@@ -242,11 +285,6 @@ function DocsTab() {
         </Select>
         <Button onClick={() => { setEditing(emptyDoc()); setTagsInput(""); setOpen(true); }} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><UploadCloud className="h-4 w-4 mr-1.5" /> Nouveau document</Button>
       </div>
-      <Card className="p-6 border-2 border-dashed border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 text-center cursor-pointer hover:bg-[color:var(--gold)]/10 transition-colors" onClick={() => { setEditing(emptyDoc()); setTagsInput(""); setOpen(true); }}>
-        <UploadCloud className="h-8 w-8 mx-auto text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)] mb-2" />
-        <div className="font-semibold">Importer un document</div>
-        <div className="text-xs text-muted-foreground mt-1">Glissez un fichier PDF, DOCX, XLSX ou PPTX — jusqu'à 20 Mo. Ces documents nourrissent l'agent de service client.</div>
-      </Card>
       <Card className="p-0 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
@@ -292,10 +330,13 @@ function DocsTab() {
             </DialogHeader>
           </div>
           <div className="px-6 py-4 grid grid-cols-2 gap-3">
-            <div className="col-span-2 border-2 border-dashed border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 rounded-lg p-6 text-center text-xs text-muted-foreground">
-              <UploadCloud className="h-6 w-6 mx-auto mb-1 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]" />
-              Glissez ici votre fichier — PDF, DOCX, XLSX ou PPTX (démo — chargement simulé)
-            </div>
+            <DocDropZone
+              onFile={(f) => {
+                const ext = f.name.split(".").pop()?.toUpperCase();
+                const type = (["PDF", "DOCX", "XLSX", "PPTX"].includes(ext ?? "") ? ext : "PDF") as KbDocument["type"];
+                setEditing((prev) => ({ ...prev, nom: prev.nom || f.name, type, taille: `${(f.size / 1024).toFixed(0)} Ko` }));
+              }}
+            />
             <div className="col-span-2 space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nom du document</Label><Input value={editing.nom} onChange={(e) => setEditing({ ...editing, nom: e.target.value })} placeholder="Ex: Plaquette commerciale 2026.pdf" className="h-11" /></div>
             <div className="space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</Label><Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as KbDocument["type"] })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PDF">PDF</SelectItem><SelectItem value="DOCX">DOCX</SelectItem><SelectItem value="XLSX">XLSX</SelectItem><SelectItem value="PPTX">PPTX</SelectItem></SelectContent></Select></div>
             <div className="space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Catégorie</Label><Select value={editing.categorie} onValueChange={(v) => setEditing({ ...editing, categorie: v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{docCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>

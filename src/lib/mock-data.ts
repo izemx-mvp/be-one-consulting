@@ -458,3 +458,61 @@ export function demandeResumeIA(d: Demande): { resume: string; infos: { label: s
       : `Demande de ${d.type.toLowerCase()} de ${d.entreprise}. L'agent IA a qualifié le besoin : budget ${d.budget ?? "à définir"}, échéance ${d.delai ?? "flexible"}. Priorité ${d.priorite}.`;
   return { resume, infos };
 }
+
+// ---------- User management & permissions ----------
+export const MODULES = ["dashboard", "demandes", "recrutement", "enquetes", "articles", "faq", "utilisateurs"] as const;
+export type ModuleKey = typeof MODULES[number];
+export type CrudPerm = { read: boolean; create: boolean; update: boolean; delete: boolean };
+export type Permissions = Record<ModuleKey, CrudPerm>;
+
+export const MODULE_LABELS: Record<ModuleKey, string> = {
+  dashboard: "Tableau de bord",
+  demandes: "Qualification AI",
+  recrutement: "Recrutement AI",
+  enquetes: "Enquêtes AI",
+  articles: "Articles AI",
+  faq: "Base de connaissance",
+  utilisateurs: "Utilisateurs",
+};
+
+export function allPerms(v: boolean): Permissions {
+  return MODULES.reduce((acc, m) => {
+    acc[m] = { read: v, create: v, update: v, delete: v };
+    return acc;
+  }, {} as Permissions);
+}
+
+export type Role = "Admin" | "Collaborateur";
+export type AppUser = {
+  id: string; nom: string; email: string; role: Role;
+  fonction: string; actif: boolean; dateAjout: string;
+  permissions: Permissions;
+};
+
+const seedUsers: AppUser[] = [
+  { id: uid(), nom: "Fatima Zahra Abbadi", email: "admin@beone-consulting.com", role: "Admin", fonction: "Directrice Générale", actif: true, dateAjout: d(180), permissions: allPerms(true) },
+  { id: uid(), nom: "Meriem Bennis", email: "m.bennis@beone-consulting.com", role: "Collaborateur", fonction: "Consultante Senior Recrutement", actif: true, dateAjout: d(90), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, recrutement: allPerms(true).recrutement, demandes: { read: true, create: false, update: true, delete: false } } },
+  { id: uid(), nom: "Karim Hilali", email: "k.hilali@beone-consulting.com", role: "Collaborateur", fonction: "Chef de projet Conseil", actif: true, dateAjout: d(45), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, enquetes: allPerms(true).enquetes, demandes: { read: true, create: false, update: true, delete: false } } },
+  { id: uid(), nom: "Sara Chraibi", email: "s.chraibi@beone-consulting.com", role: "Collaborateur", fonction: "Community Manager", actif: true, dateAjout: d(30), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, articles: allPerms(true).articles, faq: { read: true, create: true, update: true, delete: false } } },
+  { id: uid(), nom: "Anas Idrissi", email: "a.idrissi@beone-consulting.com", role: "Collaborateur", fonction: "Chargé service client", actif: false, dateAjout: d(15), permissions: { ...allPerms(false), dashboard: { read: true, create: false, update: false, delete: false }, faq: allPerms(true).faq, demandes: { read: true, create: false, update: false, delete: false } } },
+];
+export const usersStore = createStore<AppUser>(seedUsers);
+
+// Current logged-in user id (for permission gating in UI). Defaults to the admin.
+let currentUserId: string = seedUsers[0].id;
+const currentUserListeners = new Set<() => void>();
+export const currentUser = {
+  get: () => currentUserId,
+  set: (id: string) => { currentUserId = id; currentUserListeners.forEach((l) => l()); },
+  subscribe: (fn: () => void) => { currentUserListeners.add(fn); return () => currentUserListeners.delete(fn); },
+};
+
+// ---------- Evaluation criteria (used by Head Hunting for AI scoring) ----------
+export type EvaluationCriterion = { id: string; nom: string; description: string; poids: number; requis: boolean };
+export const DEFAULT_EVAL_CRITERIA: EvaluationCriterion[] = [
+  { id: uid(), nom: "Adéquation au poste", description: "Correspondance avec la description de poste et le contexte.", poids: 35, requis: true },
+  { id: uid(), nom: "Expérience sectorielle", description: "Années d'expérience dans un secteur comparable.", poids: 25, requis: true },
+  { id: uid(), nom: "Soft skills", description: "Leadership, communication, capacité d'influence.", poids: 20, requis: false },
+  { id: uid(), nom: "Formation & langues", description: "Diplôme, école, maîtrise linguistique.", poids: 20, requis: false },
+];
+

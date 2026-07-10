@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Inbox, Users, ClipboardList, CalendarClock, Newspaper, HelpCircle, LogOut, Bell, Search, Sun, Moon, ChevronsLeft, ChevronsRight, ChevronRight, Sparkles, User, Settings } from "lucide-react";
+import { LayoutDashboard, Inbox, Users, ClipboardList, Newspaper, HelpCircle, LogOut, Bell, Search, Sun, Moon, ChevronsLeft, ChevronsRight, ChevronRight, Sparkles, ShieldCheck } from "lucide-react";
 import { LOGO_URL, auth, useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -8,16 +8,18 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState, type ReactNode } from "react";
 import { useTheme } from "@/lib/theme";
-import { notificationsStore, useStore, demandesStore, candidatsStore, articlesStore, faqStore } from "@/lib/mock-data";
+import { notificationsStore, useStore, demandesStore, candidatsStore, articlesStore, faqStore, usersStore, currentUser, type ModuleKey } from "@/lib/mock-data";
+import { useCurrentUser, useCan } from "@/lib/permissions";
 
-const nav = [
-  { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-  { to: "/demandes", label: "Qualification AI", icon: Inbox },
-  { to: "/recrutement", label: "Recrutement AI", icon: Users },
-  { to: "/enquetes", label: "Enquêtes AI", icon: ClipboardList },
-  { to: "/articles", label: "Articles AI", icon: Newspaper },
-  { to: "/faq", label: "Base de connaissance", icon: HelpCircle },
-] as const;
+const nav: { to: string; label: string; icon: typeof LayoutDashboard; module: ModuleKey }[] = [
+  { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, module: "dashboard" },
+  { to: "/demandes", label: "Qualification AI", icon: Inbox, module: "demandes" },
+  { to: "/recrutement", label: "Recrutement AI", icon: Users, module: "recrutement" },
+  { to: "/enquetes", label: "Enquêtes AI", icon: ClipboardList, module: "enquetes" },
+  { to: "/articles", label: "Articles AI", icon: Newspaper, module: "articles" },
+  { to: "/faq", label: "Base de connaissance", icon: HelpCircle, module: "faq" },
+  { to: "/utilisateurs", label: "Utilisateurs", icon: ShieldCheck, module: "utilisateurs" },
+];
 
 const routeLabels: Record<string, string> = {
   dashboard: "Tableau de bord",
@@ -26,7 +28,9 @@ const routeLabels: Record<string, string> = {
   enquetes: "Enquêtes AI",
   articles: "Articles AI",
   faq: "Base de connaissance",
+  utilisateurs: "Utilisateurs",
 };
+
 
 function GlobalSearch() {
   const [q, setQ] = useState("");
@@ -154,11 +158,16 @@ function ThemeToggle() {
 export function AppShell({ children, title, subtitle }: { children: ReactNode; title: string; subtitle?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useAuth();
+  const currentAppUser = useCurrentUser();
+  const can = useCan();
+  const allUsers = useStore(usersStore);
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
   const segments = pathname.split("/").filter(Boolean);
   const crumbs = segments.map((s) => routeLabels[s] ?? s);
+
+  const visibleNav = nav.filter((n) => can(n.module, "read"));
 
   const handleLogout = () => {
     auth.logout();
@@ -174,7 +183,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
           </div>
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          {nav.map((item) => {
+          {visibleNav.map((item) => {
             const active = pathname === item.to || pathname.startsWith(item.to + "/");
             return (
               <Link
@@ -194,6 +203,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
             );
           })}
         </nav>
+
         <button
           onClick={() => setCollapsed((v) => !v)}
           className="mx-3 mb-3 h-9 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground flex items-center justify-center transition-colors"
@@ -231,26 +241,41 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 ml-2 pl-3 border-l h-9">
                   <div className="text-right text-sm hidden sm:block">
-                    <div className="font-medium leading-tight">{user?.name ?? "Invité"}</div>
-                    <div className="text-[11px] text-muted-foreground leading-tight">Administratrice</div>
+                    <div className="font-medium leading-tight">{currentAppUser?.nom ?? user?.name ?? "Invité"}</div>
+                    <div className="text-[11px] text-muted-foreground leading-tight flex items-center gap-1 justify-end">
+                      <span className={cn("inline-block h-1.5 w-1.5 rounded-full", currentAppUser?.role === "Admin" ? "bg-[color:var(--gold)]" : "bg-primary")} />
+                      {currentAppUser?.role ?? "Administratrice"}
+                    </div>
                   </div>
                   <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground grid place-items-center font-semibold text-sm shadow-sm">
-                    {(user?.name ?? "?").split(" ").map((s) => s[0]).slice(0, 2).join("")}
+                    {(currentAppUser?.nom ?? user?.name ?? "?").split(" ").map((s) => s[0]).slice(0, 2).join("")}
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-72">
                 <DropdownMenuLabel>
-                  <div className="font-medium">{user?.name}</div>
-                  <div className="text-xs text-muted-foreground font-normal">{user?.email}</div>
+                  <div className="font-medium">{currentAppUser?.nom}</div>
+                  <div className="text-xs text-muted-foreground font-normal">{currentAppUser?.email}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-[color:var(--gold)] font-semibold mt-1">{currentAppUser?.role} · {currentAppUser?.fonction}</div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem><User className="h-4 w-4 mr-2" /> Profil</DropdownMenuItem>
-                <DropdownMenuItem><Settings className="h-4 w-4 mr-2" /> Paramètres</DropdownMenuItem>
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Changer d'utilisateur (démo)</DropdownMenuLabel>
+                {allUsers.filter((u) => u.actif).map((u) => (
+                  <DropdownMenuItem key={u.id} onClick={() => currentUser.set(u.id)} className={cn("gap-2", u.id === currentAppUser?.id && "bg-muted/60")}>
+                    <div className={cn("h-6 w-6 rounded-full grid place-items-center text-[10px] font-bold text-white", u.role === "Admin" ? "bg-[color:var(--gold)]" : "bg-primary")}>
+                      {u.nom.split(" ").map((s) => s[0]).slice(0, 2).join("")}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm truncate">{u.nom}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">{u.role} · {u.fonction}</div>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive"><LogOut className="h-4 w-4 mr-2" /> Déconnexion</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
           </div>
         </header>
         <main className="flex-1 overflow-auto app-bg relative">
