@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MoreHorizontal, Eye, Pencil, Trash2, Send, ChevronLeft, ChevronRight, LayoutList, CalendarDays, Sparkles, Wand2, Plus, X } from "lucide-react";
-import { enquetesStore, ENTREPRISES, uid, useStore, type Enquete, type EnqueteDest } from "@/lib/mock-data";
+import { enquetesStore, ENTREPRISES, uid, useStore, contactBasesStore, type Enquete, type EnqueteDest } from "@/lib/mock-data";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { MiniCalendar, type CalendarEvent } from "@/components/mini-calendar";
