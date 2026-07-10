@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRecrutementRouteImport } from './routes/_app.recrutement'
+import { Route as AppEnquetesRouteImport } from './routes/_app.enquetes'
 import { Route as AppDemandesRouteImport } from './routes/_app.demandes'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 
@@ -35,6 +36,11 @@ const AppRecrutementRoute = AppRecrutementRouteImport.update({
   path: '/recrutement',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEnquetesRoute = AppEnquetesRouteImport.update({
+  id: '/enquetes',
+  path: '/enquetes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDemandesRoute = AppDemandesRouteImport.update({
   id: '/demandes',
   path: '/demandes',
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/dashboard': typeof AppDashboardRoute
   '/demandes': typeof AppDemandesRoute
+  '/enquetes': typeof AppEnquetesRoute
   '/recrutement': typeof AppRecrutementRoute
 }
 export interface FileRoutesByTo {
@@ -58,6 +65,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/dashboard': typeof AppDashboardRoute
   '/demandes': typeof AppDemandesRoute
+  '/enquetes': typeof AppEnquetesRoute
   '/recrutement': typeof AppRecrutementRoute
 }
 export interface FileRoutesById {
@@ -67,13 +75,20 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/demandes': typeof AppDemandesRoute
+  '/_app/enquetes': typeof AppEnquetesRoute
   '/_app/recrutement': typeof AppRecrutementRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard' | '/demandes' | '/recrutement'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/demandes'
+    | '/enquetes'
+    | '/recrutement'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard' | '/demandes' | '/recrutement'
+  to: '/' | '/login' | '/dashboard' | '/demandes' | '/enquetes' | '/recrutement'
   id:
     | '__root__'
     | '/'
@@ -81,6 +96,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/dashboard'
     | '/_app/demandes'
+    | '/_app/enquetes'
     | '/_app/recrutement'
   fileRoutesById: FileRoutesById
 }
@@ -120,6 +136,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRecrutementRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/enquetes': {
+      id: '/_app/enquetes'
+      path: '/enquetes'
+      fullPath: '/enquetes'
+      preLoaderRoute: typeof AppEnquetesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/demandes': {
       id: '/_app/demandes'
       path: '/demandes'
@@ -140,12 +163,14 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDemandesRoute: typeof AppDemandesRoute
+  AppEnquetesRoute: typeof AppEnquetesRoute
   AppRecrutementRoute: typeof AppRecrutementRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDemandesRoute: AppDemandesRoute,
+  AppEnquetesRoute: AppEnquetesRoute,
   AppRecrutementRoute: AppRecrutementRoute,
 }
 
