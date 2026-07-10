@@ -1388,6 +1388,7 @@ function ArticleIdeasSection() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [prefill, setPrefill] = useState<ArticleWizardPrefill | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [detail, setDetail] = useState<{ idea: ArticleIdea; index: number } | null>(null);
 
   const regenerate = () => {
     setGenerating(true);
@@ -1405,6 +1406,7 @@ function ArticleIdeasSection() {
 
   const createArticle = (idea: ArticleIdea) => {
     setPrefill({ titre: idea.titre, description: idea.description, keywords: idea.keywords, thematique: idea.thematique, longueur: idea.longueur, extrait: idea.suggestedExtrait });
+    setDetail(null);
     setWizardOpen(true);
   };
 
