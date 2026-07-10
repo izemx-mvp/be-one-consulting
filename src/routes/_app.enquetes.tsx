@@ -11,20 +11,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { MoreHorizontal, Eye, Pencil, Trash2, Send, ChevronLeft, ChevronRight, LayoutList, CalendarDays, Sparkles, Wand2, Plus, X } from "lucide-react";
 import { enquetesStore, ENTREPRISES, uid, useStore, type Enquete, type EnqueteDest } from "@/lib/mock-data";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { MiniCalendar, type CalendarEvent } from "@/components/mini-calendar";
 import { toast } from "sonner";
 import { CountUp } from "@/components/count-up";
 
 export const Route = createFileRoute("/_app/enquetes")({
-  head: () => ({ meta: [{ title: "Enquêtes & Études — Be One Consulting" }] }),
+  head: () => ({ meta: [{ title: "Enquêtes AI — Be One Consulting" }] }),
   component: Page,
 });
 
 const TYPES: Enquete["type"][] = ["Enquête satisfaction", "Étude de marché", "Audit organisationnel"];
 const STATUTS: Enquete["statut"][] = ["Brouillon", "En cours", "Relance en cours", "Terminé"];
+
+const QUESTIONNAIRES_TYPES = [
+  { id: "nps", nom: "Satisfaction NPS", questions: 10, desc: "Score de recommandation + verbatims" },
+  { id: "engagement", nom: "Baromètre engagement collaborateur", questions: 22, desc: "Motivation, environnement, management" },
+  { id: "b2b", nom: "Étude marché B2B", questions: 15, desc: "Concurrence, besoins, freins d'achat" },
+  { id: "audit", nom: "Audit organisationnel", questions: 25, desc: "Structure, process, culture" },
+];
 
 function empty(): Enquete {
   return {
@@ -43,6 +52,11 @@ function Page() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Enquete>(empty());
   const [step, setStep] = useState(1);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiQuestions, setAiQuestions] = useState<string[]>([]);
+  const [planTime, setPlanTime] = useState("09:00");
+  const [selectedTemplate, setSelectedTemplate] = useState("nps");
   const [detail, setDetail] = useState<Enquete | null>(null);
   const [destPage, setDestPage] = useState(1);
   const [confirmDel, setConfirmDel] = useState<Enquete | null>(null);
@@ -61,8 +75,27 @@ function Page() {
   const save = () => {
     if (!editing.nom || !editing.client) { toast.error("Nom et client requis"); return; }
     if (editing.id) { enquetesStore.update(editing.id, editing); toast.success("Enquête mise à jour"); }
-    else { enquetesStore.add({ ...editing, id: uid() }); toast.success("Enquête créée"); }
-    setOpen(false); setStep(1);
+    else { enquetesStore.add({ ...editing, id: uid() }); toast.success("Enquête planifiée", { description: `Envoi programmé le ${editing.dateLancement} à ${planTime}` }); }
+    setOpen(false); setStep(1); setAiQuestions([]);
+  };
+
+  const generateWithAI = () => {
+    setAiLoading(true);
+    setTimeout(() => {
+      const base = [
+        "Quel est votre niveau global de satisfaction ?",
+        "Recommanderiez-vous nos services (0-10) ?",
+        "Quels sont les points forts que vous avez appréciés ?",
+        "Quels sont les axes d'amélioration prioritaires ?",
+        "La communication avec l'équipe a-t-elle été claire ?",
+        "Les délais annoncés ont-ils été respectés ?",
+        "Le rapport qualité / prix vous semble-t-il juste ?",
+        "Un mot pour l'équipe ?",
+      ];
+      setAiQuestions(base);
+      setAiLoading(false);
+      toast.success("Questionnaire généré par l'IA", { description: `${base.length} questions proposées, éditables.` });
+    }, 900);
   };
 
   const relancerNonRepondants = (e: Enquete) => {
