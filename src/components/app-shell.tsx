@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Inbox, Users, ClipboardList, Newspaper, HelpCircle, LogOut, Bell, Search, Sun, Moon, ChevronsLeft, ChevronsRight, ChevronRight, Sparkles, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Inbox, Users, ClipboardList, Newspaper, HelpCircle, LogOut, Bell, Search, Sun, Moon, ChevronsLeft, ChevronsRight, ChevronRight, Sparkles, ShieldCheck, Bot } from "lucide-react";
 import { LOGO_URL, auth, useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,9 @@ const nav: { to: string; label: string; icon: typeof LayoutDashboard; module: Mo
   { to: "/demandes", label: "Qualification AI", icon: Inbox, module: "demandes" },
   { to: "/recrutement", label: "Recrutement AI", icon: Users, module: "recrutement" },
   { to: "/enquetes", label: "Enquêtes AI", icon: ClipboardList, module: "enquetes" },
-  { to: "/articles", label: "Articles AI", icon: Newspaper, module: "articles" },
-  { to: "/faq", label: "Base de connaissance", icon: HelpCircle, module: "faq" },
+  { to: "/articles", label: "Community Manager AI", icon: Newspaper, module: "articles" },
+  { to: "/faq", label: "Service Client AI", icon: HelpCircle, module: "faq" },
+  { to: "/assistant", label: "Assistant AI", icon: Bot, module: "assistant" },
   { to: "/utilisateurs", label: "Utilisateurs", icon: ShieldCheck, module: "utilisateurs" },
 ];
 
@@ -26,8 +27,9 @@ const routeLabels: Record<string, string> = {
   demandes: "Qualification AI",
   recrutement: "Recrutement AI",
   enquetes: "Enquêtes AI",
-  articles: "Articles AI",
-  faq: "Base de connaissance",
+  articles: "Community Manager AI",
+  faq: "Service Client AI",
+  assistant: "Assistant AI",
   utilisateurs: "Utilisateurs",
 };
 
@@ -85,7 +87,7 @@ function GlobalSearch() {
                   </Link>
                 ))}
               </Group>}
-              {results.faq.length > 0 && <Group title="Base de connaissance">
+              {results.faq.length > 0 && <Group title="Service Client AI">
                 {results.faq.map((f) => (
                   <Link key={f.id} to="/faq" className="block px-3 py-2 hover:bg-muted text-sm" onClick={() => setQ("")}>
                     <div className="font-medium">{f.question}</div>

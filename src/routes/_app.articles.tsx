@@ -61,7 +61,7 @@ import { burstConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/articles")({
-  head: () => ({ meta: [{ title: "Articles AI — Be One Consulting" }] }),
+  head: () => ({ meta: [{ title: "Community Manager AI — Be One Consulting" }] }),
   component: Page,
 });
 
@@ -96,7 +96,7 @@ function Page() {
   const [detailArticle, setDetailArticle] = useState<Article | null>(null);
   return (
     <AppShell
-      title="Articles AI"
+      title="Community Manager AI"
       subtitle="Agent Rédaction — création IA ou manuelle, validation, planification et publication"
     >
       <Tabs defaultValue="grid">
