@@ -1424,7 +1424,6 @@ const PLATFORM_ICONS: Record<SocialPlatform, typeof Linkedin> = { LinkedIn: Link
 
 function PostsTab() {
   const posts = useStore(postsStore);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [postOpen, setPostOpen] = useState(false);
   const [editing, setEditing] = useState<SocialPost | null>(null);
   const [detail, setDetail] = useState<SocialPost | null>(null);
