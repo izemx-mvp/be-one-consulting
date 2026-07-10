@@ -225,7 +225,7 @@ const seedRdv: RendezVous[] = Array.from({ length: 22 }, (_, i) => ({
 }));
 
 const thematiques = ["Ressources Humaines", "Recrutement", "Transformation", "Leadership", "Formation", "Business Performance", "Marque employeur"];
-const statutsA: Article["statut"][] = ["Brouillon", "En attente de validation", "Publié"];
+const statutsA: Article["statut"][] = ["Brouillon", "Planifié", "Publié"];
 const titresA = [
   "5 tendances RH à surveiller au Maroc en 2026",
   "Comment structurer un plan de succession efficace",
