@@ -180,7 +180,7 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{a.extrait}</p>
                 <TagChips tags={a.tags} />
                 <div className="flex items-center justify-between mt-3">
-                  <StatusBadge status={a.statut} dot={a.statut === "En attente de validation"} />
+                  <StatusBadge status={a.statut} dot={a.statut === "Brouillon"} />
                   <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {a.date}</span>
                 </div>
               </div>
@@ -289,7 +289,7 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary uppercase">{detail.thematique}</span>
                   {detail.auteur === "IA" && <span className="text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/20 text-[color:var(--gold)] inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> IA</span>}
-                  <StatusBadge status={detail.statut} dot={detail.statut === "En attente de validation"} />
+                  <StatusBadge status={detail.statut} dot={detail.statut === "Brouillon"} />
                 </div>
                 <SheetTitle className="text-2xl mt-2">{detail.titre}</SheetTitle>
                 <div className="text-xs text-muted-foreground">Publication : {detail.date}{detail.heure ? ` · ${detail.heure}` : ""}</div>
@@ -300,7 +300,7 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
                 <article className="prose prose-sm dark:prose-invert max-w-none mt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-4 [&_ul]:list-disc [&_ul]:pl-5" dangerouslySetInnerHTML={{ __html: detail.contenu }} />
               </div>
               <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
-                {detail.statut === "En attente de validation" && (
+                {detail.statut === "Brouillon" && (
                   <>
                     <Button onClick={() => approve(detail)} className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1">
                       <Check className="h-4 w-4 mr-2" /> Approuver & Publier
@@ -347,7 +347,7 @@ type View = "year" | "month" | "week" | "day" | "agenda";
 
 function toneFor(a: Article) {
   if (a.statut === "Publié") return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40";
-  if (a.statut === "En attente de validation") return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40";
+  if (a.statut === "Brouillon") return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40";
   if (a.statut === "Planifié") return "bg-[color:var(--gold)]/15 text-[color:var(--gold)] border-[color:var(--gold)]/40";
   return "bg-muted text-muted-foreground border-border";
 }
