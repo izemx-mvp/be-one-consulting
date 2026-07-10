@@ -168,6 +168,9 @@ function GridTab({
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [confirmDel, setConfirmDel] = useState<Article | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [postOpen, setPostOpen] = useState(false);
+  const [scheduleForArticle, setScheduleForArticle] = useState<Article | null>(null);
 
   const detail = externalDetail;
   const setDetail = setExternalDetail;
