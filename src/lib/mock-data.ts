@@ -444,20 +444,26 @@ export const contactBasesStore = createStore<ContactBase>(seedBases);
 
 export const huntingStore = createStore<HuntingMission>(seedHunting);
 
-// ---------- Article cover images (Unsplash keywords) ----------
+// ---------- Article cover images (bundled assets) ----------
+import articleCover1 from "@/assets/article-cover-1.jpg.asset.json";
+import articleCover2 from "@/assets/article-cover-2.jpg.asset.json";
+import articleCover3 from "@/assets/article-cover-3.jpg.asset.json";
+import articleCover4 from "@/assets/article-cover-4.jpg.asset.json";
+import articleCover5 from "@/assets/article-cover-5.jpg.asset.json";
+import articleCover6 from "@/assets/article-cover-6.jpg.asset.json";
 export const ARTICLE_IMAGES = [
-  "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=70",
-  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=70",
-  "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=70",
-  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=70",
-  "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=800&q=70",
-  "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=70",
-  "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=70",
-  "https://images.unsplash.com/photo-1590650046871-92c887180603?w=800&q=70",
-  "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&q=70",
-  "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&q=70",
-  "https://images.unsplash.com/photo-1552581234-26160f608093?w=800&q=70",
-  "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&q=70",
+  articleCover1.url,
+  articleCover2.url,
+  articleCover3.url,
+  articleCover4.url,
+  articleCover5.url,
+  articleCover6.url,
+  articleCover1.url,
+  articleCover2.url,
+  articleCover3.url,
+  articleCover4.url,
+  articleCover5.url,
+  articleCover6.url,
 ];
 
 // ---------- Demande AI qualification summary ----------
@@ -559,12 +565,11 @@ export type SocialPost = {
   aiParams?: Record<string, string | number>;
 };
 
-const POST_IMAGES = [
-  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=70",
-  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=70",
-  "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=800&q=70",
-  "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=70",
-];
+import postImage1 from "@/assets/post-1.jpg.asset.json";
+import postImage2 from "@/assets/post-2.jpg.asset.json";
+import postImage3 from "@/assets/post-3.jpg.asset.json";
+import postImage4 from "@/assets/post-4.jpg.asset.json";
+const POST_IMAGES = [postImage1.url, postImage2.url, postImage3.url, postImage4.url];
 const seedPosts: SocialPost[] = [
   { id: uid(), titre: "Lancement programme leadership", caption: "Fiers de lancer notre nouveau programme Leadership de proximité 🚀 8 jours pour transformer vos managers.", hashtags: ["#Leadership", "#RH", "#Maroc"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[0] }], platforms: ["LinkedIn", "Facebook"], platformConfig: { LinkedIn: { tone: "Professionnel", cta: "En savoir plus", paragraphes: "Court" }, Facebook: { style: "Storytelling", cta: "Contactez-nous" } }, statut: "Publié", date: d(2), heure: "10:00", auteur: "IA", langue: "Français", ton: "Professionnel" },
   { id: uid(), titre: "Coulisses de notre équipe", caption: "Retour en images sur notre séminaire annuel — merci à toute l'équipe Be One ! ✨", hashtags: ["#TeamSpirit", "#BeOne", "#Consulting"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[1] }, { id: uid(), kind: "image", url: POST_IMAGES[2] }], platforms: ["Instagram", "Facebook"], platformConfig: { Instagram: { captionLength: 120, emojiDensity: "Élevée", hashtagCount: 12 }, Facebook: { style: "Conversationnel" } }, statut: "Planifié", date: d(-3), heure: "18:30", auteur: "Manuel", langue: "Français", ton: "Chaleureux" },
