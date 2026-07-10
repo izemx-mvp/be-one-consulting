@@ -698,31 +698,27 @@ function GridTab({
               <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
                 {detail.statut === "Brouillon" && (
                   <>
-                    <Button
-                      onClick={() => approveToPlanified(detail)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
-                    >
-                      <Check className="h-4 w-4 mr-2" /> Approuver & Planifier
+                    <Button onClick={() => publishNow(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1">
+                      <Send className="h-4 w-4 mr-2" /> Publier
                     </Button>
-                    <Button
-                      variant="outline"
-                      className="text-destructive border-destructive/30 flex-1"
-                      onClick={() => setRejectOpen(true)}
-                    >
-                      <X className="h-4 w-4 mr-2" /> Demander révision
+                    <Button variant="outline" onClick={() => setScheduleForArticle(detail)} className="flex-1">
+                      <Clock className="h-4 w-4 mr-2" /> Planifier
+                    </Button>
+                    <Button variant="outline" className="text-destructive border-destructive/30" onClick={() => setRejectOpen(true)}>
+                      <X className="h-4 w-4 mr-2" /> Révision
                     </Button>
                   </>
                 )}
                 {detail.statut === "Planifié" && (
                   <>
-                    <Button
-                      onClick={() => publishNow(detail)}
-                      className="btn-premium hover:[&]:btn-premium-hover flex-1"
-                    >
-                      <Check className="h-4 w-4 mr-2" /> Publier maintenant
+                    <Button onClick={() => publishNow(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1">
+                      <Send className="h-4 w-4 mr-2" /> Publier maintenant
                     </Button>
-                    <Button variant="outline" onClick={() => unpublish(detail)} className="flex-1">
-                      <Clock className="h-4 w-4 mr-2" /> Retour brouillon
+                    <Button variant="outline" onClick={() => setScheduleForArticle(detail)} className="flex-1">
+                      <Clock className="h-4 w-4 mr-2" /> Replanifier
+                    </Button>
+                    <Button variant="outline" onClick={() => unpublish(detail)}>
+                      Retour brouillon
                     </Button>
                   </>
                 )}
