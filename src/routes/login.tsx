@@ -83,7 +83,7 @@ function LoginPage() {
             <p className="text-sm text-muted-foreground mt-1">Connectez-vous à votre espace administrateur.</p>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Adresse e-mail</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
