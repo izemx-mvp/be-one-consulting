@@ -532,3 +532,77 @@ function Page() {
     </AppShell>
   );
 }
+
+const DEMO_QUESTIONS: { q: string; type: QuestionType }[] = [
+  { q: "Recommanderiez-vous nos services (0-10) ?", type: "Note" },
+  { q: "Quel est votre niveau global de satisfaction ?", type: "Échelle" },
+  { q: "Quels sont les points forts que vous avez appréciés ?", type: "Choix multiple" },
+  { q: "La communication a-t-elle été claire ?", type: "Choix unique" },
+  { q: "Un mot pour l'équipe ?", type: "Texte libre" },
+];
+
+function PerQuestionAnalytics({ enquete }: { enquete: Enquete }) {
+  // Deterministic pseudo-distributions per (enquete, question index)
+  const seedRand = (s: string) => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return () => {
+      h = (h * 1103515245 + 12345) & 0x7fffffff;
+      return h / 0x7fffffff;
+    };
+  };
+  const reponses = enquete.reponses;
+  return (
+    <section>
+      <h4 className="text-sm font-semibold mb-2">Analyse par question</h4>
+      <div className="space-y-3">
+        {DEMO_QUESTIONS.map((qq, idx) => {
+          const rand = seedRand(enquete.id + ":" + idx);
+          let data: { name: string; n: number }[] = [];
+          let words: { w: string; n: number }[] = [];
+          if (qq.type === "Choix unique") {
+            const parts = [0.55, 0.3, 0.15].map((p) => Math.round(reponses * p * (0.85 + rand() * 0.3)));
+            data = [{ name: "Oui", n: parts[0] }, { name: "Non", n: parts[1] }, { name: "Sans avis", n: parts[2] }];
+          } else if (qq.type === "Choix multiple") {
+            data = ["Expertise", "Écoute", "Réactivité", "Prix", "Innovation"].map((n) => ({ name: n, n: Math.round(reponses * (0.2 + rand() * 0.5)) }));
+          } else if (qq.type === "Échelle") {
+            data = ["1", "2", "3", "4", "5"].map((n, i) => ({ name: n, n: Math.round(reponses * [0.05, 0.1, 0.2, 0.35, 0.3][i] * (0.8 + rand() * 0.4)) }));
+          } else if (qq.type === "Note") {
+            data = Array.from({ length: 11 }, (_, i) => ({ name: String(i), n: Math.round(reponses * (i >= 8 ? 0.09 : i >= 6 ? 0.07 : 0.03) * (0.7 + rand() * 0.5)) }));
+          } else {
+            words = ["excellent", "professionnel", "à l'écoute", "rapide", "efficace", "clair", "recommande", "réactif"].map((w) => ({ w, n: Math.round(3 + rand() * 20) }));
+          }
+          return (
+            <Card key={idx} className="p-3">
+              <div className="flex items-start justify-between gap-2 mb-2 flex-wrap">
+                <div className="text-sm font-medium flex-1 min-w-0">Q{idx + 1}. {qq.q}</div>
+                <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase", typeColor[qq.type])}>{qq.type}</span>
+              </div>
+              {qq.type === "Texte libre" ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {words.sort((a, b) => b.n - a.n).map((w) => (
+                    <span key={w.w} className="rounded-full bg-muted px-2.5 py-1 text-xs" style={{ fontSize: `${11 + Math.min(w.n / 3, 8)}px`, opacity: 0.65 + Math.min(w.n / 40, 0.35) }}>
+                      {w.w} <span className="text-muted-foreground tabular-nums">·{w.n}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
+                      <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} />
+                      <YAxis fontSize={10} tickLine={false} axisLine={false} />
+                      <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                      <Bar dataKey="n" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
