@@ -118,13 +118,11 @@ function Page() {
         <TabsList className="mb-4">
           <TabsTrigger value="grid"><LayoutGrid className="h-4 w-4 mr-2" /> Articles</TabsTrigger>
           <TabsTrigger value="posts"><Send className="h-4 w-4 mr-2" /> Posts sociaux</TabsTrigger>
-          <TabsTrigger value="ideas"><Lightbulb className="h-4 w-4 mr-2" /> Idées AI</TabsTrigger>
           <TabsTrigger value="calendar"><CalendarDays className="h-4 w-4 mr-2" /> Calendrier</TabsTrigger>
           <TabsTrigger value="config"><Settings2 className="h-4 w-4 mr-2" /> Configuration IA</TabsTrigger>
         </TabsList>
         <TabsContent value="grid"><GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} /></TabsContent>
         <TabsContent value="posts"><PostsTab /></TabsContent>
-        <TabsContent value="ideas"><IdeasTab /></TabsContent>
         <TabsContent value="calendar"><CalendarTab onArticleClick={setDetailArticle} /></TabsContent>
         <TabsContent value="config"><ConfigTab /></TabsContent>
       </Tabs>
@@ -308,6 +306,8 @@ function GridTab({
           Aucun article ne correspond à vos filtres.
         </Card>
       ) : (
+        <>
+        <ArticleIdeasSection />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {pageItems.map((a, i) => (
             <Card
@@ -347,6 +347,7 @@ function GridTab({
             </Card>
           ))}
         </div>
+        </>
       )}
       <div className="flex items-center justify-between text-sm mt-4">
         <span className="text-muted-foreground">
@@ -1277,18 +1278,6 @@ function SwitchField({ label, value, onChange }: { label: string; value: boolean
 
 // ---------------- IDEAS TAB ----------------
 const IDEA_PLATFORM_ICON: Record<SocialPlatform, typeof Linkedin> = { LinkedIn: Linkedin, Facebook, Instagram, YouTube: Youtube };
-function IdeasTab() {
-  return (
-    <Tabs defaultValue="posts">
-      <TabsList className="mb-4">
-        <TabsTrigger value="posts"><Send className="h-4 w-4 mr-2" /> Posts sociaux</TabsTrigger>
-        <TabsTrigger value="articles"><FileText className="h-4 w-4 mr-2" /> Articles</TabsTrigger>
-      </TabsList>
-      <TabsContent value="posts"><PostIdeasSection /></TabsContent>
-      <TabsContent value="articles"><ArticleIdeasSection /></TabsContent>
-    </Tabs>
-  );
-}
 
 function PostIdeasSection() {
   const ideas = useStore(postIdeasStore);
@@ -1316,7 +1305,8 @@ function PostIdeasSection() {
   };
 
   return (
-    <div>
+    <div className="mb-6">
+
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div>
           <div className="text-sm font-semibold flex items-center gap-1.5"><Lightbulb className="h-4 w-4 text-[color:var(--gold)]" /> Idées de posts générées par l'IA</div>
@@ -1326,9 +1316,10 @@ function PostIdeasSection() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {ideas.map((idea) => (
-          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3">
+          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3 border-[color:var(--gold)]/40 bg-gradient-to-br from-[color:var(--gold)]/5 to-transparent">
             <div className="flex items-start justify-between gap-2">
-              <div>
+              <div className="flex-1 min-w-0">
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/40 font-semibold mb-1"><Sparkles className="h-3 w-3" /> Idée IA</span>
                 <h3 className="font-semibold text-sm leading-tight">{idea.titre}</h3>
                 <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{idea.description}</div>
               </div>
@@ -1383,7 +1374,8 @@ function ArticleIdeasSection() {
   };
 
   return (
-    <div>
+    <div className="mb-6">
+
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div>
           <div className="text-sm font-semibold flex items-center gap-1.5"><Lightbulb className="h-4 w-4 text-[color:var(--gold)]" /> Idées d'articles générées par l'IA</div>
@@ -1393,10 +1385,13 @@ function ArticleIdeasSection() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {ideas.map((idea) => (
-          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3">
+          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3 border-[color:var(--gold)]/40 bg-gradient-to-br from-[color:var(--gold)]/5 to-transparent">
             <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{idea.thematique}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/40 font-semibold"><Sparkles className="h-3 w-3" /> Idée IA</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{idea.thematique}</span>
+                </div>
                 <h3 className="font-semibold text-sm leading-tight">{idea.titre}</h3>
                 <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{idea.description}</div>
               </div>
@@ -1456,6 +1451,8 @@ function PostsTab() {
       <ContentTypePicker open={pickerOpen} onOpenChange={setPickerOpen} onPick={(t) => { if (t === "post") openNew(); else toast.info("Passez à l'onglet Articles"); }} />
       <PostWizard open={postOpen} onOpenChange={setPostOpen} editing={editing} />
       <ScheduleDialog open={!!scheduleFor} onOpenChange={(v) => !v && setScheduleFor(null)} initialDate={scheduleFor?.date} initialTime={scheduleFor?.heure} onConfirm={({ date, time }) => { if (scheduleFor) { postsStore.update(scheduleFor.id, { statut: "Planifié", date, heure: time }); toast.success(`Post planifié pour le ${date} à ${time}`); setScheduleFor(null); } }} />
+
+      <PostIdeasSection />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {posts.map((p) => (
