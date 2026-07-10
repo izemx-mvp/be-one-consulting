@@ -337,6 +337,8 @@ function Page() {
                   </div>
                 </section>
 
+                <CvSection candidat={detail} onChange={(cv) => { candidatsStore.update(detail.id, { cv }); setDetail({ ...detail, cv }); }} />
+
                 <section>
                   <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">CV résumé</h4>
                   <p className="text-sm text-muted-foreground leading-relaxed">{detail.resume}</p>
