@@ -1442,11 +1442,11 @@ function PostsTab() {
     <div>
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div className="text-sm text-muted-foreground">{posts.length} publication{posts.length > 1 ? "s" : ""}</div>
-        <Button onClick={() => setPickerOpen(true)} className="ml-auto btn-premium hover:[&]:btn-premium-hover">
-          <Plus className="h-4 w-4 mr-1" /> Nouveau contenu
+        <Button onClick={openNew} className="ml-auto btn-premium hover:[&]:btn-premium-hover">
+          <Plus className="h-4 w-4 mr-1" /> Nouveau post
         </Button>
       </div>
-      <ContentTypePicker open={pickerOpen} onOpenChange={setPickerOpen} onPick={(t) => { if (t === "post") openNew(); else toast.info("Passez à l'onglet Articles"); }} />
+      <ContentTypePicker open={false} onOpenChange={() => {}} onPick={() => {}} />
       <PostWizard open={postOpen} onOpenChange={setPostOpen} editing={editing} />
       <ScheduleDialog open={!!scheduleFor} onOpenChange={(v) => !v && setScheduleFor(null)} initialDate={scheduleFor?.date} initialTime={scheduleFor?.heure} onConfirm={({ date, time }) => { if (scheduleFor) { postsStore.update(scheduleFor.id, { statut: "Planifié", date, heure: time }); toast.success(`Post planifié pour le ${date} à ${time}`); setScheduleFor(null); } }} />
 
