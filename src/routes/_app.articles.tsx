@@ -246,23 +246,30 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
               </div>
             </section>
             <section>
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Planification</div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <Label>Statut</Label>
-                  <Select value={editing.statut} onValueChange={(v) => setEditing({ ...editing, statut: v as Article["statut"] })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {availableStatuts.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  {isBrouillon && (
-                    <p className="text-[11px] text-muted-foreground pt-0.5">Approuvez le brouillon depuis sa fiche pour le planifier ou le publier.</p>
-                  )}
+              <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2 flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Planification</div>
+              {isBrouillon ? (
+                <div className="rounded-lg border border-dashed p-4 bg-muted/30 text-sm text-muted-foreground flex items-start gap-3">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-500" />
+                  <div>
+                    <p className="font-medium text-foreground">Planification désactivée en brouillon</p>
+                    <p className="text-xs">Approuvez l'article depuis sa fiche pour activer la planification et la publication.</p>
+                  </div>
                 </div>
-                <div className="space-y-1"><Label>Date de publication</Label><Input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} /></div>
-                <div className="space-y-1"><Label>Heure</Label><Input type="time" value={editing.heure ?? "09:00"} onChange={(e) => setEditing({ ...editing, heure: e.target.value })} /></div>
-              </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label>Statut</Label>
+                    <Select value={editing.statut} onValueChange={(v) => setEditing({ ...editing, statut: v as Article["statut"] })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {availableStatuts.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1"><Label>Date de publication</Label><Input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} /></div>
+                  <div className="space-y-1"><Label>Heure</Label><Input type="time" value={editing.heure ?? "09:00"} onChange={(e) => setEditing({ ...editing, heure: e.target.value })} /></div>
+                </div>
+              )}
             </section>
             <section>
               <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2 flex items-center gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Image de couverture</div>
