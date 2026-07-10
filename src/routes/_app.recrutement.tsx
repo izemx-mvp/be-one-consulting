@@ -369,32 +369,6 @@ function Page() {
         </SheetContent>
       </Sheet>
 
-      {/* Campaign modal */}
-      <Dialog open={campaignOpen} onOpenChange={setCampaignOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>Lancer une campagne de sourcing</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label>Plateforme</Label>
-              <Select defaultValue="LinkedIn">
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="LinkedIn">LinkedIn (B2B, cadres)</SelectItem><SelectItem value="Facebook">Facebook (grand public)</SelectItem><SelectItem value="Instagram">Instagram (grand public)</SelectItem></SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1"><Label>Poste ciblé</Label><Input placeholder="Ex: Contrôleur de gestion" /></div>
-            <div className="space-y-1"><Label>Critères clés (mots-clés)</Label><Input placeholder="Ex: SAP, 5 ans exp., anglais courant" /></div>
-            <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-              L'agent lancera la recherche sur la plateforme sélectionnée et poussera les profils qualifiés dans la CVthèque.
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCampaignOpen(false)}>Annuler</Button>
-            <Button onClick={() => { setCampaignOpen(false); toast.success("Campagne lancée", { description: "Les premiers profils arriveront sous 24-48h." }); }} className="bg-primary text-primary-foreground">
-              <Rocket className="h-4 w-4 mr-2" /> Lancer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <ConfirmDialog
         open={!!confirmDel}
