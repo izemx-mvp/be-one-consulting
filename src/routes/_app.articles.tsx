@@ -294,12 +294,10 @@ function GridTab({
             </button>
           ))}
         </div>
-        <Button onClick={() => setPickerOpen(true)} className="ml-auto btn-premium hover:[&]:btn-premium-hover">
-          <Plus className="h-4 w-4 mr-1" /> Nouveau contenu
+        <Button onClick={openNew} className="ml-auto btn-premium hover:[&]:btn-premium-hover">
+          <Plus className="h-4 w-4 mr-1" /> Nouvel article
         </Button>
       </div>
-      <ContentTypePicker open={pickerOpen} onOpenChange={setPickerOpen} onPick={(t) => { if (t === "article") openNew(); else setPostOpen(true); }} />
-      <PostWizard open={postOpen} onOpenChange={setPostOpen} />
       {pageItems.length === 0 ? (
         <Card className="p-16 text-center text-muted-foreground">
           <FileText className="h-10 w-10 mx-auto mb-2 opacity-40" />
