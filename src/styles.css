@@ -161,3 +161,30 @@
   background: color-mix(in oklch, var(--card) 75%, transparent);
   backdrop-filter: blur(14px) saturate(140%);
 }
+@utility app-bg {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(1200px 600px at 100% -10%, color-mix(in oklch, var(--gold) 14%, transparent), transparent 60%),
+    radial-gradient(900px 500px at -10% 20%, color-mix(in oklch, var(--primary) 18%, transparent), transparent 55%),
+    radial-gradient(700px 400px at 50% 110%, color-mix(in oklch, var(--gold) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, color-mix(in oklch, var(--card) 30%, transparent), transparent 40%);
+}
+@utility grid-bg {
+  background-image:
+    linear-gradient(to right, color-mix(in oklch, var(--foreground) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklch, var(--foreground) 5%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+}
+@utility btn-premium {
+  background-image: linear-gradient(135deg, var(--primary), color-mix(in oklch, var(--primary) 70%, var(--gold)));
+  color: var(--primary-foreground);
+  box-shadow: 0 8px 24px -12px var(--gold-glow), 0 2px 6px -2px color-mix(in oklch, var(--primary) 40%, transparent);
+  transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+}
+@utility btn-premium-hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 12px 32px -12px var(--gold-glow), 0 4px 10px -2px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
