@@ -1529,3 +1529,116 @@ function ConfigTab() {
     </div>
   );
 }
+
+// ---------------- POSTS TAB ----------------
+const PLATFORM_ICONS: Record<SocialPlatform, typeof Linkedin> = { LinkedIn: Linkedin, Facebook, Instagram, YouTube: Youtube };
+
+function PostsTab() {
+  const posts = useStore(postsStore);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [postOpen, setPostOpen] = useState(false);
+  const [editing, setEditing] = useState<SocialPost | null>(null);
+  const [detail, setDetail] = useState<SocialPost | null>(null);
+  const [scheduleFor, setScheduleFor] = useState<SocialPost | null>(null);
+  const [confirmDel, setConfirmDel] = useState<SocialPost | null>(null);
+
+  const openNew = () => { setEditing(null); setPostOpen(true); };
+  const openEdit = (p: SocialPost) => { setEditing(p); setPostOpen(true); };
+
+  const publish = (p: SocialPost) => { postsStore.update(p.id, { statut: "Publié" }); burstConfetti(); toast.success("Post publié"); setDetail(null); };
+  const setDraft = (p: SocialPost) => { postsStore.update(p.id, { statut: "Brouillon" }); toast.success("Retour brouillon"); };
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="text-sm text-muted-foreground">{posts.length} publication{posts.length > 1 ? "s" : ""}</div>
+        <Button onClick={() => setPickerOpen(true)} className="ml-auto btn-premium hover:[&]:btn-premium-hover">
+          <Plus className="h-4 w-4 mr-1" /> Nouveau contenu
+        </Button>
+      </div>
+      <ContentTypePicker open={pickerOpen} onOpenChange={setPickerOpen} onPick={(t) => { if (t === "post") openNew(); else toast.info("Passez à l'onglet Articles"); }} />
+      <PostWizard open={postOpen} onOpenChange={setPostOpen} editing={editing} />
+      <ScheduleDialog open={!!scheduleFor} onOpenChange={(v) => !v && setScheduleFor(null)} initialDate={scheduleFor?.date} initialTime={scheduleFor?.heure} onConfirm={({ date, time }) => { if (scheduleFor) { postsStore.update(scheduleFor.id, { statut: "Planifié", date, heure: time }); toast.success(`Post planifié pour le ${date} à ${time}`); setScheduleFor(null); } }} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {posts.map((p) => (
+          <Card key={p.id} className="p-0 overflow-hidden hover-lift cursor-pointer fade-up card-elevated" onClick={() => setDetail(p)}>
+            <div className="h-40 bg-muted relative">
+              {p.media[0] ? <img src={p.media[0].url} alt="" className="w-full h-full object-cover" /> : <div className="grid place-items-center h-full text-muted-foreground text-xs">Aucun média</div>}
+              <div className="absolute top-2 left-2 flex gap-1">
+                {p.platforms.map((pl) => {
+                  const Icon = PLATFORM_ICONS[pl];
+                  return <span key={pl} className={cn("text-white bg-black/60 backdrop-blur rounded-full h-6 w-6 grid place-items-center")}><Icon className="h-3 w-3" /></span>;
+                })}
+              </div>
+            </div>
+            <div className="p-4">
+              <h3 className="font-semibold line-clamp-1">{p.titre}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{p.caption}</p>
+              <div className="flex flex-wrap gap-1 mt-2">{p.hashtags.slice(0, 3).map((h) => <span key={h} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div>
+              <div className="flex items-center justify-between mt-3">
+                <StatusBadge status={p.statut} dot={p.statut === "Brouillon"} />
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {p.date}{p.heure ? ` ${p.heure}` : ""}</span>
+              </div>
+            </div>
+          </Card>
+        ))}
+        {posts.length === 0 && <Card className="p-16 text-center text-muted-foreground col-span-full">Aucun post pour le moment.</Card>}
+      </div>
+
+      {/* Detail sheet */}
+      <Sheet open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto scroll-fancy">
+          {detail && (
+            <>
+              <SheetHeader className="border-b pb-4">
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {detail.platforms.map((pl) => {
+                    const Icon = PLATFORM_ICONS[pl];
+                    return <span key={pl} className={cn("text-[10px] px-2 py-0.5 rounded-full border inline-flex items-center gap-1", PLATFORM_META[pl].bg, PLATFORM_META[pl].color)}><Icon className="h-3 w-3" /> {pl}</span>;
+                  })}
+                  <StatusBadge status={detail.statut} dot={detail.statut === "Brouillon"} />
+                </div>
+                <SheetTitle>{detail.titre}</SheetTitle>
+                <div className="text-xs text-muted-foreground">Publication : {detail.date}{detail.heure ? ` · ${detail.heure}` : ""} · Langue : {detail.langue} · Ton : {detail.ton}</div>
+              </SheetHeader>
+              <div className="py-4 space-y-4">
+                {detail.media.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">{detail.media.map((m) => (
+                    <div key={m.id} className="aspect-video rounded-lg overflow-hidden border bg-muted"><img src={m.url} alt={m.alt ?? ""} className="w-full h-full object-cover" /></div>
+                  ))}</div>
+                )}
+                <section><h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Caption</h4><p className="text-sm whitespace-pre-line">{detail.caption}</p></section>
+                <section><h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Hashtags</h4><div className="flex flex-wrap gap-1">{detail.hashtags.map((h) => <span key={h} className="text-[11px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div></section>
+                <section>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Paramètres IA par plateforme</h4>
+                  <div className="space-y-2">
+                    {detail.platforms.map((pl) => (
+                      <div key={pl} className={cn("rounded-lg border p-3", PLATFORM_META[pl].bg)}>
+                        <div className={cn("text-xs font-semibold mb-1", PLATFORM_META[pl].color)}>{pl}</div>
+                        <dl className="text-xs grid grid-cols-2 gap-x-3 gap-y-1">
+                          {Object.entries(detail.platformConfig[pl] ?? {}).map(([k, v]) => (
+                            <div key={k} className="flex justify-between"><dt className="text-muted-foreground">{k}</dt><dd className="font-medium">{String(v)}</dd></div>
+                          ))}
+                        </dl>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+              <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
+                {detail.statut !== "Publié" && <Button onClick={() => publish(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><Send className="h-4 w-4 mr-2" /> Publier</Button>}
+                <Button variant="outline" onClick={() => setScheduleFor(detail)} className="flex-1"><Clock className="h-4 w-4 mr-2" /> Planifier</Button>
+                {detail.statut !== "Brouillon" && <Button variant="outline" onClick={() => setDraft(detail)}>Retour brouillon</Button>}
+                <Button variant="outline" onClick={() => { openEdit(detail); setDetail(null); }}><Pencil className="h-4 w-4 mr-2" /> Modifier</Button>
+                <Button variant="outline" className="text-destructive border-destructive/30" onClick={() => setConfirmDel(detail)}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <ConfirmDialog open={!!confirmDel} onOpenChange={(v) => !v && setConfirmDel(null)} title="Supprimer ce post ?" destructive confirmLabel="Supprimer" onConfirm={() => { if (confirmDel) { postsStore.remove(confirmDel.id); toast.success("Post supprimé"); setDetail(null); } setConfirmDel(null); }} />
+    </div>
+  );
+}
