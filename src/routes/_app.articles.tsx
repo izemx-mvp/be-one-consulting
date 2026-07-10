@@ -87,6 +87,10 @@ function coverFor(a: Article, i: number) {
   return ARTICLE_IMAGES[(a.titre.length + i) % ARTICLE_IMAGES.length];
 }
 
+function postMediaFor(p: SocialPost, i = 0) {
+  return p.media[0]?.url ?? POST_IMAGES[(p.titre.length + i) % POST_IMAGES.length];
+}
+
 function useConfig() {
   const rows = useStore(editorialConfigStore);
   return rows[0];
@@ -344,7 +348,7 @@ function GridTab({
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
-                  {a.statut !== "Publié" && (
+                  {a.statut === "Brouillon" && (
                     <>
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publishNow(a); }}>
                         <Send className="h-3 w-3 mr-1" /> Publier
@@ -356,6 +360,27 @@ function GridTab({
                         <Pencil className="h-3 w-3 mr-1" /> Modifier
                       </Button>
                     </>
+                  )}
+                  {a.statut === "Planifié" && (
+                    <>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publishNow(a); }}>
+                        <Send className="h-3 w-3 mr-1" /> Publier
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleForArticle(a); }}>
+                        <Clock className="h-3 w-3 mr-1" /> Replanifier
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); unpublish(a); }}>
+                        <RefreshCw className="h-3 w-3 mr-1" /> Brouillon
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); openEdit(a); }}>
+                        <Pencil className="h-3 w-3 mr-1" /> Modifier
+                      </Button>
+                    </>
+                  )}
+                  {a.statut === "Publié" && (
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setDetail(a); }}>
+                      <FileText className="h-3 w-3 mr-1" /> Détails
+                    </Button>
                   )}
                   <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); setConfirmDel(a); }}>
                     <Trash2 className="h-3 w-3" />
@@ -717,10 +742,10 @@ function CalendarTab({ onArticleClick, onPostClick }: { onArticleClick: (a: Arti
       )}
 
       {view === "week" && (
-        <WeekView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />
+        <WeekView cursor={cursor} byDay={byDay} postsByDay={postsByDay} onArticleClick={onArticleClick} onPostClick={onPostClick} />
       )}
-      {view === "day" && <DayView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />}
-      {view === "agenda" && <AgendaView rows={rows.filter((a) => a.statut === "Publié" || a.statut === "Planifié")} onArticleClick={onArticleClick} />}
+      {view === "day" && <DayView cursor={cursor} byDay={byDay} postsByDay={postsByDay} onArticleClick={onArticleClick} onPostClick={onPostClick} />}
+      {view === "agenda" && <AgendaView rows={rows.filter((a) => a.statut === "Publié" || a.statut === "Planifié")} posts={posts.filter((p) => p.statut === "Publié" || p.statut === "Planifié")} onArticleClick={onArticleClick} onPostClick={onPostClick} />}
     </div>
   );
 }
