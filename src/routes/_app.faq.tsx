@@ -242,11 +242,6 @@ function DocsTab() {
         </Select>
         <Button onClick={() => { setEditing(emptyDoc()); setTagsInput(""); setOpen(true); }} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><UploadCloud className="h-4 w-4 mr-1.5" /> Nouveau document</Button>
       </div>
-      <Card className="p-6 border-2 border-dashed border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 text-center cursor-pointer hover:bg-[color:var(--gold)]/10 transition-colors" onClick={() => { setEditing(emptyDoc()); setTagsInput(""); setOpen(true); }}>
-        <UploadCloud className="h-8 w-8 mx-auto text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)] mb-2" />
-        <div className="font-semibold">Importer un document</div>
-        <div className="text-xs text-muted-foreground mt-1">Glissez un fichier PDF, DOCX, XLSX ou PPTX — jusqu'à 20 Mo. Ces documents nourrissent l'agent de service client.</div>
-      </Card>
       <Card className="p-0 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
