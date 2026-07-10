@@ -466,6 +466,8 @@ function Page() {
                   </Card>
                 </div>
 
+                <AiAnalysisCard enquete={detail} />
+
                 <PerQuestionAnalytics enquete={detail} />
 
 
