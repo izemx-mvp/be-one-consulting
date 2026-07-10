@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Inbox, Users, ClipboardList, CalendarClock, Newspaper, HelpCircle, LogOut, Bell, Search, Sun, Moon, ChevronsLeft, ChevronsRight, ChevronRight, Sparkles, User, Settings } from "lucide-react";
+import { LayoutDashboard, Inbox, Users, ClipboardList, CalendarClock, Newspaper, HelpCircle, LogOut, Bell, Search, Sun, Moon, ChevronsLeft, ChevronsRight, ChevronRight, Sparkles, User, Settings, ShieldCheck } from "lucide-react";
 import { LOGO_URL, auth, useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -8,16 +8,18 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState, type ReactNode } from "react";
 import { useTheme } from "@/lib/theme";
-import { notificationsStore, useStore, demandesStore, candidatsStore, articlesStore, faqStore } from "@/lib/mock-data";
+import { notificationsStore, useStore, demandesStore, candidatsStore, articlesStore, faqStore, usersStore, currentUser, type ModuleKey } from "@/lib/mock-data";
+import { useCurrentUser, useCan } from "@/lib/permissions";
 
-const nav = [
-  { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-  { to: "/demandes", label: "Qualification AI", icon: Inbox },
-  { to: "/recrutement", label: "Recrutement AI", icon: Users },
-  { to: "/enquetes", label: "Enquêtes AI", icon: ClipboardList },
-  { to: "/articles", label: "Articles AI", icon: Newspaper },
-  { to: "/faq", label: "Base de connaissance", icon: HelpCircle },
-] as const;
+const nav: { to: string; label: string; icon: typeof LayoutDashboard; module: ModuleKey }[] = [
+  { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, module: "dashboard" },
+  { to: "/demandes", label: "Qualification AI", icon: Inbox, module: "demandes" },
+  { to: "/recrutement", label: "Recrutement AI", icon: Users, module: "recrutement" },
+  { to: "/enquetes", label: "Enquêtes AI", icon: ClipboardList, module: "enquetes" },
+  { to: "/articles", label: "Articles AI", icon: Newspaper, module: "articles" },
+  { to: "/faq", label: "Base de connaissance", icon: HelpCircle, module: "faq" },
+  { to: "/utilisateurs", label: "Utilisateurs", icon: ShieldCheck, module: "utilisateurs" },
+];
 
 const routeLabels: Record<string, string> = {
   dashboard: "Tableau de bord",
@@ -26,7 +28,9 @@ const routeLabels: Record<string, string> = {
   enquetes: "Enquêtes AI",
   articles: "Articles AI",
   faq: "Base de connaissance",
+  utilisateurs: "Utilisateurs",
 };
+
 
 function GlobalSearch() {
   const [q, setQ] = useState("");
