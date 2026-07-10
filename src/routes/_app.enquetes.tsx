@@ -115,7 +115,7 @@ function Page() {
         "Le rapport qualité / prix vous semble-t-il juste ?",
         "Un mot pour l'équipe ?",
       ];
-      setAiQuestions(base);
+      setAiQuestions(base.map((q) => ({ q, type: detectQuestionType(q) })));
       setAiLoading(false);
       toast.success("Questionnaire généré par l'IA", { description: `${base.length} questions proposées, éditables.` });
     }, 900);
