@@ -175,8 +175,8 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <aside className={cn("shrink-0 bg-sidebar text-sidebar-foreground flex flex-col transition-[width] duration-300 border-r border-sidebar-border", collapsed ? "w-[76px]" : "w-64")}>
+    <div className="h-screen flex bg-background overflow-hidden">
+      <aside className={cn("shrink-0 bg-sidebar text-sidebar-foreground flex flex-col transition-[width] duration-300 border-r border-sidebar-border h-screen sticky top-0", collapsed ? "w-[76px]" : "w-64")}>
         <div className={cn("border-b border-sidebar-border flex items-center justify-center", collapsed ? "p-3" : "p-5")}>
           <div className={cn("bg-white rounded-xl shadow-sm flex items-center justify-center", collapsed ? "h-11 w-11 p-1.5" : "h-16 w-full p-2.5")}>
             <img src={LOGO_URL} alt="Be One Consulting" className={cn("object-contain", collapsed ? "h-8 w-8" : "h-11 w-auto max-w-full")} />
