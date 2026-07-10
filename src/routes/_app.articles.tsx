@@ -596,12 +596,11 @@ function dateKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function CalendarTab({ onArticleClick }: { onArticleClick: (a: Article) => void }) {
+function CalendarTab({ onArticleClick, onPostClick }: { onArticleClick: (a: Article) => void; onPostClick: (p: SocialPost) => void }) {
   const rows = useStore(articlesStore);
   const posts = useStore(postsStore);
   const [view, setView] = useState<View>("month");
   const [cursor, setCursor] = useState<Date>(new Date());
-  const [postDetail, setPostDetail] = useState<SocialPost | null>(null);
 
   const byDay = useMemo(() => {
     const m = new Map<string, Article[]>();
