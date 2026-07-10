@@ -350,19 +350,20 @@ function Page() {
               </div>
             </div>
           )}
-          <DialogFooter className="justify-between">
+          </div>
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30 flex-row justify-between sm:justify-between">
             <Button variant="outline" onClick={() => step > 1 ? setStep(step - 1) : setOpen(false)}>
               {step > 1 ? "Précédent" : "Annuler"}
             </Button>
             {step < 4 ? (
-              <Button onClick={() => setStep(step + 1)} className="bg-primary text-primary-foreground">Suivant</Button>
+              <Button onClick={() => setStep(step + 1)} className="btn-premium hover:[&]:btn-premium-hover">Suivant</Button>
             ) : (
-
-              <Button onClick={save} className="bg-primary text-primary-foreground">Enregistrer</Button>
+              <Button onClick={save} className="btn-premium hover:[&]:btn-premium-hover">Enregistrer</Button>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       {/* Detail Drawer */}
       <Sheet open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
