@@ -1446,7 +1446,6 @@ function PostsTab() {
           <Plus className="h-4 w-4 mr-1" /> Nouveau post
         </Button>
       </div>
-      <ContentTypePicker open={false} onOpenChange={() => {}} onPick={() => {}} />
       <PostWizard open={postOpen} onOpenChange={setPostOpen} editing={editing} />
       <ScheduleDialog open={!!scheduleFor} onOpenChange={(v) => !v && setScheduleFor(null)} initialDate={scheduleFor?.date} initialTime={scheduleFor?.heure} onConfirm={({ date, time }) => { if (scheduleFor) { postsStore.update(scheduleFor.id, { statut: "Planifié", date, heure: time }); toast.success(`Post planifié pour le ${date} à ${time}`); setScheduleFor(null); } }} />
 
