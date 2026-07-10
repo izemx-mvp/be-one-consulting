@@ -25,8 +25,8 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     setLoading(true);
     setTimeout(() => {
       auth.login(email, password);
@@ -42,7 +42,10 @@ function LoginPage() {
         <div className="absolute inset-0 opacity-70 pointer-events-none">
           <div className="absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-[color:var(--gold)]/15 blur-3xl" />
           <div className="absolute bottom-0 right-0 h-[420px] w-[420px] rounded-full bg-primary/40 blur-3xl" />
-          <svg className="absolute inset-0 h-full w-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            className="absolute inset-0 h-full w-full opacity-[0.06]"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <defs>
               <pattern id="p" width="40" height="40" patternUnits="userSpaceOnUse">
                 <path d="M0 40L40 0" stroke="currentColor" strokeWidth="0.5" />
@@ -62,10 +65,13 @@ function LoginPage() {
             <span className="h-px w-8 bg-[color:var(--gold)]" /> Espace administrateur
           </div>
           <h2 className="text-3xl font-semibold leading-tight">
-            Premier partenaire marocain en solutions <span className="text-[color:var(--gold)]">Ressources Humaines</span> & Business Performance.
+            Premier partenaire marocain en solutions{" "}
+            <span className="text-[color:var(--gold)]">Ressources Humaines</span> & Business
+            Performance.
           </h2>
           <p className="text-sidebar-foreground/70">
-            Suivi des demandes clients, CVthèque, enquêtes, rendez-vous, articles et base de connaissance — une plateforme unifiée pour piloter votre activité.
+            Suivi des demandes clients, CVthèque, enquêtes, rendez-vous, articles et base de
+            connaissance — une plateforme unifiée pour piloter votre activité.
           </p>
         </div>
         <div className="relative text-xs text-sidebar-foreground/50">
@@ -80,25 +86,52 @@ function LoginPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Bienvenue</h1>
-            <p className="text-sm text-muted-foreground mt-1">Connectez-vous à votre espace administrateur.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Connectez-vous à votre espace administrateur.
+            </p>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Adresse e-mail</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Mot de passe</Label>
-                <a href="#" onClick={(e) => e.preventDefault()} className="text-xs text-muted-foreground hover:text-foreground">
+                <a
+                  href="#"
+                  onClick={(e) => e.preventDefault()}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
                   Mot de passe oublié ?
                 </a>
               </div>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
-            <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground h-11">
-              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Connexion...</> : "Se connecter"}
+            <Button
+              type="submit"
+              disabled={loading}
+              onClick={handleSubmit}
+              className="w-full bg-primary text-primary-foreground h-11"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Connexion...
+                </>
+              ) : (
+                "Se connecter"
+              )}
             </Button>
           </form>
 
@@ -107,7 +140,8 @@ function LoginPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--gold)] pulse-soft" />
               Identifiants de démonstration
             </div>
-            Email : <span className="font-mono">{DEMO_EMAIL}</span><br />
+            Email : <span className="font-mono">{DEMO_EMAIL}</span>
+            <br />
             Mot de passe : <span className="font-mono">{DEMO_PASSWORD}</span>
           </div>
         </Card>
