@@ -540,7 +540,7 @@ export const DEFAULT_EVAL_CRITERIA: EvaluationCriterion[] = [
 
 // ---------- Community Manager: Social Posts ----------
 export type SocialPlatform = "LinkedIn" | "Facebook" | "Instagram" | "YouTube";
-export type PostMedia = { id: string; kind: "image" | "video"; url: string; alt?: string };
+export type PostMedia = { id: string; kind: "image" | "video"; url: string; alt?: string; description?: string; reference?: string; prompt?: string };
 export type PostPlatformConfig = Record<string, string | number>;
 export type SocialPost = {
   id: string;
