@@ -608,3 +608,78 @@ function PerQuestionAnalytics({ enquete }: { enquete: Enquete }) {
     </section>
   );
 }
+
+function AiAnalysisCard({ enquete }: { enquete: Enquete }) {
+  const seed = enquete.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const rnd = (n: number) => ((seed * 1103515245 + n * 12345) & 0x7fffffff) / 0x7fffffff;
+  const sentiment = Math.round(55 + rnd(1) * 40);
+  const trends = [
+    "Amélioration continue de la satisfaction globale (+8 pts vs Q4)",
+    "Réactivité perçue comme le principal point fort (78% de mentions positives)",
+    "Communication écrite jugée trop technique par 24% des répondants",
+  ];
+  const positives = [
+    "Expertise reconnue et valorisée par les répondants",
+    "Ponctualité et respect des délais annoncés",
+    "Qualité des livrables jugée très satisfaisante",
+  ];
+  const negatives = [
+    "Manque de transparence sur les évolutions en cours de projet",
+    "Documentation intermédiaire insuffisante pour certains sujets",
+    "Prix perçu comme élevé par les répondants du segment PME",
+  ];
+  const topics = ["Expertise", "Réactivité", "Prix", "Communication", "Innovation", "Suivi", "Restitution", "Documentation"];
+  const risks = sentiment < 65 ? ["Risque de churn sur segment PME", "Attente forte sur la transparence"] : ["Attente forte sur l'innovation"];
+  const actions = [
+    "Programmer un webinaire de restitution collective",
+    "Ajouter un point de reporting bi-hebdomadaire pour les projets > 3 mois",
+    "Repositionner l'offre pour le segment PME",
+  ];
+  return (
+    <Card className="card-elevated p-5 border-[color:var(--gold)]/30">
+      <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-[color:var(--gold)]" />
+          <h3 className="font-semibold text-sm">Analyse IA de l'enquête</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Sentiment global</div>
+          <div className={cn("text-lg font-bold tabular-nums", sentiment >= 75 ? "text-emerald-600" : sentiment >= 60 ? "text-[color:var(--gold)]" : "text-amber-600")}>{sentiment}%</div>
+          <div className="w-24 h-2 rounded-full bg-muted overflow-hidden">
+            <div className={cn("h-full", sentiment >= 75 ? "bg-emerald-500" : sentiment >= 60 ? "bg-[color:var(--gold)]" : "bg-amber-500")} style={{ width: `${sentiment}%` }} />
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <div className="text-[11px] uppercase font-semibold text-muted-foreground mb-1.5">Tendances principales</div>
+          <ul className="text-sm space-y-1">{trends.map((t, i) => <li key={i} className="flex gap-2"><span className="text-[color:var(--gold)]">▲</span> {t}</li>)}</ul>
+        </div>
+        <div>
+          <div className="text-[11px] uppercase font-semibold text-emerald-600 mb-1.5">Points positifs</div>
+          <ul className="text-sm space-y-1">{positives.map((t, i) => <li key={i} className="flex gap-2"><span className="text-emerald-600">+</span> {t}</li>)}</ul>
+        </div>
+        <div>
+          <div className="text-[11px] uppercase font-semibold text-amber-600 mb-1.5">Points d'attention</div>
+          <ul className="text-sm space-y-1">{negatives.map((t, i) => <li key={i} className="flex gap-2"><span className="text-amber-600">−</span> {t}</li>)}</ul>
+        </div>
+        <div>
+          <div className="text-[11px] uppercase font-semibold text-muted-foreground mb-1.5">Sujets fréquemment mentionnés</div>
+          <div className="flex flex-wrap gap-1.5">{topics.map((t, i) => <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-[color:var(--gold)]/12 border border-[color:var(--gold)]/25 text-[color:var(--gold)]" style={{ fontSize: `${11 + ((i * 3) % 5)}px` }}>{t}</span>)}</div>
+        </div>
+        <div>
+          <div className="text-[11px] uppercase font-semibold text-red-600 mb-1.5">Indicateurs de risque</div>
+          <ul className="text-sm space-y-1">{risks.map((r, i) => <li key={i} className="flex gap-2 items-start"><span className="text-red-600 mt-0.5">!</span> {r}</li>)}</ul>
+        </div>
+        <div>
+          <div className="text-[11px] uppercase font-semibold text-sky-600 mb-1.5">Actions recommandées</div>
+          <ul className="text-sm space-y-1">{actions.map((a, i) => <li key={i} className="flex gap-2"><span className="text-sky-600">→</span> {a}</li>)}</ul>
+        </div>
+      </div>
+      <div className="mt-4 rounded-lg border p-3 bg-gradient-to-r from-[color:var(--gold)]/8 to-transparent border-[color:var(--gold)]/25">
+        <div className="text-[11px] uppercase font-semibold text-muted-foreground mb-1">Synthèse exécutive IA</div>
+        <p className="text-sm">Sur les <b>{enquete.reponses}</b> réponses collectées, l'enquête révèle un climat globalement <b>{sentiment >= 75 ? "positif" : sentiment >= 60 ? "encourageant" : "à surveiller"}</b>. Les répondants valorisent particulièrement l'expertise et la réactivité de vos équipes, tout en pointant des axes de progrès autour de la communication intermédiaire. Une action ciblée sur le segment PME et un rythme de reporting renforcé permettraient de sécuriser la fidélisation à horizon 6 mois.</p>
+      </div>
+    </Card>
+  );
+}
