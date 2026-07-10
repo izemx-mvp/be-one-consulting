@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRendezvousRouteImport } from './routes/_app.rendezvous'
 import { Route as AppRecrutementRouteImport } from './routes/_app.recrutement'
 import { Route as AppEnquetesRouteImport } from './routes/_app.enquetes'
 import { Route as AppDemandesRouteImport } from './routes/_app.demandes'
@@ -30,6 +31,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppRendezvousRoute = AppRendezvousRouteImport.update({
+  id: '/rendezvous',
+  path: '/rendezvous',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppRecrutementRoute = AppRecrutementRouteImport.update({
   id: '/recrutement',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/demandes': typeof AppDemandesRoute
   '/enquetes': typeof AppEnquetesRoute
   '/recrutement': typeof AppRecrutementRoute
+  '/rendezvous': typeof AppRendezvousRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/demandes': typeof AppDemandesRoute
   '/enquetes': typeof AppEnquetesRoute
   '/recrutement': typeof AppRecrutementRoute
+  '/rendezvous': typeof AppRendezvousRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/_app/demandes': typeof AppDemandesRoute
   '/_app/enquetes': typeof AppEnquetesRoute
   '/_app/recrutement': typeof AppRecrutementRoute
+  '/_app/rendezvous': typeof AppRendezvousRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,8 +96,16 @@ export interface FileRouteTypes {
     | '/demandes'
     | '/enquetes'
     | '/recrutement'
+    | '/rendezvous'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard' | '/demandes' | '/enquetes' | '/recrutement'
+  to:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/demandes'
+    | '/enquetes'
+    | '/recrutement'
+    | '/rendezvous'
   id:
     | '__root__'
     | '/'
@@ -98,6 +115,7 @@ export interface FileRouteTypes {
     | '/_app/demandes'
     | '/_app/enquetes'
     | '/_app/recrutement'
+    | '/_app/rendezvous'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -128,6 +146,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/rendezvous': {
+      id: '/_app/rendezvous'
+      path: '/rendezvous'
+      fullPath: '/rendezvous'
+      preLoaderRoute: typeof AppRendezvousRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/recrutement': {
       id: '/_app/recrutement'
@@ -165,6 +190,7 @@ interface AppRouteChildren {
   AppDemandesRoute: typeof AppDemandesRoute
   AppEnquetesRoute: typeof AppEnquetesRoute
   AppRecrutementRoute: typeof AppRecrutementRoute
+  AppRendezvousRoute: typeof AppRendezvousRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -172,6 +198,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDemandesRoute: AppDemandesRoute,
   AppEnquetesRoute: AppEnquetesRoute,
   AppRecrutementRoute: AppRecrutementRoute,
+  AppRendezvousRoute: AppRendezvousRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
