@@ -60,6 +60,16 @@ const sourceIcon: Record<Candidat["source"], React.ReactNode> = {
   Instagram: <Instagram className="h-3 w-3" />,
 };
 
+function defaultScoringCriteria(): ScoringCriterion[] {
+  return [
+    { id: uid(), label: "Adéquation compétences", poids: 35, type: "Compétence" },
+    { id: uid(), label: "Expérience sectorielle", poids: 30, type: "Expérience" },
+    { id: uid(), label: "Formation & diplômes", poids: 15, type: "Formation" },
+    { id: uid(), label: "Soft skills & leadership", poids: 15, type: "Soft skill" },
+    { id: uid(), label: "Localisation & mobilité", poids: 5, type: "Localisation" },
+  ];
+}
+
 function empty(): HuntingMission {
   return {
     id: "", poste: "", entreprise: "", seniorite: "Directeur", secteur: SECTEURS[0], localisation: "Casablanca",
@@ -72,6 +82,7 @@ function empty(): HuntingMission {
     formation: "", ageMin: undefined, ageMax: undefined, experienceMin: 5, mobilite: "Nationale",
     disponibilite: "3 mois", packageDetails: "", avantages: [], discretion: "Confidentielle",
     livrablesAttendus: "Shortlist de 3-5 candidats avec rapport détaillé", criteresExclusion: "", notesInternes: "",
+    scoringCriteria: defaultScoringCriteria(),
   };
 }
 
