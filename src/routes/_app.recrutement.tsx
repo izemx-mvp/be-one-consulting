@@ -127,10 +127,8 @@ function Page() {
             <TabsTrigger value="kanban">Pipeline</TabsTrigger>
             <TabsTrigger value="hunting"><Target className="h-4 w-4 mr-1.5" /> Head Hunting</TabsTrigger>
           </TabsList>
-          <Button onClick={() => setCampaignOpen(true)} variant="outline" className="border-[color:var(--gold)]/40 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]">
-            <Rocket className="h-4 w-4 mr-2" /> Lancer une campagne de sourcing
-          </Button>
         </div>
+
 
 
         <TabsContent value="table">
