@@ -1383,10 +1383,13 @@ function ArticleIdeasSection() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {ideas.map((idea) => (
-          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3">
+          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3 border-[color:var(--gold)]/40 bg-gradient-to-br from-[color:var(--gold)]/5 to-transparent">
             <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{idea.thematique}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/40 font-semibold"><Sparkles className="h-3 w-3" /> Idée IA</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{idea.thematique}</span>
+                </div>
                 <h3 className="font-semibold text-sm leading-tight">{idea.titre}</h3>
                 <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{idea.description}</div>
               </div>
