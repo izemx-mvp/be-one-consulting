@@ -746,35 +746,6 @@ function CalendarTab({ onArticleClick, onPostClick }: { onArticleClick: (a: Arti
   );
 }
 
-function CalendarPostDetail({ post, onOpenChange }: { post: SocialPost | null; onOpenChange: (v: boolean) => void }) {
-  return (
-    <Sheet open={!!post} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto scroll-fancy">
-        {post && (
-          <>
-            <SheetHeader className="border-b pb-4">
-              <div className="flex flex-wrap gap-2 mb-2">
-                {post.platforms.map((pl) => { const Icon = PLATFORM_ICONS[pl]; return <span key={pl} className={cn("text-[10px] px-2 py-0.5 rounded-full border inline-flex items-center gap-1", PLATFORM_META[pl].bg, PLATFORM_META[pl].color)}><Icon className="h-3 w-3" /> {pl}</span>; })}
-                <StatusBadge status={post.statut} dot={post.statut === "Brouillon"} />
-              </div>
-              <SheetTitle>{post.titre}</SheetTitle>
-              <div className="text-xs text-muted-foreground">Publication : {post.date}{post.heure ? ` · ${post.heure}` : ""}</div>
-            </SheetHeader>
-            <div className="py-4 space-y-4">
-              {post.media.length > 0 && (
-                <div className="grid grid-cols-2 gap-2">{post.media.map((m) => (
-                  <div key={m.id} className="aspect-video rounded-lg overflow-hidden border bg-muted"><img src={m.url} alt={m.description ?? ""} className="w-full h-full object-cover" /></div>
-                ))}</div>
-              )}
-              <section><h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Caption</h4><p className="text-sm whitespace-pre-line">{post.caption}</p></section>
-              <section><h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Hashtags</h4><div className="flex flex-wrap gap-1">{post.hashtags.map((h) => <span key={h} className="text-[11px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div></section>
-            </div>
-          </>
-        )}
-      </SheetContent>
-    </Sheet>
-  );
-}
 
 
 function startOfWeek(d: Date) {
