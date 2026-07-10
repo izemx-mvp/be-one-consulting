@@ -75,9 +75,11 @@ export type RendezVous = {
 export type Article = {
   id: string; titre: string; thematique: string;
   auteur: "IA" | "Manuel"; contenu: string;
-  statut: "Brouillon" | "En attente de validation" | "Publié";
+  statut: "Idée" | "Brouillon" | "En attente de validation" | "Planifié" | "Publié";
   date: string;
   extrait: string;
+  tags: string[];
+  heure?: string;
 };
 
 export type FaqItem = {
@@ -244,6 +246,7 @@ const titresA = [
   "Gérer les talents à haut potentiel",
   "Culture d'entreprise en fusion-acquisition",
 ];
+const tagsPool = ["RH", "IA", "Leadership", "Culture", "Talents", "Digital", "Performance", "Casablanca", "Afrique", "Innovation", "Management", "Recrutement", "Formation"];
 const seedArticles: Article[] = titresA.map((t, i) => ({
   id: uid(),
   titre: t,
@@ -253,6 +256,8 @@ const seedArticles: Article[] = titresA.map((t, i) => ({
   extrait: "Les enjeux clés pour les DRH marocains et nos recommandations concrètes issues de nos missions terrain.",
   statut: statutsA[i % statutsA.length],
   date: d(i * 3),
+  tags: [tagsPool[i % tagsPool.length], tagsPool[(i + 3) % tagsPool.length], tagsPool[(i + 7) % tagsPool.length]],
+  heure: `${9 + (i % 8)}:${((i * 15) % 60).toString().padStart(2, "0")}`,
 }));
 
 const categoriesFaq = ["Recrutement", "Conseil & Stratégie", "Formation", "Facturation", "Général", "Missions & Méthodologie"];
@@ -312,6 +317,13 @@ export const THEMATIQUES = thematiques;
 export const POSTES = postes;
 export const CONSULTANTS = consultants;
 export const ENTREPRISES = entreprises;
+
+// Editable editorial config (thematiques + topics to avoid)
+export type EditorialConfig = { id: string; thematiques: string[]; topicsAvoid: string[] };
+export const editorialConfigStore = createStore<EditorialConfig>([
+  { id: "editorial", thematiques: [...thematiques], topicsAvoid: ["Politique partisane", "Religion", "Sujets polémiques non-RH", "Comparaisons directes concurrents"] },
+]);
+
 
 // ---------- Head Hunting missions ----------
 export type HuntingMission = {

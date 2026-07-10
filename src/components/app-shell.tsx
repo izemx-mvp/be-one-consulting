@@ -167,17 +167,11 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
 
   return (
     <div className="min-h-screen flex bg-background">
-      <aside className={cn("shrink-0 bg-sidebar text-sidebar-foreground flex flex-col transition-[width] duration-300", collapsed ? "w-[76px]" : "w-64")}>
-        <div className="p-4 border-b border-sidebar-border flex items-center gap-3">
-          <div className="bg-white rounded-lg p-1.5 shrink-0">
-            <img src={LOGO_URL} alt="Be One Consulting" className="h-7 w-7 object-contain" />
+      <aside className={cn("shrink-0 bg-sidebar text-sidebar-foreground flex flex-col transition-[width] duration-300 border-r border-sidebar-border", collapsed ? "w-[76px]" : "w-64")}>
+        <div className={cn("border-b border-sidebar-border flex items-center justify-center", collapsed ? "p-3" : "p-5")}>
+          <div className={cn("bg-white rounded-xl shadow-sm flex items-center justify-center", collapsed ? "h-11 w-11 p-1.5" : "h-16 w-full p-2.5")}>
+            <img src={LOGO_URL} alt="Be One Consulting" className={cn("object-contain", collapsed ? "h-8 w-8" : "h-11 w-auto max-w-full")} />
           </div>
-          {!collapsed && (
-            <div className="leading-tight min-w-0">
-              <div className="font-semibold truncate">Be One</div>
-              <div className="text-[11px] text-sidebar-foreground/60 truncate">Consulting</div>
-            </div>
-          )}
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {nav.map((item) => {
@@ -259,7 +253,9 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
             </DropdownMenu>
           </div>
         </header>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto app-bg relative">
+          <div className="absolute inset-x-0 top-0 h-72 grid-bg pointer-events-none" />
+          <div className="relative">
           <div className="p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
             <div className="mb-6 fade-up">
               <div className="flex items-start justify-between gap-4">
@@ -273,6 +269,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
               </div>
             </div>
             {children}
+          </div>
           </div>
         </main>
       </div>
