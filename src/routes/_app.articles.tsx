@@ -63,7 +63,7 @@ import {
 } from "@/lib/mock-data";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { PostWizard, ContentTypePicker, type PostWizardPrefill } from "@/components/post-wizard";
+import { PostWizard, type PostWizardPrefill } from "@/components/post-wizard";
 import { ArticleWizard, type ArticleWizardPrefill } from "@/components/article-wizard";
 import { ScheduleDialog } from "@/components/schedule-dialog";
 import { postsStore, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
