@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRendezvousRouteImport } from './routes/_app.rendezvous'
 import { Route as AppRecrutementRouteImport } from './routes/_app.recrutement'
+import { Route as AppFaqRouteImport } from './routes/_app.faq'
 import { Route as AppEnquetesRouteImport } from './routes/_app.enquetes'
 import { Route as AppDemandesRouteImport } from './routes/_app.demandes'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
@@ -41,6 +42,11 @@ const AppRendezvousRoute = AppRendezvousRouteImport.update({
 const AppRecrutementRoute = AppRecrutementRouteImport.update({
   id: '/recrutement',
   path: '/recrutement',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFaqRoute = AppFaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEnquetesRoute = AppEnquetesRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/demandes': typeof AppDemandesRoute
   '/enquetes': typeof AppEnquetesRoute
+  '/faq': typeof AppFaqRoute
   '/recrutement': typeof AppRecrutementRoute
   '/rendezvous': typeof AppRendezvousRoute
 }
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/demandes': typeof AppDemandesRoute
   '/enquetes': typeof AppEnquetesRoute
+  '/faq': typeof AppFaqRoute
   '/recrutement': typeof AppRecrutementRoute
   '/rendezvous': typeof AppRendezvousRoute
 }
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/demandes': typeof AppDemandesRoute
   '/_app/enquetes': typeof AppEnquetesRoute
+  '/_app/faq': typeof AppFaqRoute
   '/_app/recrutement': typeof AppRecrutementRoute
   '/_app/rendezvous': typeof AppRendezvousRoute
 }
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/demandes'
     | '/enquetes'
+    | '/faq'
     | '/recrutement'
     | '/rendezvous'
   fileRoutesByTo: FileRoutesByTo
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/demandes'
     | '/enquetes'
+    | '/faq'
     | '/recrutement'
     | '/rendezvous'
   id:
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/demandes'
     | '/_app/enquetes'
+    | '/_app/faq'
     | '/_app/recrutement'
     | '/_app/rendezvous'
   fileRoutesById: FileRoutesById
@@ -173,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRecrutementRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/faq': {
+      id: '/_app/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof AppFaqRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/enquetes': {
       id: '/_app/enquetes'
       path: '/enquetes'
@@ -209,6 +228,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDemandesRoute: typeof AppDemandesRoute
   AppEnquetesRoute: typeof AppEnquetesRoute
+  AppFaqRoute: typeof AppFaqRoute
   AppRecrutementRoute: typeof AppRecrutementRoute
   AppRendezvousRoute: typeof AppRendezvousRoute
 }
@@ -218,6 +238,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDemandesRoute: AppDemandesRoute,
   AppEnquetesRoute: AppEnquetesRoute,
+  AppFaqRoute: AppFaqRoute,
   AppRecrutementRoute: AppRecrutementRoute,
   AppRendezvousRoute: AppRendezvousRoute,
 }
