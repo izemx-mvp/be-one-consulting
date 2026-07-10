@@ -56,6 +56,10 @@ import {
 import { StatusBadge } from "@/components/status-badge";
 import { RichEditor } from "@/components/rich-editor";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { PostWizard, ContentTypePicker } from "@/components/post-wizard";
+import { ScheduleDialog } from "@/components/schedule-dialog";
+import { postsStore, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
+import { Linkedin, Facebook, Instagram, Youtube, Globe as GlobeIcon, Send } from "lucide-react";
 import { toast } from "sonner";
 import { burstConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
