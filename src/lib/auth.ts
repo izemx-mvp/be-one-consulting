@@ -32,6 +32,6 @@ export function useAuth() {
 }
 
 export const DEMO_EMAIL = "admin@beone-consulting.com";
-export const DEMO_PASSWORD = "demo1234";
+export const DEMO_PASSWORD = "Demo1234!";
 export const LOGO_URL =
   "https://beone-consulting.com/wp-content/uploads/2026/01/LOGO-BEONE-1-Photoroom.png";

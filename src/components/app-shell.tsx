@@ -1,10 +1,14 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Inbox, Users, ClipboardList, CalendarClock, Newspaper, HelpCircle, LogOut } from "lucide-react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { LayoutDashboard, Inbox, Users, ClipboardList, CalendarClock, Newspaper, HelpCircle, LogOut, Bell, Search, Sun, Moon, ChevronsLeft, ChevronsRight, ChevronRight, Sparkles, User, Settings } from "lucide-react";
 import { LOGO_URL, auth, useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useState, type ReactNode } from "react";
+import { useTheme } from "@/lib/theme";
+import { notificationsStore, useStore, demandesStore, candidatsStore, articlesStore, faqStore } from "@/lib/mock-data";
 
 const nav = [
   { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
@@ -13,13 +17,150 @@ const nav = [
   { to: "/enquetes", label: "Enquêtes & Études", icon: ClipboardList },
   { to: "/rendezvous", label: "Rendez-vous", icon: CalendarClock },
   { to: "/articles", label: "Articles & Blog", icon: Newspaper },
-  { to: "/faq", label: "Base de connaissance", icon: HelpCircle },
+  { to: "/faq", label: "Service Client", icon: HelpCircle },
 ] as const;
+
+const routeLabels: Record<string, string> = {
+  dashboard: "Tableau de bord",
+  demandes: "Demandes Clients",
+  recrutement: "Recrutement",
+  enquetes: "Enquêtes & Études",
+  rendezvous: "Rendez-vous & Rappels",
+  articles: "Articles & Blog",
+  faq: "Service Client",
+};
+
+function GlobalSearch() {
+  const [q, setQ] = useState("");
+  const demandes = useStore(demandesStore);
+  const candidats = useStore(candidatsStore);
+  const articles = useStore(articlesStore);
+  const faq = useStore(faqStore);
+  const needle = q.trim().toLowerCase();
+  const results = needle ? {
+    demandes: demandes.filter((d) => d.nom.toLowerCase().includes(needle) || d.entreprise.toLowerCase().includes(needle)).slice(0, 4),
+    candidats: candidats.filter((c) => c.nom.toLowerCase().includes(needle) || c.poste.toLowerCase().includes(needle)).slice(0, 4),
+    articles: articles.filter((a) => a.titre.toLowerCase().includes(needle)).slice(0, 4),
+    faq: faq.filter((f) => f.question.toLowerCase().includes(needle)).slice(0, 4),
+  } : null;
+  const total = results ? results.demandes.length + results.candidats.length + results.articles.length + results.faq.length : 0;
+  return (
+    <Popover open={!!needle}>
+      <PopoverTrigger asChild>
+        <div className="relative w-full max-w-md hidden md:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Recherche globale — candidats, demandes, articles..." className="pl-9 bg-background/60" />
+        </div>
+      </PopoverTrigger>
+      <PopoverContent className="w-[520px] p-0" align="start">
+        <div className="p-3 border-b text-xs text-muted-foreground">
+          {total} résultat{total > 1 ? "s" : ""} pour « {q} »
+        </div>
+        <div className="max-h-[380px] overflow-auto">
+          {results && (
+            <>
+              {results.demandes.length > 0 && <Group title="Demandes">
+                {results.demandes.map((d) => (
+                  <Link key={d.id} to="/demandes" className="block px-3 py-2 hover:bg-muted text-sm" onClick={() => setQ("")}>
+                    <div className="font-medium">{d.nom} <span className="text-muted-foreground font-normal">— {d.entreprise}</span></div>
+                    <div className="text-xs text-muted-foreground">{d.type} · {d.statut}</div>
+                  </Link>
+                ))}
+              </Group>}
+              {results.candidats.length > 0 && <Group title="Candidats">
+                {results.candidats.map((c) => (
+                  <Link key={c.id} to="/recrutement" className="block px-3 py-2 hover:bg-muted text-sm" onClick={() => setQ("")}>
+                    <div className="font-medium">{c.nom}</div>
+                    <div className="text-xs text-muted-foreground">{c.poste} · {c.source}</div>
+                  </Link>
+                ))}
+              </Group>}
+              {results.articles.length > 0 && <Group title="Articles">
+                {results.articles.map((a) => (
+                  <Link key={a.id} to="/articles" className="block px-3 py-2 hover:bg-muted text-sm" onClick={() => setQ("")}>
+                    <div className="font-medium">{a.titre}</div>
+                    <div className="text-xs text-muted-foreground">{a.thematique} · {a.statut}</div>
+                  </Link>
+                ))}
+              </Group>}
+              {results.faq.length > 0 && <Group title="Base de connaissance">
+                {results.faq.map((f) => (
+                  <Link key={f.id} to="/faq" className="block px-3 py-2 hover:bg-muted text-sm" onClick={() => setQ("")}>
+                    <div className="font-medium">{f.question}</div>
+                    <div className="text-xs text-muted-foreground">{f.categorie}</div>
+                  </Link>
+                ))}
+              </Group>}
+              {total === 0 && <div className="p-6 text-center text-sm text-muted-foreground">Aucun résultat.</div>}
+            </>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div>
+      <div className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function Notifications() {
+  const notifs = useStore(notificationsStore);
+  const unread = notifs.filter((n) => !n.lu).length;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          {unread > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[360px] p-0" align="end">
+        <div className="p-3 border-b flex items-center justify-between">
+          <span className="font-semibold text-sm">Notifications</span>
+          <button
+            className="text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => notifs.forEach((n) => !n.lu && notificationsStore.update(n.id, { lu: true }))}
+          >Tout marquer comme lu</button>
+        </div>
+        <div className="max-h-[360px] overflow-auto divide-y">
+          {notifs.map((n) => (
+            <div key={n.id} className={cn("p-3 flex gap-3", !n.lu && "bg-muted/30")}>
+              <div className={cn("mt-1 h-2 w-2 rounded-full shrink-0", n.type === "success" && "bg-emerald-500", n.type === "warn" && "bg-amber-500", n.type === "info" && "bg-sky-500")} />
+              <div className="min-w-0">
+                <div className="text-sm">{n.titre}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{n.at}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <Button variant="ghost" size="icon" onClick={toggle} aria-label="Changer de thème">
+      {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+    </Button>
+  );
+}
 
 export function AppShell({ children, title, subtitle }: { children: ReactNode; title: string; subtitle?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const segments = pathname.split("/").filter(Boolean);
+  const crumbs = segments.map((s) => routeLabels[s] ?? s);
 
   const handleLogout = () => {
     auth.logout();
@@ -28,15 +169,17 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
 
   return (
     <div className="min-h-screen flex bg-background">
-      <aside className="w-64 shrink-0 bg-sidebar text-sidebar-foreground flex flex-col">
-        <div className="p-5 border-b border-sidebar-border flex items-center gap-3">
-          <div className="bg-white rounded-md p-1.5">
-            <img src={LOGO_URL} alt="Be One Consulting" className="h-8 w-auto" />
+      <aside className={cn("shrink-0 bg-sidebar text-sidebar-foreground flex flex-col transition-[width] duration-300", collapsed ? "w-[76px]" : "w-64")}>
+        <div className="p-4 border-b border-sidebar-border flex items-center gap-3">
+          <div className="bg-white rounded-lg p-1.5 shrink-0">
+            <img src={LOGO_URL} alt="Be One Consulting" className="h-7 w-7 object-contain" />
           </div>
-          <div className="leading-tight">
-            <div className="font-semibold">Be One</div>
-            <div className="text-xs text-sidebar-foreground/70">Consulting</div>
-          </div>
+          {!collapsed && (
+            <div className="leading-tight min-w-0">
+              <div className="font-semibold truncate">Be One</div>
+              <div className="text-[11px] text-sidebar-foreground/60 truncate">Consulting</div>
+            </div>
+          )}
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {nav.map((item) => {
@@ -46,43 +189,94 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                  "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
                   active
-                    ? "bg-[color:var(--gold)] text-[color:var(--gold-foreground)] font-medium"
-                    : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
                 )}
               >
-                <item.icon className="h-4 w-4" />
-                {item.label}
+                {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r bg-[color:var(--gold)] shadow-[0_0_10px_var(--gold-glow)]" />}
+                <item.icon className={cn("h-[18px] w-[18px] shrink-0", active && "text-[color:var(--gold)]")} />
+                {!collapsed && <span className="truncate">{item.label}</span>}
               </Link>
             );
           })}
         </nav>
-        <div className="p-4 border-t border-sidebar-border text-xs text-sidebar-foreground/70">
-          Premier partenaire marocain en solutions RH & Business Performance.
-        </div>
+        <button
+          onClick={() => setCollapsed((v) => !v)}
+          className="mx-3 mb-3 h-9 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground flex items-center justify-center transition-colors"
+          aria-label="Réduire le menu"
+        >
+          {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+        </button>
+        {!collapsed && (
+          <div className="p-4 border-t border-sidebar-border text-[11px] leading-relaxed text-sidebar-foreground/60">
+            Premier partenaire marocain en solutions RH & Business Performance.
+          </div>
+        )}
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b bg-card flex items-center justify-between px-6">
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">{title}</h1>
-            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        <header className="h-16 border-b glass flex items-center justify-between px-6 sticky top-0 z-30">
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span>Admin</span>
+              {crumbs.map((c, i) => (
+                <span key={i} className="flex items-center gap-1.5">
+                  <ChevronRight className="h-3 w-3" />
+                  <span className={cn(i === crumbs.length - 1 && "text-foreground font-medium")}>{c}</span>
+                </span>
+              ))}
+            </div>
+            <div className="flex-1 flex justify-center">
+              <GlobalSearch />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right text-sm">
-              <div className="font-medium">{user?.name ?? "Invité"}</div>
-              <div className="text-xs text-muted-foreground">{user?.email}</div>
-            </div>
-            <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground grid place-items-center font-medium">
-              {(user?.name ?? "?").split(" ").map((s) => s[0]).slice(0, 2).join("")}
-            </div>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-1" /> Déconnexion
-            </Button>
+          <div className="flex items-center gap-1">
+            <Notifications />
+            <ThemeToggle />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-3 ml-2 pl-3 border-l h-9">
+                  <div className="text-right text-sm hidden sm:block">
+                    <div className="font-medium leading-tight">{user?.name ?? "Invité"}</div>
+                    <div className="text-[11px] text-muted-foreground leading-tight">Administratrice</div>
+                  </div>
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground grid place-items-center font-semibold text-sm shadow-sm">
+                    {(user?.name ?? "?").split(" ").map((s) => s[0]).slice(0, 2).join("")}
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="font-medium">{user?.name}</div>
+                  <div className="text-xs text-muted-foreground font-normal">{user?.email}</div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem><User className="h-4 w-4 mr-2" /> Profil</DropdownMenuItem>
+                <DropdownMenuItem><Settings className="h-4 w-4 mr-2" /> Paramètres</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive"><LogOut className="h-4 w-4 mr-2" /> Déconnexion</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto">
+          <div className="p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
+            <div className="mb-6 fade-up">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                    {title}
+                    <Sparkles className="h-4 w-4 text-[color:var(--gold)]" />
+                  </h1>
+                  {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+                </div>
+              </div>
+            </div>
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

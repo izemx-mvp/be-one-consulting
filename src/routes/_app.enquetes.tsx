@@ -1,17 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { DataTable } from "@/components/data-table";
+import { DataTable, type FilterChip } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, BarChart3 } from "lucide-react";
-import { enquetesStore, uid, useStore, type Enquete } from "@/lib/mock-data";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Eye, Pencil, Trash2, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { enquetesStore, ENTREPRISES, uid, useStore, type Enquete, type EnqueteDest } from "@/lib/mock-data";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { toast } from "sonner";
+import { CountUp } from "@/components/count-up";
 
 export const Route = createFileRoute("/_app/enquetes")({
   head: () => ({ meta: [{ title: "Enquêtes & Études — Be One Consulting" }] }),
@@ -19,30 +24,60 @@ export const Route = createFileRoute("/_app/enquetes")({
 });
 
 const TYPES: Enquete["type"][] = ["Enquête satisfaction", "Étude de marché", "Audit organisationnel"];
-const STATUTS: Enquete["statut"][] = ["En cours", "Terminé", "En attente de relance"];
+const STATUTS: Enquete["statut"][] = ["Brouillon", "En cours", "Relance en cours", "Terminé"];
 
 function empty(): Enquete {
-  return { id: "", client: "", type: "Enquête satisfaction", envoyees: 100, reponses: 0, dateLancement: new Date().toISOString().slice(0, 10), statut: "En cours" };
+  return {
+    id: "", nom: "", client: "", type: "Enquête satisfaction",
+    envoyees: 100, reponses: 0, dateLancement: new Date().toISOString().slice(0, 10),
+    dateCloture: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+    statut: "Brouillon", destinataires: [], relances: [],
+  };
 }
 
 function Page() {
   const rows = useStore(enquetesStore);
   const [type, setType] = useState("all");
   const [statut, setStatut] = useState("all");
+  const [client, setClient] = useState("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Enquete>(empty());
+  const [step, setStep] = useState(1);
   const [detail, setDetail] = useState<Enquete | null>(null);
+  const [destPage, setDestPage] = useState(1);
+  const [confirmDel, setConfirmDel] = useState<Enquete | null>(null);
 
-  const filtered = rows.filter((r) => (type === "all" || r.type === type) && (statut === "all" || r.statut === statut));
+  const filtered = rows.filter((r) =>
+    (type === "all" || r.type === type) &&
+    (statut === "all" || r.statut === statut) &&
+    (client === "all" || r.client === client),
+  );
+
+  const chips: FilterChip[] = [];
+  if (type !== "all") chips.push({ label: `Type : ${type}`, onRemove: () => setType("all") });
+  if (statut !== "all") chips.push({ label: `Statut : ${statut}`, onRemove: () => setStatut("all") });
+  if (client !== "all") chips.push({ label: `Client : ${client}`, onRemove: () => setClient("all") });
 
   const save = () => {
-    if (!editing.client) return;
-    if (editing.id) enquetesStore.update(editing.id, editing);
-    else enquetesStore.add({ ...editing, id: uid() });
-    setOpen(false);
+    if (!editing.nom || !editing.client) { toast.error("Nom et client requis"); return; }
+    if (editing.id) { enquetesStore.update(editing.id, editing); toast.success("Enquête mise à jour"); }
+    else { enquetesStore.add({ ...editing, id: uid() }); toast.success("Enquête créée"); }
+    setOpen(false); setStep(1);
   };
 
-  const detailData = detail
+  const relancerNonRepondants = (e: Enquete) => {
+    const newDest = e.destinataires.map((d) => (d.statut === "Non répondu" || d.statut === "Envoyé") ? { ...d, statut: "Relancé" as const } : d);
+    const nb = newDest.filter((d) => d.statut === "Relancé").length;
+    enquetesStore.update(e.id, {
+      destinataires: newDest,
+      statut: "Relance en cours",
+      relances: [...e.relances, { at: new Date().toISOString().slice(0, 10), nb }],
+    });
+    setDetail({ ...e, destinataires: newDest, statut: "Relance en cours", relances: [...e.relances, { at: new Date().toISOString().slice(0, 10), nb }] });
+    toast.success(`${nb} non-répondants relancés`, { description: "Messages envoyés par email + WhatsApp." });
+  };
+
+  const destData = detail
     ? [
         { note: "Très satisfait", n: Math.round(detail.reponses * 0.45) },
         { note: "Satisfait", n: Math.round(detail.reponses * 0.32) },
@@ -52,24 +87,46 @@ function Page() {
       ]
     : [];
 
+  const satisfaction = detail
+    ? [
+        { name: "Promoteurs", value: 62, fill: "var(--chart-4)" },
+        { name: "Passifs", value: 24, fill: "var(--chart-2)" },
+        { name: "Détracteurs", value: 14, fill: "var(--chart-5)" },
+      ]
+    : [];
+
+  const destPageSize = 6;
+  const destTotalPages = detail ? Math.max(1, Math.ceil(detail.destinataires.length / destPageSize)) : 1;
+  const destSlice = detail ? detail.destinataires.slice((destPage - 1) * destPageSize, destPage * destPageSize) : [];
+
   return (
-    <AppShell title="Enquêtes & Études" subtitle="Suivi des enquêtes clients et études terrain">
+    <AppShell title="Enquêtes & Études" subtitle="Envois automatisés, relances et synthèse des résultats">
       <DataTable<Enquete>
         data={filtered}
-        searchKeys={["client"]}
+        searchKeys={["nom", "client"]}
+        searchPlaceholder="Rechercher une enquête, un client..."
         addLabel="Nouvelle enquête"
-        onAdd={() => { setEditing(empty()); setOpen(true); }}
+        onAdd={() => { setEditing(empty()); setStep(1); setOpen(true); }}
+        onRowClick={(r) => { setDetail(r); setDestPage(1); }}
+        filterChips={chips}
         filters={
           <>
             <Select value={type} onValueChange={setType}>
-              <SelectTrigger className="w-[210px]"><SelectValue placeholder="Type" /></SelectTrigger>
+              <SelectTrigger className="w-[220px]"><SelectValue placeholder="Type" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les types</SelectItem>
                 {TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={client} onValueChange={setClient}>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Client" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous clients</SelectItem>
+                {ENTREPRISES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={statut} onValueChange={setStatut}>
-              <SelectTrigger className="w-[190px]"><SelectValue placeholder="Statut" /></SelectTrigger>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Statut" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous statuts</SelectItem>
                 {STATUTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -78,94 +135,217 @@ function Page() {
           </>
         }
         columns={[
-          { header: "Client", cell: (r) => <button onClick={() => setDetail(r)} className="font-medium hover:underline text-left">{r.client}</button> },
-          { header: "Type", cell: (r) => r.type },
-          { header: "Réponses", cell: (r) => (
-            <div className="text-sm">
-              <span className="font-medium">{r.reponses}</span> / {r.envoyees}
-              <div className="w-24 h-1.5 rounded-full bg-muted mt-1 overflow-hidden">
-                <div className="h-full bg-primary" style={{ width: `${(r.reponses / r.envoyees) * 100}%` }} />
+          { header: "Enquête", sortKey: "nom", cell: (r) => <span className="font-medium">{r.nom}</span> },
+          { header: "Client", sortKey: "client", cell: (r) => r.client },
+          { header: "Type", cell: (r) => <span className="text-xs">{r.type}</span> },
+          { header: "Réponses", sortKey: "reponses", cell: (r) => (
+            <div className="min-w-[140px]">
+              <div className="text-sm"><span className="font-medium">{r.reponses}</span> <span className="text-muted-foreground">/ {r.envoyees}</span> <span className="text-xs text-muted-foreground">({Math.round((r.reponses / r.envoyees) * 100)}%)</span></div>
+              <div className="w-32 h-1.5 rounded-full bg-muted mt-1 overflow-hidden">
+                <div className="h-full bg-[color:var(--gold)] transition-all" style={{ width: `${(r.reponses / r.envoyees) * 100}%` }} />
               </div>
             </div>
           ) },
-          { header: "Date de lancement", cell: (r) => r.dateLancement },
-          { header: "Statut", cell: (r) => <StatusBadge status={r.statut} /> },
+          { header: "Lancement", sortKey: "dateLancement", cell: (r) => <span className="text-sm text-muted-foreground">{r.dateLancement}</span> },
+          { header: "Statut", cell: (r) => <StatusBadge status={r.statut} dot /> },
         ]}
         rowActions={(r) => (
-          <div className="flex justify-end gap-1">
-            <Button size="icon" variant="ghost" onClick={() => setDetail(r)}><BarChart3 className="h-4 w-4" /></Button>
-            <Button size="icon" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-            <Button size="icon" variant="ghost" onClick={() => enquetesStore.remove(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild><Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => { setDetail(r); setDestPage(1); }}><Eye className="h-4 w-4 mr-2" /> Voir résultats</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setEditing(r); setStep(1); setOpen(true); }}><Pencil className="h-4 w-4 mr-2" /> Modifier</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDel(r)}><Trash2 className="h-4 w-4 mr-2" /> Supprimer</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       />
 
+      {/* Multi-step create/edit */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>{editing.id ? "Modifier l'enquête" : "Nouvelle enquête"}</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2 space-y-1"><Label>Client</Label><Input value={editing.client} onChange={(e) => setEditing({ ...editing, client: e.target.value })} /></div>
-            <div className="space-y-1">
-              <Label>Type</Label>
-              <Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as Enquete["type"] })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-              </Select>
+          <DialogHeader>
+            <DialogTitle>{editing.id ? "Modifier l'enquête" : "Nouvelle enquête"}</DialogTitle>
+            <div className="flex items-center gap-2 pt-2 text-xs">
+              {[1, 2, 3].map((s) => (
+                <span key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-[color:var(--gold)]" : "bg-muted"}`} />
+              ))}
             </div>
-            <div className="space-y-1">
-              <Label>Statut</Label>
-              <Select value={editing.statut} onValueChange={(v) => setEditing({ ...editing, statut: v as Enquete["statut"] })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
+            <div className="text-xs text-muted-foreground pt-1">Étape {step} sur 3 — {["Infos générales", "Base destinataires", "Questionnaire"][step - 1]}</div>
+          </DialogHeader>
+          {step === 1 && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 space-y-1"><Label>Nom de l'enquête</Label><Input value={editing.nom} onChange={(e) => setEditing({ ...editing, nom: e.target.value })} /></div>
+              <div className="col-span-2 space-y-1"><Label>Client</Label><Input value={editing.client} onChange={(e) => setEditing({ ...editing, client: e.target.value })} /></div>
+              <div className="space-y-1">
+                <Label>Type</Label>
+                <Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as Enquete["type"] })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Statut</Label>
+                <Select value={editing.statut} onValueChange={(v) => setEditing({ ...editing, statut: v as Enquete["statut"] })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{STATUTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1"><Label>Date lancement</Label><Input type="date" value={editing.dateLancement} onChange={(e) => setEditing({ ...editing, dateLancement: e.target.value })} /></div>
+              <div className="space-y-1"><Label>Date clôture</Label><Input type="date" value={editing.dateCloture} onChange={(e) => setEditing({ ...editing, dateCloture: e.target.value })} /></div>
             </div>
-            <div className="space-y-1"><Label>Envoyées</Label><Input type="number" value={editing.envoyees} onChange={(e) => setEditing({ ...editing, envoyees: Number(e.target.value) })} /></div>
-            <div className="space-y-1"><Label>Réponses reçues</Label><Input type="number" value={editing.reponses} onChange={(e) => setEditing({ ...editing, reponses: Number(e.target.value) })} /></div>
-            <div className="col-span-2 space-y-1"><Label>Date de lancement</Label><Input type="date" value={editing.dateLancement} onChange={(e) => setEditing({ ...editing, dateLancement: e.target.value })} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={save} className="bg-primary text-primary-foreground">Enregistrer</Button>
+          )}
+          {step === 2 && (
+            <div className="space-y-3">
+              <div className="space-y-1"><Label>Nombre de destinataires (base importée)</Label><Input type="number" value={editing.envoyees} onChange={(e) => setEditing({ ...editing, envoyees: Number(e.target.value) })} /></div>
+              <div className="rounded-lg border-2 border-dashed p-6 text-center text-sm text-muted-foreground">
+                📎 Glissez ici un fichier CSV/Excel pour importer la base<br />
+                <span className="text-xs">(démo — chargement simulé)</span>
+              </div>
+            </div>
+          )}
+          {step === 3 && (
+            <div className="space-y-2">
+              <Label>Questionnaire type</Label>
+              <div className="space-y-2">
+                {["Satisfaction NPS (10 questions)", "Baromètre engagement collaborateur", "Étude marché B2B (15 questions)", "Audit organisationnel (25 questions)"].map((q) => (
+                  <label key={q} className="flex items-center gap-2 border rounded-lg p-3 cursor-pointer hover:bg-muted/50">
+                    <input type="radio" name="q" defaultChecked={q.startsWith("Satisfaction")} />
+                    <span className="text-sm">{q}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+          <DialogFooter className="justify-between">
+            <Button variant="outline" onClick={() => step > 1 ? setStep(step - 1) : setOpen(false)}>
+              {step > 1 ? "Précédent" : "Annuler"}
+            </Button>
+            {step < 3 ? (
+              <Button onClick={() => setStep(step + 1)} className="bg-primary text-primary-foreground">Suivant</Button>
+            ) : (
+              <Button onClick={save} className="bg-primary text-primary-foreground">Enregistrer</Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
-        <DialogContent className="sm:max-w-2xl">
+      {/* Detail Drawer */}
+      <Sheet open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto">
           {detail && (
             <>
-              <DialogHeader>
-                <DialogTitle>{detail.client} — {detail.type}</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-3 gap-3">
-                <Card className="p-4">
-                  <div className="text-xs text-muted-foreground">Taux de réponse</div>
-                  <div className="text-2xl font-semibold mt-1">{Math.round((detail.reponses / detail.envoyees) * 100)}%</div>
+              <SheetHeader className="border-b pb-4">
+                <SheetTitle className="text-xl">{detail.nom}</SheetTitle>
+                <div className="text-sm text-muted-foreground">{detail.client} · {detail.type}</div>
+                <div className="flex gap-2 mt-2"><StatusBadge status={detail.statut} dot /></div>
+              </SheetHeader>
+              <div className="py-4 space-y-5">
+                <div className="grid grid-cols-3 gap-3">
+                  <Card className="p-4">
+                    <div className="text-xs text-muted-foreground">Taux de réponse</div>
+                    <div className="text-3xl font-bold mt-1 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]"><CountUp value={Math.round((detail.reponses / detail.envoyees) * 100)} />%</div>
+                  </Card>
+                  <Card className="p-4">
+                    <div className="text-xs text-muted-foreground">Réponses</div>
+                    <div className="text-3xl font-bold mt-1"><CountUp value={detail.reponses} /> <span className="text-sm text-muted-foreground">/ {detail.envoyees}</span></div>
+                  </Card>
+                  <Card className="p-4">
+                    <div className="text-xs text-muted-foreground">NPS estimé</div>
+                    <div className="text-3xl font-bold mt-1">+{20 + (detail.reponses % 50)}</div>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  <Card className="p-3">
+                    <div className="text-sm font-semibold mb-2">Distribution des réponses</div>
+                    <div className="h-56">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={destData}>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.25} vertical={false} />
+                          <XAxis dataKey="note" fontSize={10} tickLine={false} axisLine={false} />
+                          <YAxis fontSize={11} tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                          <Bar dataKey="n" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                  <Card className="p-3">
+                    <div className="text-sm font-semibold mb-2">Satisfaction globale</div>
+                    <div className="h-56">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={satisfaction} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={2}>
+                            {satisfaction.map((s, i) => <Cell key={i} fill={s.fill} />)}
+                          </Pie>
+                          <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">Destinataires ({detail.destinataires.length})</h4>
+                  <Button size="sm" onClick={() => relancerNonRepondants(detail)} className="bg-primary text-primary-foreground">
+                    <Send className="h-4 w-4 mr-2" /> Relancer les non-répondants
+                  </Button>
+                </div>
+                <Card className="p-0 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40">
+                      <tr className="text-left">
+                        <th className="p-2 font-medium">Nom</th>
+                        <th className="p-2 font-medium">Email</th>
+                        <th className="p-2 font-medium">Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {destSlice.map((d: EnqueteDest) => (
+                        <tr key={d.id} className="border-t">
+                          <td className="p-2">{d.nom}</td>
+                          <td className="p-2 text-muted-foreground text-xs">{d.email}</td>
+                          <td className="p-2"><StatusBadge status={d.statut} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="flex items-center justify-between p-2 border-t text-xs">
+                    <span className="text-muted-foreground">Page {destPage} / {destTotalPages}</span>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="outline" className="h-7 w-7" disabled={destPage === 1} onClick={() => setDestPage(destPage - 1)}><ChevronLeft className="h-3 w-3" /></Button>
+                      <Button size="icon" variant="outline" className="h-7 w-7" disabled={destPage === destTotalPages} onClick={() => setDestPage(destPage + 1)}><ChevronRight className="h-3 w-3" /></Button>
+                    </div>
+                  </div>
                 </Card>
-                <Card className="p-4">
-                  <div className="text-xs text-muted-foreground">Réponses</div>
-                  <div className="text-2xl font-semibold mt-1">{detail.reponses}</div>
-                </Card>
-                <Card className="p-4">
-                  <div className="text-xs text-muted-foreground">Score moyen (NPS)</div>
-                  <div className="text-2xl font-semibold mt-1">+{20 + ((detail.reponses % 50))}</div>
-                </Card>
-              </div>
-              <div className="h-64 mt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={detailData}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="note" fontSize={12} />
-                    <YAxis fontSize={12} />
-                    <Tooltip />
-                    <Bar dataKey="n" fill="var(--color-chart-1)" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+
+                {detail.relances.length > 0 && (
+                  <section>
+                    <h4 className="text-sm font-semibold mb-2">Historique des relances</h4>
+                    <ul className="space-y-1 text-sm text-muted-foreground">
+                      {detail.relances.map((r, i) => (
+                        <li key={i}>• {r.at} — {r.nb} destinataires relancés</li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
+
+      <ConfirmDialog
+        open={!!confirmDel}
+        onOpenChange={(v) => !v && setConfirmDel(null)}
+        title="Supprimer cette enquête ?"
+        description="Toutes les réponses collectées seront perdues."
+        destructive
+        confirmLabel="Supprimer"
+        onConfirm={() => { if (confirmDel) { enquetesStore.remove(confirmDel.id); toast.success("Enquête supprimée"); } setConfirmDel(null); }}
+      />
     </AppShell>
   );
 }
