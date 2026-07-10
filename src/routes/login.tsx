@@ -97,7 +97,7 @@ function LoginPage() {
               </div>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground h-11">
+            <Button type="submit" disabled={loading} onClick={handleSubmit} className="w-full bg-primary text-primary-foreground h-11">
               {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Connexion...</> : "Se connecter"}
             </Button>
           </form>
