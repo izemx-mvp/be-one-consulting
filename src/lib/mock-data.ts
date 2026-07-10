@@ -397,6 +397,18 @@ const seedServices: Service[] = [
 ];
 export const servicesStore = createStore<Service>(seedServices);
 
+// ---------- Contact bases for surveys ----------
+export type ContactBase = { id: string; nom: string; description: string; nbContacts: number; source: string; derniereMaj: string };
+const seedBases: ContactBase[] = [
+  { id: uid(), nom: "Clients B2B — Grands comptes", description: "Interlocuteurs décisionnaires des 40 principaux clients Corp.", nbContacts: 187, source: "CRM HubSpot", derniereMaj: d(3) },
+  { id: uid(), nom: "Collaborateurs — Groupe complet", description: "Base RH interne, tous sites confondus.", nbContacts: 642, source: "SIRH Talentia", derniereMaj: d(1) },
+  { id: uid(), nom: "Candidats vivier 2025-2026", description: "Candidats qualifiés issus des campagnes de sourcing des 12 derniers mois.", nbContacts: 1_284, source: "CVthèque interne", derniereMaj: d(7) },
+  { id: uid(), nom: "Anciens participants formations", description: "Participants à nos parcours certifiants leadership et RH.", nbContacts: 356, source: "LMS Be One Academy", derniereMaj: d(14) },
+  { id: uid(), nom: "Prospects tièdes — Retail & FMCG", description: "Prospects ayant échangé avec l'équipe commerciale sans décision.", nbContacts: 92, source: "CRM HubSpot", derniereMaj: d(20) },
+  { id: uid(), nom: "Écosystème RH Maroc", description: "DRH, DRHA, responsables talent management identifiés au Maroc.", nbContacts: 428, source: "LinkedIn Sales Nav", derniereMaj: d(9) },
+];
+export const contactBasesStore = createStore<ContactBase>(seedBases);
+
 export const huntingStore = createStore<HuntingMission>(seedHunting);
 
 // ---------- Article cover images (Unsplash keywords) ----------
