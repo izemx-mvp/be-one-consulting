@@ -78,6 +78,8 @@ const STEP_LABELS = ["Brief poste", "Profil recherché", "Package & mobilité", 
 
 export function HeadHuntingPanel() {
   const rows = useStore(huntingStore);
+  const allCandidats = useStore(candidatsStore);
+  const [candidatDetail, setCandidatDetail] = useState<Candidat | null>(null);
   const [q, setQ] = useState("");
   const [statut, setStatut] = useState("all");
   const [urgence, setUrgence] = useState("all");
