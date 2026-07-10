@@ -466,6 +466,10 @@ function Page() {
                   </Card>
                 </div>
 
+                <PerQuestionAnalytics enquete={detail} />
+
+
+
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-semibold">Destinataires ({detail.destinataires.length})</h4>
                   <Button size="sm" onClick={() => relancerNonRepondants(detail)} className="bg-primary text-primary-foreground">
