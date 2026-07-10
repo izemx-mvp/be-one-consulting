@@ -287,10 +287,13 @@ function DocsTab() {
             </DialogHeader>
           </div>
           <div className="px-6 py-4 grid grid-cols-2 gap-3">
-            <div className="col-span-2 border-2 border-dashed border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 rounded-lg p-6 text-center text-xs text-muted-foreground">
-              <UploadCloud className="h-6 w-6 mx-auto mb-1 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]" />
-              Glissez ici votre fichier — PDF, DOCX, XLSX ou PPTX (démo — chargement simulé)
-            </div>
+            <DocDropZone
+              onFile={(f) => {
+                const ext = f.name.split(".").pop()?.toUpperCase();
+                const type = (["PDF", "DOCX", "XLSX", "PPTX"].includes(ext ?? "") ? ext : "PDF") as KbDocument["type"];
+                setEditing((prev) => ({ ...prev, nom: prev.nom || f.name, type, taille: `${(f.size / 1024).toFixed(0)} Ko` }));
+              }}
+            />
             <div className="col-span-2 space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nom du document</Label><Input value={editing.nom} onChange={(e) => setEditing({ ...editing, nom: e.target.value })} placeholder="Ex: Plaquette commerciale 2026.pdf" className="h-11" /></div>
             <div className="space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</Label><Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as KbDocument["type"] })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PDF">PDF</SelectItem><SelectItem value="DOCX">DOCX</SelectItem><SelectItem value="XLSX">XLSX</SelectItem><SelectItem value="PPTX">PPTX</SelectItem></SelectContent></Select></div>
             <div className="space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Catégorie</Label><Select value={editing.categorie} onValueChange={(v) => setEditing({ ...editing, categorie: v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{docCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
