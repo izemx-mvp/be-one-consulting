@@ -335,58 +335,63 @@ function SocialTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">Comptes officiels alimentant la présence digitale et l'agent de service client sur les réseaux.</div>
-        <Button onClick={() => { setEditing(emptySocial()); setOpen(true); }} className="bg-primary text-primary-foreground"><Plus className="h-4 w-4 mr-1" /> Ajouter un profil</Button>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <div className="font-semibold text-sm">Liens des réseaux sociaux</div>
+          <div className="text-xs text-muted-foreground">Uniquement les URL officielles utilisées par l'agent Communication.</div>
+        </div>
+        <Button onClick={() => { setEditing(emptySocial()); setOpen(true); }} className="btn-premium hover:[&]:btn-premium-hover"><Plus className="h-4 w-4 mr-1" /> Ajouter un lien</Button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {rows.map((s) => {
-          const Icon = socialIcon[s.reseau];
-          return (
-            <Card key={s.id} className="p-0 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all fade-up">
-              <div className={cn("h-24 bg-gradient-to-br relative", socialColor[s.reseau])}>
-                <Icon className="absolute right-4 bottom-3 h-10 w-10 text-white/80" />
-                <div className="absolute left-4 bottom-3 text-white">
-                  <div className="text-xs opacity-80">{s.reseau}</div>
-                  <div className="text-lg font-semibold truncate">{s.handle}</div>
+      <Card className="p-0 overflow-hidden">
+        <div className="divide-y">
+          {rows.map((s) => {
+            const Icon = socialIcon[s.reseau];
+            return (
+              <div key={s.id} className="flex items-center gap-3 p-4 hover:bg-muted/40 transition-colors">
+                <div className={cn("h-11 w-11 rounded-xl grid place-items-center text-white bg-gradient-to-br shrink-0", socialColor[s.reseau])}>
+                  <Icon className="h-5 w-5" />
                 </div>
-                {!s.actif && <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-black/50 text-white">Inactif</span>}
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium flex items-center gap-2">{s.reseau} {!s.actif && <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Inactif</span>}</div>
+                  <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline inline-flex items-center gap-1 truncate max-w-full">
+                    <ExternalLink className="h-3 w-3 shrink-0" /> <span className="truncate">{s.url.replace(/^https?:\/\//, "")}</span>
+                  </a>
+                </div>
+                <Switch checked={s.actif} onCheckedChange={(v) => socialStore.update(s.id, { actif: v })} />
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(s); setOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setConfirmDel(s)}><Trash2 className="h-3.5 w-3.5" /></Button>
               </div>
-              <div className="p-4">
-                <p className="text-xs text-muted-foreground line-clamp-2 min-h-[32px]">{s.description}</p>
-                <div className="grid grid-cols-2 gap-2 mt-3 text-center">
-                  <div className="rounded-lg bg-muted/40 p-2"><div className="text-xs text-muted-foreground">Abonnés</div><div className="font-bold tabular-nums">{s.abonnes.toLocaleString("fr-FR")}</div></div>
-                  <div className="rounded-lg bg-muted/40 p-2"><div className="text-xs text-muted-foreground">Engagement</div><div className="font-bold tabular-nums">{s.engagement}%</div></div>
-                </div>
-                <div className="flex items-center gap-2 mt-3">
-                  <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline inline-flex items-center gap-1 flex-1 truncate"><ExternalLink className="h-3 w-3" /> {s.url.replace(/^https?:\/\//, "")}</a>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditing(s); setOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setConfirmDel(s)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+            );
+          })}
+          {rows.length === 0 && <div className="p-10 text-center text-sm text-muted-foreground">Aucun lien enregistré.</div>}
+        </div>
+      </Card>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>{editing.id ? "Modifier le profil" : "Nouveau profil réseau"}</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Réseau</Label><Select value={editing.reseau} onValueChange={(v) => setEditing({ ...editing, reseau: v as SocialProfile["reseau"] })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{(["LinkedIn", "Facebook", "Instagram", "YouTube", "TikTok", "Site web"] as SocialProfile["reseau"][]).map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-1"><Label>Handle</Label><Input value={editing.handle} onChange={(e) => setEditing({ ...editing, handle: e.target.value })} placeholder="@beone-consulting" /></div>
-            <div className="col-span-2 space-y-1"><Label>URL</Label><Input value={editing.url} onChange={(e) => setEditing({ ...editing, url: e.target.value })} placeholder="https://..." /></div>
-            <div className="space-y-1"><Label>Abonnés</Label><Input type="number" value={editing.abonnes} onChange={(e) => setEditing({ ...editing, abonnes: Number(e.target.value) })} /></div>
-            <div className="space-y-1"><Label>Engagement %</Label><Input type="number" step="0.1" value={editing.engagement} onChange={(e) => setEditing({ ...editing, engagement: Number(e.target.value) })} /></div>
-            <div className="col-span-2 space-y-1"><Label>Description</Label><Textarea rows={3} value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
-            <div className="col-span-2 flex items-center justify-between rounded-lg border p-3"><div><div className="text-sm font-medium">Actif</div><div className="text-xs text-muted-foreground">Le profil est utilisé par les agents de communication.</div></div><Switch checked={editing.actif} onCheckedChange={(v) => setEditing({ ...editing, actif: v })} /></div>
+        <DialogContent className="sm:max-w-lg p-0">
+          <div className="bg-gradient-to-r from-primary/10 via-[color:var(--gold)]/10 to-transparent px-6 py-4 border-b">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><Globe className="h-5 w-5 text-[color:var(--gold)]" /> {editing.id ? "Modifier le lien" : "Nouveau lien réseau social"}</DialogTitle>
+            </DialogHeader>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button><Button onClick={save} className="bg-primary text-primary-foreground">Enregistrer</Button></DialogFooter>
+          <div className="px-6 py-4 grid grid-cols-1 gap-3">
+            <div className="space-y-1">
+              <Label>Réseau</Label>
+              <Select value={editing.reseau} onValueChange={(v) => setEditing({ ...editing, reseau: v as SocialProfile["reseau"] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{(["LinkedIn", "Facebook", "Instagram", "YouTube", "TikTok", "Site web"] as SocialProfile["reseau"][]).map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1"><Label>URL complète</Label><Input value={editing.url} onChange={(e) => setEditing({ ...editing, url: e.target.value, handle: editing.handle || e.target.value.split("/").pop() || "" })} placeholder="https://www.linkedin.com/company/beone-consulting" /></div>
+            <div className="flex items-center justify-between rounded-lg border p-3"><div><div className="text-sm font-medium">Actif</div><div className="text-xs text-muted-foreground">Utilisé par les agents.</div></div><Switch checked={editing.actif} onCheckedChange={(v) => setEditing({ ...editing, actif: v })} /></div>
+          </div>
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30"><Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button><Button onClick={save} className="btn-premium hover:[&]:btn-premium-hover">Enregistrer</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-      <ConfirmDialog open={!!confirmDel} onOpenChange={(v) => !v && setConfirmDel(null)} title="Supprimer ce profil ?" destructive confirmLabel="Supprimer" onConfirm={() => { if (confirmDel) { socialStore.remove(confirmDel.id); toast.success("Profil supprimé"); } setConfirmDel(null); }} />
+      <ConfirmDialog open={!!confirmDel} onOpenChange={(v) => !v && setConfirmDel(null)} title="Supprimer ce lien ?" destructive confirmLabel="Supprimer" onConfirm={() => { if (confirmDel) { socialStore.remove(confirmDel.id); toast.success("Lien supprimé"); } setConfirmDel(null); }} />
     </div>
   );
 }
+
 
 // ------------- SERVICES TAB -------------
 const familles: Service["famille"][] = ["Conseil", "Recrutement", "Formation", "Assessment", "Enquêtes"];
