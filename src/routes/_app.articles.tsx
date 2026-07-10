@@ -719,7 +719,7 @@ function CalendarTab({ onArticleClick, onPostClick }: { onArticleClick: (a: Arti
         <WeekView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />
       )}
       {view === "day" && <DayView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />}
-      {view === "agenda" && <AgendaView rows={rows} onArticleClick={onArticleClick} />}
+      {view === "agenda" && <AgendaView rows={rows.filter((a) => a.statut === "Publié" || a.statut === "Planifié")} onArticleClick={onArticleClick} />}
     </div>
   );
 }
