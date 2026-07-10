@@ -344,18 +344,18 @@ function GridTab({
                 </div>
                 <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
                   {a.statut !== "Publié" && (
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publishNow(a); }}>
-                      <Send className="h-3 w-3 mr-1" /> Publier
-                    </Button>
+                    <>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publishNow(a); }}>
+                        <Send className="h-3 w-3 mr-1" /> Publier
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleForArticle(a); }}>
+                        <Clock className="h-3 w-3 mr-1" /> Planifier
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); openEdit(a); }}>
+                        <Pencil className="h-3 w-3 mr-1" /> Modifier
+                      </Button>
+                    </>
                   )}
-                  {a.statut !== "Publié" && (
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleForArticle(a); }}>
-                      <Clock className="h-3 w-3 mr-1" /> Planifier
-                    </Button>
-                  )}
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); openEdit(a); }}>
-                    <Pencil className="h-3 w-3 mr-1" /> Modifier
-                  </Button>
                   <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); setConfirmDel(a); }}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
