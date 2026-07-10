@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Inbox, Users, ClipboardList, CalendarClock, Newspaper, HelpCircle, LogOut, Bell, Search, Sun, Moon, ChevronsLeft, ChevronsRight, ChevronRight, Sparkles, User, Settings, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Inbox, Users, ClipboardList, Newspaper, HelpCircle, LogOut, Bell, Search, Sun, Moon, ChevronsLeft, ChevronsRight, ChevronRight, Sparkles, ShieldCheck } from "lucide-react";
 import { LOGO_URL, auth, useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
