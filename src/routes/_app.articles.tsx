@@ -1531,10 +1531,10 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
       <PostIdeasSection />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {posts.map((p) => (
+        {posts.map((p, i) => (
           <Card key={p.id} className="p-0 overflow-hidden hover-lift fade-up card-elevated group">
             <div className="h-40 bg-muted relative cursor-pointer" onClick={() => setDetail(p)}>
-              {p.media[0] ? <img src={p.media[0].url} alt="" className="w-full h-full object-cover" /> : <div className="grid place-items-center h-full text-muted-foreground text-xs">Aucun média</div>}
+              <img src={postMediaFor(p, i)} alt={p.media[0]?.alt ?? p.titre} className="w-full h-full object-cover transition-transform group-hover:scale-105" loading="lazy" onError={(e) => { e.currentTarget.src = POST_IMAGES[i % POST_IMAGES.length]; }} />
               <div className="absolute top-2 left-2 flex gap-1">
                 {p.platforms.map((pl) => {
                   const Icon = PLATFORM_ICONS[pl];
@@ -1551,7 +1551,7 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
                 <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {p.date}{p.heure ? ` ${p.heure}` : ""}</span>
               </div>
               <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
-                {p.statut !== "Publié" && (
+                {p.statut === "Brouillon" && (
                   <>
                     <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publish(p); }}>
                       <Send className="h-3 w-3 mr-1" /> Publier
@@ -1563,6 +1563,27 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
                       <Pencil className="h-3 w-3 mr-1" /> Modifier
                     </Button>
                   </>
+                )}
+                {p.statut === "Planifié" && (
+                  <>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publish(p); }}>
+                      <Send className="h-3 w-3 mr-1" /> Publier
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleFor(p); }}>
+                      <Clock className="h-3 w-3 mr-1" /> Replanifier
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setDraft(p); }}>
+                      <RefreshCw className="h-3 w-3 mr-1" /> Brouillon
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); openEdit(p); }}>
+                      <Pencil className="h-3 w-3 mr-1" /> Modifier
+                    </Button>
+                  </>
+                )}
+                {p.statut === "Publié" && (
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setDetail(p); }}>
+                    <FileText className="h-3 w-3 mr-1" /> Détails
+                  </Button>
                 )}
                 <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); setConfirmDel(p); }}>
                   <Trash2 className="h-3 w-3" />
@@ -1605,7 +1626,7 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
               <div className="py-4 space-y-4">
                 {detail.media.length > 0 && (
                   detail.media.length === 1 ? (
-                    <img src={detail.media[0].url} alt={detail.media[0].alt ?? ""} className="w-full h-56 object-cover rounded-lg" />
+                    <img src={postMediaFor(detail)} alt={detail.media[0]?.alt ?? detail.titre} className="w-full h-56 object-cover rounded-lg" onError={(e) => { e.currentTarget.src = POST_IMAGES[0]; }} />
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
                       {detail.media.map((m) => (
