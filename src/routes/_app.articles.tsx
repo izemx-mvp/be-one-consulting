@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_app/articles")({
   component: Page,
 });
 
-const STATUTS: Article["statut"][] = ["Brouillon", "En attente de validation", "Planifié", "Publié"];
+const STATUTS: Article["statut"][] = ["Brouillon", "Planifié", "Publié"];
 const PAGE_SIZE = 9;
 
 function coverFor(a: Article, i: number) {
