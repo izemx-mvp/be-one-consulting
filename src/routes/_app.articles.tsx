@@ -1514,18 +1514,18 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
               </div>
               <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
                 {p.statut !== "Publié" && (
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publish(p); }}>
-                    <Send className="h-3 w-3 mr-1" /> Publier
-                  </Button>
+                  <>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publish(p); }}>
+                      <Send className="h-3 w-3 mr-1" /> Publier
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleFor(p); }}>
+                      <Clock className="h-3 w-3 mr-1" /> Planifier
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); openEdit(p); }}>
+                      <Pencil className="h-3 w-3 mr-1" /> Modifier
+                    </Button>
+                  </>
                 )}
-                {p.statut !== "Publié" && (
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleFor(p); }}>
-                    <Clock className="h-3 w-3 mr-1" /> Planifier
-                  </Button>
-                )}
-                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); openEdit(p); }}>
-                  <Pencil className="h-3 w-3 mr-1" /> Modifier
-                </Button>
                 <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); setConfirmDel(p); }}>
                   <Trash2 className="h-3 w-3" />
                 </Button>
