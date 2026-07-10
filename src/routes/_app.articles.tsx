@@ -66,7 +66,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PostWizard, type PostWizardPrefill } from "@/components/post-wizard";
 import { ArticleWizard, type ArticleWizardPrefill } from "@/components/article-wizard";
 import { ScheduleDialog } from "@/components/schedule-dialog";
-import { postsStore, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
+import { postsStore, POST_IMAGES, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
 import { Linkedin, Facebook, Instagram, Youtube, Globe as GlobeIcon, Send, Lightbulb, RefreshCw, Bookmark, Copy } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -85,6 +85,10 @@ const PAGE_SIZE = 9;
 
 function coverFor(a: Article, i: number) {
   return ARTICLE_IMAGES[(a.titre.length + i) % ARTICLE_IMAGES.length];
+}
+
+function postMediaFor(p: SocialPost, i = 0) {
+  return p.media[0]?.url ?? POST_IMAGES[(p.titre.length + i) % POST_IMAGES.length];
 }
 
 function useConfig() {
@@ -108,6 +112,7 @@ function empty(cfg: { thematiques: string[] }): Article {
 }
 
 function Page() {
+  const [activeTab, setActiveTab] = useState("grid");
   const [detailArticle, setDetailArticle] = useState<Article | null>(null);
   const [detailPost, setDetailPost] = useState<SocialPost | null>(null);
   return (
@@ -115,7 +120,7 @@ function Page() {
       title="Community Manager AI"
       subtitle="Agent Rédaction — création IA ou manuelle, validation, planification et publication"
     >
-      <Tabs defaultValue="grid">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="grid"><LayoutGrid className="h-4 w-4 mr-2" /> Articles</TabsTrigger>
           <TabsTrigger value="posts"><Send className="h-4 w-4 mr-2" /> Posts sociaux</TabsTrigger>
@@ -124,7 +129,7 @@ function Page() {
         </TabsList>
         <TabsContent value="grid" forceMount className="data-[state=inactive]:hidden"><GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} /></TabsContent>
         <TabsContent value="posts" forceMount className="data-[state=inactive]:hidden"><PostsTab externalDetail={detailPost} setExternalDetail={setDetailPost} /></TabsContent>
-        <TabsContent value="calendar"><CalendarTab onArticleClick={setDetailArticle} onPostClick={setDetailPost} /></TabsContent>
+        <TabsContent value="calendar"><CalendarTab onArticleClick={(article) => { setDetailPost(null); setDetailArticle(article); setActiveTab("grid"); }} onPostClick={(post) => { setDetailArticle(null); setDetailPost(post); setActiveTab("posts"); }} /></TabsContent>
         <TabsContent value="config"><ConfigTab /></TabsContent>
       </Tabs>
 
@@ -343,7 +348,7 @@ function GridTab({
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
-                  {a.statut !== "Publié" && (
+                  {a.statut === "Brouillon" && (
                     <>
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publishNow(a); }}>
                         <Send className="h-3 w-3 mr-1" /> Publier
@@ -355,6 +360,27 @@ function GridTab({
                         <Pencil className="h-3 w-3 mr-1" /> Modifier
                       </Button>
                     </>
+                  )}
+                  {a.statut === "Planifié" && (
+                    <>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publishNow(a); }}>
+                        <Send className="h-3 w-3 mr-1" /> Publier
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleForArticle(a); }}>
+                        <Clock className="h-3 w-3 mr-1" /> Replanifier
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); unpublish(a); }}>
+                        <RefreshCw className="h-3 w-3 mr-1" /> Brouillon
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); openEdit(a); }}>
+                        <Pencil className="h-3 w-3 mr-1" /> Modifier
+                      </Button>
+                    </>
+                  )}
+                  {a.statut === "Publié" && (
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setDetail(a); }}>
+                      <FileText className="h-3 w-3 mr-1" /> Détails
+                    </Button>
                   )}
                   <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); setConfirmDel(a); }}>
                     <Trash2 className="h-3 w-3" />
@@ -716,10 +742,10 @@ function CalendarTab({ onArticleClick, onPostClick }: { onArticleClick: (a: Arti
       )}
 
       {view === "week" && (
-        <WeekView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />
+        <WeekView cursor={cursor} byDay={byDay} postsByDay={postsByDay} onArticleClick={onArticleClick} onPostClick={onPostClick} />
       )}
-      {view === "day" && <DayView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />}
-      {view === "agenda" && <AgendaView rows={rows.filter((a) => a.statut === "Publié" || a.statut === "Planifié")} onArticleClick={onArticleClick} />}
+      {view === "day" && <DayView cursor={cursor} byDay={byDay} postsByDay={postsByDay} onArticleClick={onArticleClick} onPostClick={onPostClick} />}
+      {view === "agenda" && <AgendaView rows={rows.filter((a) => a.statut === "Publié" || a.statut === "Planifié")} posts={posts.filter((p) => p.statut === "Publié" || p.statut === "Planifié")} onArticleClick={onArticleClick} onPostClick={onPostClick} />}
     </div>
   );
 }
@@ -881,11 +907,15 @@ function postToneFor(p: SocialPost) {
 function WeekView({
   cursor,
   byDay,
+  postsByDay,
   onArticleClick,
+  onPostClick,
 }: {
   cursor: Date;
   byDay: Map<string, Article[]>;
+  postsByDay: Map<string, SocialPost[]>;
   onArticleClick: (a: Article) => void;
+  onPostClick: (p: SocialPost) => void;
 }) {
   const start = startOfWeek(cursor);
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -897,7 +927,13 @@ function WeekView({
   return (
     <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
       {days.map((d) => {
-        const evs = byDay.get(dateKey(d)) ?? [];
+        const key = dateKey(d);
+        const evs = byDay.get(key) ?? [];
+        const dayPosts = postsByDay.get(key) ?? [];
+        const merged = [
+          ...evs.map((a) => ({ kind: "article" as const, id: a.id, entity: a })),
+          ...dayPosts.map((p) => ({ kind: "post" as const, id: p.id, entity: p })),
+        ].sort((a, b) => ((a.entity.heure ?? "") + a.entity.titre).localeCompare((b.entity.heure ?? "") + b.entity.titre));
         const isToday = d.toDateString() === today.toDateString();
         return (
           <Card key={d.toISOString()} className="p-3 min-h-[280px]">
@@ -918,20 +954,18 @@ function WeekView({
               </span>
             </div>
             <div className="space-y-1.5">
-              {evs.length === 0 && (
+              {merged.length === 0 && (
                 <div className="text-[10px] text-muted-foreground italic">Aucune publication</div>
               )}
-              {evs.map((a) => (
-                <button
-                  key={a.id}
-                  onClick={() => onArticleClick(a)}
-                  className={cn(
-                    "w-full text-left text-[11px] px-2 py-1.5 rounded border hover:brightness-95 transition",
-                    toneFor(a),
-                  )}
-                >
-                  {a.heure && <div className="text-[9px] opacity-70">{a.heure}</div>}
-                  <div className="font-medium line-clamp-2">{a.titre}</div>
+              {merged.map((ev) => ev.kind === "article" ? (
+                <button key={`a-${ev.id}`} onClick={() => onArticleClick(ev.entity)} className={cn("w-full text-left text-[11px] px-2 py-1.5 rounded border hover:brightness-95 transition", toneFor(ev.entity))}>
+                  {ev.entity.heure && <div className="text-[9px] opacity-70">{ev.entity.heure}</div>}
+                  <div className="font-medium line-clamp-2 flex items-start gap-1"><GlobeIcon className="h-3 w-3 mt-0.5 shrink-0" /> {ev.entity.titre}</div>
+                </button>
+              ) : (
+                <button key={`p-${ev.id}`} onClick={() => onPostClick(ev.entity)} className={cn("w-full text-left text-[11px] px-2 py-1.5 rounded border hover:brightness-95 transition", postToneFor(ev.entity))}>
+                  {ev.entity.heure && <div className="text-[9px] opacity-70">{ev.entity.heure}</div>}
+                  <div className="font-medium line-clamp-2 flex items-start gap-1"><Send className="h-3 w-3 mt-0.5 shrink-0" /> {ev.entity.titre}</div>
                 </button>
               ))}
             </div>
@@ -945,31 +979,43 @@ function WeekView({
 function DayView({
   cursor,
   byDay,
+  postsByDay,
   onArticleClick,
+  onPostClick,
 }: {
   cursor: Date;
   byDay: Map<string, Article[]>;
+  postsByDay: Map<string, SocialPost[]>;
   onArticleClick: (a: Article) => void;
+  onPostClick: (p: SocialPost) => void;
 }) {
   const evs = (byDay.get(dateKey(cursor)) ?? [])
     .slice()
     .sort((a, b) => (a.heure ?? "").localeCompare(b.heure ?? ""));
+  const postEvs = (postsByDay.get(dateKey(cursor)) ?? [])
+    .slice()
+    .sort((a, b) => (a.heure ?? "").localeCompare(b.heure ?? ""));
   const hours = Array.from({ length: 12 }, (_, i) => 8 + i); // 8h → 19h
-  const byHour = new Map<number, Article[]>();
+  const byHour = new Map<number, Array<{ kind: "article"; entity: Article } | { kind: "post"; entity: SocialPost }>>();
   for (const a of evs) {
     const h = parseInt((a.heure ?? "09:00").slice(0, 2), 10);
     if (!byHour.has(h)) byHour.set(h, []);
-    byHour.get(h)!.push(a);
+    byHour.get(h)!.push({ kind: "article", entity: a });
+  }
+  for (const p of postEvs) {
+    const h = parseInt((p.heure ?? "09:00").slice(0, 2), 10);
+    if (!byHour.has(h)) byHour.set(h, []);
+    byHour.get(h)!.push({ kind: "post", entity: p });
   }
   return (
     <Card className="p-0 overflow-hidden">
-      {evs.length === 0 && (
+      {evs.length + postEvs.length === 0 && (
         <div className="p-16 text-center text-muted-foreground">
           <CalendarDays className="h-10 w-10 mx-auto mb-2 opacity-40" />
           Aucune publication ce jour.
         </div>
       )}
-      {evs.length > 0 && (
+      {evs.length + postEvs.length > 0 && (
         <div className="divide-y">
           {hours.map((h) => {
             const items = byHour.get(h) ?? [];
@@ -979,23 +1025,15 @@ function DayView({
                   {String(h).padStart(2, "0")}:00
                 </div>
                 <div className="p-2 space-y-1.5">
-                  {items.map((a) => (
-                    <button
-                      key={a.id}
-                      onClick={() => onArticleClick(a)}
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition",
-                        toneFor(a),
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono opacity-70">{a.heure}</span>
-                        <span className="font-medium">{a.titre}</span>
-                        <StatusBadge status={a.statut} />
-                      </div>
-                      <div className="text-[11px] opacity-80 mt-0.5">
-                        {a.thematique} · {a.auteur}
-                      </div>
+                  {items.map((item) => item.kind === "article" ? (
+                    <button key={`a-${item.entity.id}`} onClick={() => onArticleClick(item.entity)} className={cn("w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition", toneFor(item.entity))}>
+                      <div className="flex items-center gap-2"><GlobeIcon className="h-3.5 w-3.5" /><span className="text-xs font-mono opacity-70">{item.entity.heure}</span><span className="font-medium">{item.entity.titre}</span><StatusBadge status={item.entity.statut} /></div>
+                      <div className="text-[11px] opacity-80 mt-0.5">{item.entity.thematique} · {item.entity.auteur}</div>
+                    </button>
+                  ) : (
+                    <button key={`p-${item.entity.id}`} onClick={() => onPostClick(item.entity)} className={cn("w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition", postToneFor(item.entity))}>
+                      <div className="flex items-center gap-2"><Send className="h-3.5 w-3.5" /><span className="text-xs font-mono opacity-70">{item.entity.heure}</span><span className="font-medium">{item.entity.titre}</span><StatusBadge status={item.entity.statut} /></div>
+                      <div className="text-[11px] opacity-80 mt-0.5">{item.entity.platforms.join(" · ")} · {item.entity.auteur}</div>
                     </button>
                   ))}
                 </div>
@@ -1010,18 +1048,23 @@ function DayView({
 
 function AgendaView({
   rows,
+  posts,
   onArticleClick,
+  onPostClick,
 }: {
   rows: Article[];
+  posts: SocialPost[];
   onArticleClick: (a: Article) => void;
+  onPostClick: (p: SocialPost) => void;
 }) {
-  const sorted = rows
-    .slice()
-    .sort((a, b) => (a.date + (a.heure ?? "")).localeCompare(b.date + (b.heure ?? "")));
-  const groups = new Map<string, Article[]>();
-  for (const a of sorted) {
-    if (!groups.has(a.date)) groups.set(a.date, []);
-    groups.get(a.date)!.push(a);
+  const sorted = [
+    ...rows.map((a) => ({ kind: "article" as const, id: a.id, entity: a, date: a.date, heure: a.heure ?? "" })),
+    ...posts.map((p) => ({ kind: "post" as const, id: p.id, entity: p, date: p.date, heure: p.heure ?? "" })),
+  ].sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure));
+  const groups = new Map<string, typeof sorted>();
+  for (const item of sorted) {
+    if (!groups.has(item.date)) groups.set(item.date, []);
+    groups.get(item.date)!.push(item);
   }
   return (
     <div className="space-y-3">
@@ -1029,18 +1072,13 @@ function AgendaView({
         <Card key={date} className="p-4">
           <div className="text-sm font-semibold mb-2">{date}</div>
           <div className="space-y-1.5">
-            {items.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => onArticleClick(a)}
-                className={cn(
-                  "w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition flex items-center gap-3",
-                  toneFor(a),
-                )}
-              >
-                <span className="text-xs font-mono opacity-70 w-12">{a.heure ?? "—"}</span>
-                <span className="flex-1 font-medium truncate">{a.titre}</span>
-                <StatusBadge status={a.statut} />
+            {items.map((item) => item.kind === "article" ? (
+              <button key={`a-${item.id}`} onClick={() => onArticleClick(item.entity)} className={cn("w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition flex items-center gap-3", toneFor(item.entity))}>
+                <GlobeIcon className="h-3.5 w-3.5 shrink-0" /><span className="text-xs font-mono opacity-70 w-12">{item.entity.heure ?? "—"}</span><span className="flex-1 font-medium truncate">{item.entity.titre}</span><StatusBadge status={item.entity.statut} />
+              </button>
+            ) : (
+              <button key={`p-${item.id}`} onClick={() => onPostClick(item.entity)} className={cn("w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition flex items-center gap-3", postToneFor(item.entity))}>
+                <Send className="h-3.5 w-3.5 shrink-0" /><span className="text-xs font-mono opacity-70 w-12">{item.entity.heure ?? "—"}</span><span className="flex-1 font-medium truncate">{item.entity.titre}</span><StatusBadge status={item.entity.statut} />
               </button>
             ))}
           </div>
@@ -1280,11 +1318,11 @@ function PostIdeasSection() {
         <Button onClick={regenerate} disabled={generating} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><Sparkles className={cn("h-4 w-4 mr-1.5", generating && "animate-spin")} /> Générer de nouvelles idées</Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {ideas.map((idea) => (
+        {ideas.map((idea, i) => (
           <Card key={idea.id} className="p-0 overflow-hidden hover-lift cursor-pointer fade-up card-elevated group relative" onClick={() => setDetail(idea)}>
-            <div className="h-40 bg-muted relative grid place-items-center text-muted-foreground">
-              <div className="text-center px-4">
-                <ImageIcon className="h-8 w-8 mx-auto opacity-40 mb-1" />
+            <div className="h-40 bg-muted relative overflow-hidden text-muted-foreground">
+              <img src={POST_IMAGES[(idea.titre.length + i) % POST_IMAGES.length]} alt={idea.titre} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+              <div className="absolute inset-x-0 bottom-0 bg-black/55 text-white px-3 py-2 backdrop-blur-sm">
                 <div className="text-[11px] italic line-clamp-2">{idea.mediaConcept}</div>
               </div>
               <div className="absolute top-2 left-2 flex gap-1">
@@ -1320,6 +1358,7 @@ function PostIdeasSection() {
                 <div className="text-xs text-muted-foreground">Date suggérée : {detail.suggestedDate}</div>
               </SheetHeader>
               <div className="py-4 space-y-4">
+                <img src={POST_IMAGES[detail.titre.length % POST_IMAGES.length]} alt={detail.titre} className="w-full h-56 object-cover rounded-lg" />
                 <section>
                   <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Description</h4>
                   <p className="text-sm">{detail.description}</p>
@@ -1493,10 +1532,10 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
       <PostIdeasSection />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {posts.map((p) => (
+        {posts.map((p, i) => (
           <Card key={p.id} className="p-0 overflow-hidden hover-lift fade-up card-elevated group">
             <div className="h-40 bg-muted relative cursor-pointer" onClick={() => setDetail(p)}>
-              {p.media[0] ? <img src={p.media[0].url} alt="" className="w-full h-full object-cover" /> : <div className="grid place-items-center h-full text-muted-foreground text-xs">Aucun média</div>}
+              <img src={postMediaFor(p, i)} alt={p.media[0]?.alt ?? p.titre} className="w-full h-full object-cover transition-transform group-hover:scale-105" loading="lazy" onError={(e) => { e.currentTarget.src = POST_IMAGES[i % POST_IMAGES.length]; }} />
               <div className="absolute top-2 left-2 flex gap-1">
                 {p.platforms.map((pl) => {
                   const Icon = PLATFORM_ICONS[pl];
@@ -1513,7 +1552,7 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
                 <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {p.date}{p.heure ? ` ${p.heure}` : ""}</span>
               </div>
               <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
-                {p.statut !== "Publié" && (
+                {p.statut === "Brouillon" && (
                   <>
                     <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publish(p); }}>
                       <Send className="h-3 w-3 mr-1" /> Publier
@@ -1525,6 +1564,27 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
                       <Pencil className="h-3 w-3 mr-1" /> Modifier
                     </Button>
                   </>
+                )}
+                {p.statut === "Planifié" && (
+                  <>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publish(p); }}>
+                      <Send className="h-3 w-3 mr-1" /> Publier
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleFor(p); }}>
+                      <Clock className="h-3 w-3 mr-1" /> Replanifier
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setDraft(p); }}>
+                      <RefreshCw className="h-3 w-3 mr-1" /> Brouillon
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); openEdit(p); }}>
+                      <Pencil className="h-3 w-3 mr-1" /> Modifier
+                    </Button>
+                  </>
+                )}
+                {p.statut === "Publié" && (
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setDetail(p); }}>
+                    <FileText className="h-3 w-3 mr-1" /> Détails
+                  </Button>
                 )}
                 <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); setConfirmDel(p); }}>
                   <Trash2 className="h-3 w-3" />
@@ -1567,7 +1627,7 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
               <div className="py-4 space-y-4">
                 {detail.media.length > 0 && (
                   detail.media.length === 1 ? (
-                    <img src={detail.media[0].url} alt={detail.media[0].alt ?? ""} className="w-full h-56 object-cover rounded-lg" />
+                    <img src={postMediaFor(detail)} alt={detail.media[0]?.alt ?? detail.titre} className="w-full h-56 object-cover rounded-lg" onError={(e) => { e.currentTarget.src = POST_IMAGES[0]; }} />
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
                       {detail.media.map((m) => (

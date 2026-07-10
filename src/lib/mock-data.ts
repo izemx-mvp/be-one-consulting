@@ -569,7 +569,7 @@ import postImage1 from "@/assets/post-1.jpg.asset.json";
 import postImage2 from "@/assets/post-2.jpg.asset.json";
 import postImage3 from "@/assets/post-3.jpg.asset.json";
 import postImage4 from "@/assets/post-4.jpg.asset.json";
-const POST_IMAGES = [postImage1.url, postImage2.url, postImage3.url, postImage4.url];
+export const POST_IMAGES = [postImage1.url, postImage2.url, postImage3.url, postImage4.url];
 const seedPosts: SocialPost[] = [
   { id: uid(), titre: "Lancement programme leadership", caption: "Fiers de lancer notre nouveau programme Leadership de proximité 🚀 8 jours pour transformer vos managers.", hashtags: ["#Leadership", "#RH", "#Maroc"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[0] }], platforms: ["LinkedIn", "Facebook"], platformConfig: { LinkedIn: { tone: "Professionnel", cta: "En savoir plus", paragraphes: "Court" }, Facebook: { style: "Storytelling", cta: "Contactez-nous" } }, statut: "Publié", date: d(2), heure: "10:00", auteur: "IA", langue: "Français", ton: "Professionnel" },
   { id: uid(), titre: "Coulisses de notre équipe", caption: "Retour en images sur notre séminaire annuel — merci à toute l'équipe Be One ! ✨", hashtags: ["#TeamSpirit", "#BeOne", "#Consulting"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[1] }, { id: uid(), kind: "image", url: POST_IMAGES[2] }], platforms: ["Instagram", "Facebook"], platformConfig: { Instagram: { captionLength: 120, emojiDensity: "Élevée", hashtagCount: 12 }, Facebook: { style: "Conversationnel" } }, statut: "Planifié", date: d(-3), heure: "18:30", auteur: "Manuel", langue: "Français", ton: "Chaleureux" },
