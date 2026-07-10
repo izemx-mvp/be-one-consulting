@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, Linkedin, Facebook, Instagram, Rocket, Calendar, MessageSquare, XCircle, ArrowRight, Target } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, Linkedin, Facebook, Instagram, Calendar, MessageSquare, XCircle, ArrowRight, Target } from "lucide-react";
 import { candidatsStore, POSTES, rdvStore, uid, useStore, type Candidat } from "@/lib/mock-data";
 import { HeadHuntingPanel } from "@/components/head-hunting";
 import { ConfirmDialog } from "@/components/confirm-dialog";
