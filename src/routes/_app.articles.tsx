@@ -1537,28 +1537,49 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
 
       {/* Detail sheet */}
       <Sheet open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto scroll-fancy">
+        <SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto scroll-fancy">
           {detail && (
             <>
               <SheetHeader className="border-b pb-4">
-                <div className="flex flex-wrap gap-2 mb-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   {detail.platforms.map((pl) => {
                     const Icon = PLATFORM_ICONS[pl];
                     return <span key={pl} className={cn("text-[10px] px-2 py-0.5 rounded-full border inline-flex items-center gap-1", PLATFORM_META[pl].bg, PLATFORM_META[pl].color)}><Icon className="h-3 w-3" /> {pl}</span>;
                   })}
                   <StatusBadge status={detail.statut} dot={detail.statut === "Brouillon"} />
                 </div>
-                <SheetTitle>{detail.titre}</SheetTitle>
-                <div className="text-xs text-muted-foreground">Publication : {detail.date}{detail.heure ? ` · ${detail.heure}` : ""} · Langue : {detail.langue} · Ton : {detail.ton}</div>
+                <SheetTitle className="text-2xl mt-2">{detail.titre}</SheetTitle>
+                <div className="text-xs text-muted-foreground">
+                  Publication : {detail.date}{detail.heure ? ` · ${detail.heure}` : ""} · Langue : {detail.langue} · Ton : {detail.ton}
+                </div>
+                {detail.hashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {detail.hashtags.map((h) => (
+                      <span key={h} className="text-[10px] inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/35 font-medium shadow-sm">
+                        <Hash className="h-2.5 w-2.5" />{h.replace(/^#/, "")}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </SheetHeader>
               <div className="py-4 space-y-4">
                 {detail.media.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2">{detail.media.map((m) => (
-                    <div key={m.id} className="aspect-video rounded-lg overflow-hidden border bg-muted"><img src={m.url} alt={m.alt ?? ""} className="w-full h-full object-cover" /></div>
-                  ))}</div>
+                  detail.media.length === 1 ? (
+                    <img src={detail.media[0].url} alt={detail.media[0].alt ?? ""} className="w-full h-56 object-cover rounded-lg" />
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      {detail.media.map((m) => (
+                        <div key={m.id} className="aspect-video rounded-lg overflow-hidden border bg-muted">
+                          <img src={m.url} alt={m.alt ?? ""} className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )
                 )}
-                <section><h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Caption</h4><p className="text-sm whitespace-pre-line">{detail.caption}</p></section>
-                <section><h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Hashtags</h4><div className="flex flex-wrap gap-1">{detail.hashtags.map((h) => <span key={h} className="text-[11px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div></section>
+                <section>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Caption</h4>
+                  <p className="text-sm whitespace-pre-line">{detail.caption}</p>
+                </section>
                 <section>
                   <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Paramètres IA par plateforme</h4>
                   <div className="space-y-2">
@@ -1575,17 +1596,43 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
                   </div>
                 </section>
               </div>
-              <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
-                {detail.statut !== "Publié" && <Button onClick={() => publish(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><Send className="h-4 w-4 mr-2" /> Publier</Button>}
-                <Button variant="outline" onClick={() => setScheduleFor(detail)} className="flex-1"><Clock className="h-4 w-4 mr-2" /> Planifier</Button>
-                {detail.statut !== "Brouillon" && <Button variant="outline" onClick={() => setDraft(detail)}>Retour brouillon</Button>}
-                <Button variant="outline" onClick={() => { openEdit(detail); setDetail(null); }}><Pencil className="h-4 w-4 mr-2" /> Modifier</Button>
-                <Button variant="outline" className="text-destructive border-destructive/30" onClick={() => setConfirmDel(detail)}><Trash2 className="h-4 w-4" /></Button>
-              </div>
+              {detail.statut !== "Publié" && (
+                <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
+                  {detail.statut === "Brouillon" && (
+                    <>
+                      <Button onClick={() => publish(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1">
+                        <Send className="h-4 w-4 mr-2" /> Publier
+                      </Button>
+                      <Button variant="outline" onClick={() => setScheduleFor(detail)} className="flex-1">
+                        <Clock className="h-4 w-4 mr-2" /> Planifier
+                      </Button>
+                    </>
+                  )}
+                  {detail.statut === "Planifié" && (
+                    <>
+                      <Button onClick={() => publish(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1">
+                        <Send className="h-4 w-4 mr-2" /> Publier maintenant
+                      </Button>
+                      <Button variant="outline" onClick={() => setScheduleFor(detail)} className="flex-1">
+                        <Clock className="h-4 w-4 mr-2" /> Replanifier
+                      </Button>
+                      <Button variant="outline" onClick={() => setDraft(detail)}>Retour brouillon</Button>
+                    </>
+                  )}
+                  <Button variant="outline" onClick={() => { openEdit(detail); setDetail(null); }}>
+                    <Pencil className="h-4 w-4 mr-2" /> Modifier
+                  </Button>
+                  <Button variant="outline" className="text-destructive border-destructive/30" onClick={() => setConfirmDel(detail)}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Supprimer
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </SheetContent>
       </Sheet>
+
+
 
       <ConfirmDialog open={!!confirmDel} onOpenChange={(v) => !v && setConfirmDel(null)} title="Supprimer ce post ?" destructive confirmLabel="Supprimer" onConfirm={() => { if (confirmDel) { postsStore.remove(confirmDel.id); toast.success("Post supprimé"); setDetail(null); } setConfirmDel(null); }} />
     </div>
