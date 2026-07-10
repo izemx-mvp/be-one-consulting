@@ -318,6 +318,13 @@ export const POSTES = postes;
 export const CONSULTANTS = consultants;
 export const ENTREPRISES = entreprises;
 
+// Editable editorial config (thematiques + topics to avoid)
+export type EditorialConfig = { id: string; thematiques: string[]; topicsAvoid: string[] };
+export const editorialConfigStore = createStore<EditorialConfig>([
+  { id: "editorial", thematiques: [...thematiques], topicsAvoid: ["Politique partisane", "Religion", "Sujets polémiques non-RH", "Comparaisons directes concurrents"] },
+]);
+
+
 // ---------- Head Hunting missions ----------
 export type HuntingMission = {
   id: string;
