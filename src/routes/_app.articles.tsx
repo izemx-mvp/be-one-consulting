@@ -1275,18 +1275,6 @@ function SwitchField({ label, value, onChange }: { label: string; value: boolean
 
 // ---------------- IDEAS TAB ----------------
 const IDEA_PLATFORM_ICON: Record<SocialPlatform, typeof Linkedin> = { LinkedIn: Linkedin, Facebook, Instagram, YouTube: Youtube };
-function IdeasTab() {
-  return (
-    <Tabs defaultValue="posts">
-      <TabsList className="mb-4">
-        <TabsTrigger value="posts"><Send className="h-4 w-4 mr-2" /> Posts sociaux</TabsTrigger>
-        <TabsTrigger value="articles"><FileText className="h-4 w-4 mr-2" /> Articles</TabsTrigger>
-      </TabsList>
-      <TabsContent value="posts"><PostIdeasSection /></TabsContent>
-      <TabsContent value="articles"><ArticleIdeasSection /></TabsContent>
-    </Tabs>
-  );
-}
 
 function PostIdeasSection() {
   const ideas = useStore(postIdeasStore);
