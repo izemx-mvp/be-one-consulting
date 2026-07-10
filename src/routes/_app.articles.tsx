@@ -406,79 +406,82 @@ function GridTab({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-y-auto p-0">
-          <div className="bg-gradient-to-r from-primary/10 via-[color:var(--gold)]/10 to-transparent px-6 py-4 border-b">
+        <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-y-auto scroll-fancy p-0">
+          <div className="bg-gradient-to-r from-primary via-primary/90 to-[color:var(--gold)]/70 text-primary-foreground px-6 py-5 border-b">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                <FileText className="h-5 w-5 text-[color:var(--gold)]" />{" "}
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <FileText className="h-5 w-5" />{" "}
                 {editing.id ? "Modifier l'article" : "Nouvel article"}
               </DialogTitle>
-              <DialogDescription>
-                Rédigez un contenu prêt à publier. Les tags améliorent la découverte et le
-                référencement.
+              <DialogDescription className="text-primary-foreground/80">
+                Assistant en 3 étapes — idée, contenu, publication.
               </DialogDescription>
             </DialogHeader>
+            <div className="flex items-center gap-1.5 pt-3">
+              {[1, 2, 3].map((s) => (
+                <span
+                  key={s}
+                  className={cn(
+                    "h-1.5 flex-1 rounded-full transition-colors",
+                    s <= step ? "bg-[color:var(--gold)]" : "bg-white/25",
+                  )}
+                />
+              ))}
+            </div>
+            <div className="text-xs text-primary-foreground/80 pt-2 font-medium">
+              Étape {step} / 3 — {["Idée & angle", "Contenu", "Publication"][step - 1]}
+            </div>
           </div>
-          <div className="px-6 py-4 space-y-5">
-            <section>
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-                Informations principales
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2 space-y-1">
-                  <Label>Titre</Label>
-                  <Input
-                    value={editing.titre}
-                    onChange={(e) => setEditing({ ...editing, titre: e.target.value })}
-                    placeholder="Ex: 5 tendances RH à surveiller au Maroc en 2026"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Thématique</Label>
-                  <Select
-                    value={editing.thematique}
-                    onValueChange={(v) => setEditing({ ...editing, thematique: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cfg.thematiques.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
+          <div className="px-6 py-5 space-y-5">
+            {step === 1 && (
+              <section className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label>Thématique</Label>
+                    <Select
+                      value={editing.thematique}
+                      onValueChange={(v) => setEditing({ ...editing, thematique: v })}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {cfg.thematiques.map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Auteur</Label>
+                    <Select
+                      value={editing.auteur}
+                      onValueChange={(v) =>
+                        setEditing({ ...editing, auteur: v as Article["auteur"] })
+                      }
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Manuel">Manuel</SelectItem>
+                        <SelectItem value="IA">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Sparkles className="h-3.5 w-3.5 text-[color:var(--gold)]" /> IA
+                          </span>
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <Label>Auteur</Label>
-                  <Select
-                    value={editing.auteur}
-                    onValueChange={(v) =>
-                      setEditing({ ...editing, auteur: v as Article["auteur"] })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Manuel">Manuel</SelectItem>
-                      <SelectItem value="IA">IA</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-2 space-y-1">
-                  <Label>Extrait (2 lignes)</Label>
-                  <Input
+                  <Label>Angle / idée directrice</Label>
+                  <Textarea
+                    rows={3}
                     value={editing.extrait}
                     onChange={(e) => setEditing({ ...editing, extrait: e.target.value })}
-                    placeholder="Une phrase d'accroche qui résume l'article"
+                    placeholder="Décrivez l'angle : problème traité, promesse au lecteur, ton..."
                   />
                 </div>
-                <div className="col-span-2 space-y-1">
+                <div className="space-y-1">
                   <Label className="flex items-center gap-1.5">
-                    <Tag className="h-3.5 w-3.5" /> Tags{" "}
+                    <Tag className="h-3.5 w-3.5" /> Mots-clés{" "}
                     <span className="text-muted-foreground text-xs font-normal">
                       (séparés par virgules)
                     </span>
@@ -506,100 +509,145 @@ function GridTab({
                     </div>
                   )}
                 </div>
-              </div>
-            </section>
-            <section>
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" /> Planification
-              </div>
-              {isBrouillon ? (
-                <div className="rounded-lg border border-dashed p-4 bg-muted/30 text-sm text-muted-foreground flex items-start gap-3">
-                  <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-500" />
-                  <div>
-                    <p className="font-medium text-foreground">
-                      Planification désactivée en brouillon
-                    </p>
-                    <p className="text-xs">
-                      Approuvez l'article depuis sa fiche pour activer la planification et la
-                      publication.
-                    </p>
+              </section>
+            )}
+            {step === 2 && (
+              <section className="space-y-4">
+                <div className="space-y-1">
+                  <Label>Titre *</Label>
+                  <Input
+                    value={editing.titre}
+                    onChange={(e) => setEditing({ ...editing, titre: e.target.value })}
+                    placeholder="Ex: 5 tendances RH à surveiller au Maroc en 2026"
+                  />
+                </div>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <ImageIcon className="h-3.5 w-3.5" /> Image de couverture
+                  </div>
+                  <div className="grid grid-cols-6 gap-2">
+                    {ARTICLE_IMAGES.slice(0, 6).map((src, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className="aspect-video rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-all"
+                        onClick={() => toast.success("Image de couverture mise à jour")}
+                      >
+                        <img src={src} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <Label>Statut</Label>
-                    <Select
-                      value={editing.statut}
-                      onValueChange={(v) =>
-                        setEditing({ ...editing, statut: v as Article["statut"] })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableStatuts.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
+                    Contenu
                   </div>
-                  <div className="space-y-1">
-                    <Label>Date de publication</Label>
-                    <Input
-                      type="date"
-                      value={editing.date}
-                      onChange={(e) => setEditing({ ...editing, date: e.target.value })}
-                    />
+                  <RichEditor
+                    value={editing.contenu}
+                    onChange={(v) => setEditing({ ...editing, contenu: v })}
+                  />
+                </div>
+              </section>
+            )}
+            {step === 3 && (
+              <section className="space-y-4">
+                {isBrouillon ? (
+                  <div className="rounded-lg border border-dashed p-4 bg-muted/30 text-sm text-muted-foreground flex items-start gap-3">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-500" />
+                    <div>
+                      <p className="font-medium text-foreground">
+                        Planification désactivée en brouillon
+                      </p>
+                      <p className="text-xs">
+                        Approuvez l'article depuis sa fiche pour activer la planification et la
+                        publication.
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label>Heure</Label>
-                    <Input
-                      type="time"
-                      value={editing.heure ?? "09:00"}
-                      onChange={(e) => setEditing({ ...editing, heure: e.target.value })}
-                    />
+                ) : (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <Label>Statut</Label>
+                      <Select
+                        value={editing.statut}
+                        onValueChange={(v) =>
+                          setEditing({ ...editing, statut: v as Article["statut"] })
+                        }
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {availableStatuts.map((s) => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Date de publication</Label>
+                      <Input
+                        type="date"
+                        value={editing.date}
+                        onChange={(e) => setEditing({ ...editing, date: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Heure</Label>
+                      <Input
+                        type="time"
+                        value={editing.heure ?? "09:00"}
+                        onChange={(e) => setEditing({ ...editing, heure: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="rounded-xl border p-4 bg-gradient-to-br from-[color:var(--gold)]/10 to-transparent border-[color:var(--gold)]/25">
+                  <div className="text-sm font-semibold flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-[color:var(--gold)]" /> Récapitulatif
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                    <div><b className="text-foreground">Titre :</b> {editing.titre || "—"}</div>
+                    <div><b className="text-foreground">Thématique :</b> {editing.thematique} · <b className="text-foreground">Auteur :</b> {editing.auteur}</div>
+                    <div><b className="text-foreground">Statut :</b> {editing.statut}{!isBrouillon && ` · ${editing.date} à ${editing.heure ?? "09:00"}`}</div>
                   </div>
                 </div>
-              )}
-            </section>
-            <section>
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
-                <ImageIcon className="h-3.5 w-3.5" /> Image de couverture
-              </div>
-              <div className="grid grid-cols-6 gap-2">
-                {ARTICLE_IMAGES.slice(0, 6).map((src, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    className="aspect-video rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-all"
-                    onClick={() => toast.success("Image de couverture mise à jour")}
-                  >
-                    <img src={src} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            </section>
-            <section>
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">
-                Contenu
-              </div>
-              <RichEditor
-                value={editing.contenu}
-                onChange={(v) => setEditing({ ...editing, contenu: v })}
-              />
-            </section>
+              </section>
+            )}
           </div>
-          <DialogFooter className="px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Annuler
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30 flex-row justify-between sm:justify-between">
+            <Button
+              variant="outline"
+              onClick={() => (step > 1 ? setStep(step - 1) : setOpen(false))}
+            >
+              {step > 1 ? "Précédent" : "Annuler"}
             </Button>
-            <Button onClick={save} className="btn-premium hover:[&]:btn-premium-hover">
-              Enregistrer
-            </Button>
+            <div className="flex gap-2">
+              {step === 2 && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (!editing.titre) { toast.error("Titre requis pour enregistrer le brouillon"); return; }
+                    save();
+                  }}
+                >
+                  Enregistrer en brouillon
+                </Button>
+              )}
+              {step < 3 ? (
+                <Button
+                  onClick={() => {
+                    if (step === 2 && !editing.titre) { toast.error("Titre requis"); return; }
+                    setStep(step + 1);
+                  }}
+                  className="btn-premium hover:[&]:btn-premium-hover"
+                >
+                  Suivant
+                </Button>
+              ) : (
+                <Button onClick={save} className="btn-premium hover:[&]:btn-premium-hover">
+                  Enregistrer
+                </Button>
+              )}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
