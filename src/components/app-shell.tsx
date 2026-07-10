@@ -270,6 +270,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
             </div>
             {children}
           </div>
+          </div>
         </main>
       </div>
     </div>
