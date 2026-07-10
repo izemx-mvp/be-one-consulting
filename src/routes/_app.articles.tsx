@@ -1287,6 +1287,7 @@ function PostIdeasSection() {
   const [prefill, setPrefill] = useState<PostWizardPrefill | null>(null);
   const [generating, setGenerating] = useState(false);
   const [detail, setDetail] = useState<PostIdea | null>(null);
+  const [scheduleIdea, setScheduleIdea] = useState<PostIdea | null>(null);
 
   const regenerate = () => {
     setGenerating(true);
@@ -1306,6 +1307,28 @@ function PostIdeasSection() {
     setPrefill({ titre: idea.titre, caption: idea.suggestedCaption, hashtags: idea.hashtags, platforms: idea.platforms, idea: idea.description, date: idea.suggestedDate });
     setDetail(null);
     setWizardOpen(true);
+  };
+
+  const addPostFromIdea = (idea: PostIdea, statut: SocialPost["statut"], date = idea.suggestedDate, heure = "09:00") => {
+    postsStore.add({
+      id: uid(),
+      titre: idea.titre,
+      caption: idea.suggestedCaption,
+      hashtags: idea.hashtags,
+      media: [{ id: uid(), kind: "image", url: POST_IMAGES[idea.titre.length % POST_IMAGES.length], alt: idea.titre, description: idea.mediaConcept }],
+      platforms: idea.platforms,
+      platformConfig: {},
+      statut,
+      date,
+      heure,
+      auteur: "IA",
+      langue: "Français",
+      ton: "Professionnel",
+    });
+    postIdeasStore.remove(idea.id);
+    setDetail(null);
+    toast.success(statut === "Publié" ? "Post publié" : "Post planifié");
+    if (statut === "Publié") burstConfetti();
   };
 
   return (
@@ -1339,6 +1362,20 @@ function PostIdeasSection() {
                 <StatusBadge status="Brouillon" dot />
                 <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {idea.suggestedDate}</span>
               </div>
+                <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); addPostFromIdea(idea, "Publié"); }}>
+                    <Send className="h-3 w-3 mr-1" /> Publier
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleIdea(idea); }}>
+                    <Clock className="h-3 w-3 mr-1" /> Planifier
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); createPost(idea); }}>
+                    <Pencil className="h-3 w-3 mr-1" /> Modifier
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); postIdeasStore.remove(idea.id); toast.success("Idée supprimée"); }}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
             </div>
           </Card>
         ))}
@@ -1377,7 +1414,9 @@ function PostIdeasSection() {
                 </section>
               </div>
               <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
-                <Button onClick={() => createPost(detail)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><Send className="h-4 w-4 mr-2" /> Créer le post</Button>
+                <Button onClick={() => addPostFromIdea(detail, "Publié")} className="btn-premium hover:[&]:btn-premium-hover flex-1"><Send className="h-4 w-4 mr-2" /> Publier</Button>
+                <Button variant="outline" onClick={() => setScheduleIdea(detail)} className="flex-1"><Clock className="h-4 w-4 mr-2" /> Planifier</Button>
+                <Button variant="outline" onClick={() => createPost(detail)}><Pencil className="h-4 w-4 mr-2" /> Modifier</Button>
                 <Button variant="outline" className="text-destructive border-destructive/30" onClick={() => { postIdeasStore.remove(detail.id); toast.success("Idée supprimée"); setDetail(null); }}><Trash2 className="h-4 w-4 mr-2" /> Supprimer</Button>
               </div>
             </>
@@ -1386,6 +1425,7 @@ function PostIdeasSection() {
       </Sheet>
 
       <PostWizard open={wizardOpen} onOpenChange={(v) => { setWizardOpen(v); if (!v) setPrefill(null); }} prefill={prefill} />
+      <ScheduleDialog open={!!scheduleIdea} onOpenChange={(v) => !v && setScheduleIdea(null)} initialDate={scheduleIdea?.suggestedDate} onConfirm={({ date, time }) => { if (scheduleIdea) { addPostFromIdea(scheduleIdea, "Planifié", date, time); setScheduleIdea(null); } }} />
     </div>
   );
 }
@@ -1396,6 +1436,7 @@ function ArticleIdeasSection() {
   const [prefill, setPrefill] = useState<ArticleWizardPrefill | null>(null);
   const [generating, setGenerating] = useState(false);
   const [detail, setDetail] = useState<{ idea: ArticleIdea; index: number } | null>(null);
+  const [scheduleIdea, setScheduleIdea] = useState<{ idea: ArticleIdea; index: number } | null>(null);
 
   const regenerate = () => {
     setGenerating(true);
@@ -1415,6 +1456,26 @@ function ArticleIdeasSection() {
     setPrefill({ titre: idea.titre, description: idea.description, keywords: idea.keywords, thematique: idea.thematique, longueur: idea.longueur, extrait: idea.suggestedExtrait });
     setDetail(null);
     setWizardOpen(true);
+  };
+
+  const addArticleFromIdea = (idea: ArticleIdea, index: number, statut: Article["statut"], date = idea.suggestedDate, heure = "09:00") => {
+    articlesStore.add({
+      id: uid(),
+      titre: idea.titre,
+      thematique: idea.thematique,
+      auteur: "IA",
+      contenu: `<h2>${idea.titre}</h2><p>${idea.description}</p><p>${idea.suggestedExtrait}</p><p><b>Angle éditorial.</b> ${idea.angle}</p>`,
+      extrait: idea.suggestedExtrait,
+      statut,
+      date,
+      heure,
+      tags: idea.keywords,
+      cover: ARTICLE_IMAGES[(idea.titre.length + index) % ARTICLE_IMAGES.length],
+    });
+    articleIdeasStore.remove(idea.id);
+    setDetail(null);
+    toast.success(statut === "Publié" ? "Article publié" : "Article planifié");
+    if (statut === "Publié") burstConfetti();
   };
 
   return (
@@ -1446,6 +1507,20 @@ function ArticleIdeasSection() {
                 <StatusBadge status="Brouillon" dot />
                 <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {idea.suggestedDate}</span>
               </div>
+                <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); addArticleFromIdea(idea, i, "Publié"); }}>
+                    <Send className="h-3 w-3 mr-1" /> Publier
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleIdea({ idea, index: i }); }}>
+                    <Clock className="h-3 w-3 mr-1" /> Planifier
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); createArticle(idea); }}>
+                    <Pencil className="h-3 w-3 mr-1" /> Modifier
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); articleIdeasStore.remove(idea.id); toast.success("Idée supprimée"); }}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
             </div>
           </Card>
         ))}
@@ -1485,7 +1560,9 @@ function ArticleIdeasSection() {
                 </section>
               </div>
               <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
-                <Button onClick={() => createArticle(detail.idea)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><FileText className="h-4 w-4 mr-2" /> Créer l'article</Button>
+                <Button onClick={() => addArticleFromIdea(detail.idea, detail.index, "Publié")} className="btn-premium hover:[&]:btn-premium-hover flex-1"><Send className="h-4 w-4 mr-2" /> Publier</Button>
+                <Button variant="outline" onClick={() => setScheduleIdea(detail)} className="flex-1"><Clock className="h-4 w-4 mr-2" /> Planifier</Button>
+                <Button variant="outline" onClick={() => createArticle(detail.idea)}><Pencil className="h-4 w-4 mr-2" /> Modifier</Button>
                 <Button variant="outline" className="text-destructive border-destructive/30" onClick={() => { articleIdeasStore.remove(detail.idea.id); toast.success("Idée supprimée"); setDetail(null); }}><Trash2 className="h-4 w-4 mr-2" /> Supprimer</Button>
               </div>
             </>
@@ -1494,6 +1571,7 @@ function ArticleIdeasSection() {
       </Sheet>
 
       <ArticleWizard open={wizardOpen} onOpenChange={(v) => { setWizardOpen(v); if (!v) setPrefill(null); }} prefill={prefill} />
+      <ScheduleDialog open={!!scheduleIdea} onOpenChange={(v) => !v && setScheduleIdea(null)} initialDate={scheduleIdea?.idea.suggestedDate} onConfirm={({ date, time }) => { if (scheduleIdea) { addArticleFromIdea(scheduleIdea.idea, scheduleIdea.index, "Planifié", date, time); setScheduleIdea(null); } }} />
     </div>
   );
 }
