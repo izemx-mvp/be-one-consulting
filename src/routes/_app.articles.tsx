@@ -581,6 +581,7 @@ function CalendarTab({ onArticleClick, onPostClick }: { onArticleClick: (a: Arti
   const byDay = useMemo(() => {
     const m = new Map<string, Article[]>();
     for (const a of rows) {
+      if (a.statut !== "Publié" && a.statut !== "Planifié") continue;
       if (!m.has(a.date)) m.set(a.date, []);
       m.get(a.date)!.push(a);
     }
@@ -589,6 +590,7 @@ function CalendarTab({ onArticleClick, onPostClick }: { onArticleClick: (a: Arti
   const postsByDay = useMemo(() => {
     const m = new Map<string, SocialPost[]>();
     for (const p of posts) {
+      if (p.statut !== "Publié" && p.statut !== "Planifié") continue;
       if (!m.has(p.date)) m.set(p.date, []);
       m.get(p.date)!.push(p);
     }
