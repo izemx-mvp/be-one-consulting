@@ -309,14 +309,16 @@ function GridTab({
           {pageItems.map((a, i) => (
             <Card
               key={a.id}
-              className="p-0 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all fade-up cursor-pointer"
-              onClick={() => setDetail(a)}
+              className="p-0 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all fade-up group"
             >
-              <div className="h-40 bg-muted overflow-hidden relative">
+              <div
+                className="h-40 bg-muted overflow-hidden relative cursor-pointer"
+                onClick={() => setDetail(a)}
+              >
                 <img
                   src={coverFor(a, i)}
                   alt={a.titre}
-                  className="w-full h-full object-cover transition-transform hover:scale-105"
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
                   loading="lazy"
                 />
                 <div className="absolute top-2 left-2 flex gap-1.5">
@@ -331,7 +333,7 @@ function GridTab({
                 </div>
               </div>
               <div className="p-4">
-                <h3 className="font-semibold line-clamp-2 min-h-[44px]">{a.titre}</h3>
+                <h3 className="font-semibold line-clamp-2 min-h-[44px] cursor-pointer" onClick={() => setDetail(a)}>{a.titre}</h3>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{a.extrait}</p>
                 <TagChips tags={a.tags} />
                 <div className="flex items-center justify-between mt-3">
@@ -339,6 +341,24 @@ function GridTab({
                   <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" /> {a.date}
                   </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
+                  {a.statut !== "Publié" && (
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publishNow(a); }}>
+                      <Send className="h-3 w-3 mr-1" /> Publier
+                    </Button>
+                  )}
+                  {a.statut !== "Publié" && (
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleForArticle(a); }}>
+                      <Clock className="h-3 w-3 mr-1" /> Planifier
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); openEdit(a); }}>
+                    <Pencil className="h-3 w-3 mr-1" /> Modifier
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); setConfirmDel(a); }}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             </Card>
