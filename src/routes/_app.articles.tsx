@@ -66,7 +66,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PostWizard, type PostWizardPrefill } from "@/components/post-wizard";
 import { ArticleWizard, type ArticleWizardPrefill } from "@/components/article-wizard";
 import { ScheduleDialog } from "@/components/schedule-dialog";
-import { postsStore, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
+import { postsStore, POST_IMAGES, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
 import { Linkedin, Facebook, Instagram, Youtube, Globe as GlobeIcon, Send, Lightbulb, RefreshCw, Bookmark, Copy } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -108,6 +108,7 @@ function empty(cfg: { thematiques: string[] }): Article {
 }
 
 function Page() {
+  const [activeTab, setActiveTab] = useState("grid");
   const [detailArticle, setDetailArticle] = useState<Article | null>(null);
   const [detailPost, setDetailPost] = useState<SocialPost | null>(null);
   return (
@@ -115,7 +116,7 @@ function Page() {
       title="Community Manager AI"
       subtitle="Agent Rédaction — création IA ou manuelle, validation, planification et publication"
     >
-      <Tabs defaultValue="grid">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="grid"><LayoutGrid className="h-4 w-4 mr-2" /> Articles</TabsTrigger>
           <TabsTrigger value="posts"><Send className="h-4 w-4 mr-2" /> Posts sociaux</TabsTrigger>
@@ -124,7 +125,7 @@ function Page() {
         </TabsList>
         <TabsContent value="grid" forceMount className="data-[state=inactive]:hidden"><GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} /></TabsContent>
         <TabsContent value="posts" forceMount className="data-[state=inactive]:hidden"><PostsTab externalDetail={detailPost} setExternalDetail={setDetailPost} /></TabsContent>
-        <TabsContent value="calendar"><CalendarTab onArticleClick={setDetailArticle} onPostClick={setDetailPost} /></TabsContent>
+        <TabsContent value="calendar"><CalendarTab onArticleClick={(article) => { setDetailPost(null); setDetailArticle(article); setActiveTab("grid"); }} onPostClick={(post) => { setDetailArticle(null); setDetailPost(post); setActiveTab("posts"); }} /></TabsContent>
         <TabsContent value="config"><ConfigTab /></TabsContent>
       </Tabs>
 
