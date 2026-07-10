@@ -444,26 +444,20 @@ export const contactBasesStore = createStore<ContactBase>(seedBases);
 
 export const huntingStore = createStore<HuntingMission>(seedHunting);
 
-// ---------- Article cover images (bundled assets) ----------
-import articleCover1 from "@/assets/article-cover-1.jpg.asset.json";
-import articleCover2 from "@/assets/article-cover-2.jpg.asset.json";
-import articleCover3 from "@/assets/article-cover-3.jpg.asset.json";
-import articleCover4 from "@/assets/article-cover-4.jpg.asset.json";
-import articleCover5 from "@/assets/article-cover-5.jpg.asset.json";
-import articleCover6 from "@/assets/article-cover-6.jpg.asset.json";
+// ---------- Article cover images (external URLs) ----------
 export const ARTICLE_IMAGES = [
-  articleCover1.url,
-  articleCover2.url,
-  articleCover3.url,
-  articleCover4.url,
-  articleCover5.url,
-  articleCover6.url,
-  articleCover1.url,
-  articleCover2.url,
-  articleCover3.url,
-  articleCover4.url,
-  articleCover5.url,
-  articleCover6.url,
+  "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80",
 ];
 
 // ---------- Demande AI qualification summary ----------
@@ -546,7 +540,7 @@ export const DEFAULT_EVAL_CRITERIA: EvaluationCriterion[] = [
 
 // ---------- Community Manager: Social Posts ----------
 export type SocialPlatform = "LinkedIn" | "Facebook" | "Instagram" | "YouTube";
-export type PostMedia = { id: string; kind: "image" | "video"; url: string; alt?: string; description?: string; reference?: string; prompt?: string };
+export type PostMedia = { id: string; kind: "image" | "video"; url: string; alt?: string; legende?: string; description?: string; reference?: string; prompt?: string; poster?: string };
 export type PostPlatformConfig = Record<string, string | number>;
 export type SocialPost = {
   id: string;
@@ -565,15 +559,20 @@ export type SocialPost = {
   aiParams?: Record<string, string | number>;
 };
 
-import postImage1 from "@/assets/post-1.jpg.asset.json";
-import postImage2 from "@/assets/post-2.jpg.asset.json";
-import postImage3 from "@/assets/post-3.jpg.asset.json";
-import postImage4 from "@/assets/post-4.jpg.asset.json";
-export const POST_IMAGES = [postImage1.url, postImage2.url, postImage3.url, postImage4.url];
+export const POST_IMAGES = [
+  "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80",
+];
+export const POST_VIDEOS = [
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+];
 const seedPosts: SocialPost[] = [
-  { id: uid(), titre: "Lancement programme leadership", caption: "Fiers de lancer notre nouveau programme Leadership de proximité 🚀 8 jours pour transformer vos managers.", hashtags: ["#Leadership", "#RH", "#Maroc"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[0] }], platforms: ["LinkedIn", "Facebook"], platformConfig: { LinkedIn: { tone: "Professionnel", cta: "En savoir plus", paragraphes: "Court" }, Facebook: { style: "Storytelling", cta: "Contactez-nous" } }, statut: "Publié", date: d(2), heure: "10:00", auteur: "IA", langue: "Français", ton: "Professionnel" },
-  { id: uid(), titre: "Coulisses de notre équipe", caption: "Retour en images sur notre séminaire annuel — merci à toute l'équipe Be One ! ✨", hashtags: ["#TeamSpirit", "#BeOne", "#Consulting"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[1] }, { id: uid(), kind: "image", url: POST_IMAGES[2] }], platforms: ["Instagram", "Facebook"], platformConfig: { Instagram: { captionLength: 120, emojiDensity: "Élevée", hashtagCount: 12 }, Facebook: { style: "Conversationnel" } }, statut: "Planifié", date: d(-3), heure: "18:30", auteur: "Manuel", langue: "Français", ton: "Chaleureux" },
-  { id: uid(), titre: "Webinaire transformation RH", caption: "Rejoignez notre webinaire exclusif sur la transformation RH — inscription ouverte !", hashtags: ["#Webinaire", "#TransformationRH"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[3] }], platforms: ["LinkedIn", "YouTube"], platformConfig: { LinkedIn: { tone: "Expert", cta: "S'inscrire" }, YouTube: { titre: "Webinaire — Transformation RH 2026", description: "Session complète", tags: "RH,transformation,2026", thumbnailPrompt: "Podium moderne, éclairage doré" } }, statut: "Brouillon", date: d(0), auteur: "IA", langue: "Français", ton: "Expert" },
+  { id: uid(), titre: "Lancement programme leadership", caption: "Fiers de lancer notre nouveau programme Leadership de proximité 🚀 8 jours pour transformer vos managers.", hashtags: ["#Leadership", "#RH", "#Maroc"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[0], legende: "Kick-off du programme Leadership de proximité — Casablanca, mars 2026." }], platforms: ["LinkedIn", "Facebook"], platformConfig: { LinkedIn: { tone: "Professionnel", cta: "En savoir plus", paragraphes: "Court" }, Facebook: { style: "Storytelling", cta: "Contactez-nous" } }, statut: "Publié", date: d(2), heure: "10:00", auteur: "IA", langue: "Français", ton: "Professionnel" },
+  { id: uid(), titre: "Coulisses de notre équipe", caption: "Retour en images sur notre séminaire annuel — merci à toute l'équipe Be One ! ✨", hashtags: ["#TeamSpirit", "#BeOne", "#Consulting"], media: [{ id: uid(), kind: "image", url: POST_IMAGES[1], legende: "Atelier co-création — jour 1 du séminaire." }, { id: uid(), kind: "image", url: POST_IMAGES[2], legende: "Photo de groupe, clôture du séminaire." }, { id: uid(), kind: "video", url: POST_VIDEOS[0], poster: POST_IMAGES[2], legende: "Best-of vidéo — 45 secondes des meilleurs moments." }], platforms: ["Instagram", "Facebook"], platformConfig: { Instagram: { captionLength: 120, emojiDensity: "Élevée", hashtagCount: 12 }, Facebook: { style: "Conversationnel" } }, statut: "Planifié", date: d(-3), heure: "18:30", auteur: "Manuel", langue: "Français", ton: "Chaleureux" },
+  { id: uid(), titre: "Webinaire transformation RH", caption: "Rejoignez notre webinaire exclusif sur la transformation RH — inscription ouverte !", hashtags: ["#Webinaire", "#TransformationRH"], media: [{ id: uid(), kind: "video", url: POST_VIDEOS[1], poster: POST_IMAGES[3], legende: "Teaser 30 secondes — aperçu des intervenants." }, { id: uid(), kind: "image", url: POST_IMAGES[3], legende: "Visuel promotionnel officiel du webinaire." }], platforms: ["LinkedIn", "YouTube"], platformConfig: { LinkedIn: { tone: "Expert", cta: "S'inscrire" }, YouTube: { titre: "Webinaire — Transformation RH 2026", description: "Session complète", tags: "RH,transformation,2026", thumbnailPrompt: "Podium moderne, éclairage doré" } }, statut: "Brouillon", date: d(0), auteur: "IA", langue: "Français", ton: "Expert" },
 ];
 export const postsStore = createStore<SocialPost>(seedPosts);
 

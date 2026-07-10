@@ -88,7 +88,12 @@ function coverFor(a: Article, i: number) {
 }
 
 function postMediaFor(p: SocialPost, i = 0) {
-  return p.media[0]?.url ?? POST_IMAGES[(p.titre.length + i) % POST_IMAGES.length];
+  const first = p.media[0];
+  if (first) {
+    if (first.kind === "video") return first.poster ?? POST_IMAGES[(p.titre.length + i) % POST_IMAGES.length];
+    return first.url;
+  }
+  return POST_IMAGES[(p.titre.length + i) % POST_IMAGES.length];
 }
 
 function useConfig() {
@@ -1704,17 +1709,35 @@ function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: Socia
               </SheetHeader>
               <div className="py-4 space-y-4">
                 {detail.media.length > 0 && (
-                  detail.media.length === 1 ? (
-                    <img src={postMediaFor(detail)} alt={detail.media[0]?.alt ?? detail.titre} className="w-full h-56 object-cover rounded-lg" onError={(e) => { e.currentTarget.src = POST_IMAGES[0]; }} />
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2">
+                  <section className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-semibold uppercase text-muted-foreground">Médias ({detail.media.length})</h4>
+                      <div className="text-[11px] text-muted-foreground">
+                        {detail.media.filter((m) => m.kind === "image").length} image(s) · {detail.media.filter((m) => m.kind === "video").length} vidéo(s)
+                      </div>
+                    </div>
+                    <div className={cn("grid gap-3", detail.media.length === 1 ? "grid-cols-1" : "grid-cols-2")}>
                       {detail.media.map((m) => (
-                        <div key={m.id} className="aspect-video rounded-lg overflow-hidden border bg-muted">
-                          <img src={m.url} alt={m.alt ?? ""} className="w-full h-full object-cover" />
-                        </div>
+                        <figure key={m.id} className="group rounded-xl overflow-hidden border bg-muted/40 shadow-sm">
+                          <div className="relative aspect-video bg-black/5">
+                            {m.kind === "video" ? (
+                              <video src={m.url} poster={m.poster} controls preload="metadata" className="w-full h-full object-cover" />
+                            ) : (
+                              <img src={m.url} alt={m.alt ?? m.legende ?? detail.titre} className="w-full h-full object-cover transition-transform group-hover:scale-105" loading="lazy" onError={(e) => { e.currentTarget.src = POST_IMAGES[0]; }} />
+                            )}
+                            <span className={cn("absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full backdrop-blur", m.kind === "video" ? "bg-black/70 text-white" : "bg-white/85 text-foreground")}>
+                              {m.kind === "video" ? "Vidéo" : "Image"}
+                            </span>
+                          </div>
+                          {(m.legende || m.description) && (
+                            <figcaption className="px-3 py-2 text-xs text-muted-foreground border-t bg-background/60">
+                              <span className="font-medium text-foreground/80">Légende : </span>{m.legende ?? m.description}
+                            </figcaption>
+                          )}
+                        </figure>
                       ))}
                     </div>
-                  )
+                  </section>
                 )}
                 <section>
                   <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Caption</h4>
