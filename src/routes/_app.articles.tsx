@@ -1310,35 +1310,33 @@ function PostIdeasSection() {
         </div>
         <Button onClick={regenerate} disabled={generating} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><Sparkles className={cn("h-4 w-4 mr-1.5", generating && "animate-spin")} /> Générer de nouvelles idées</Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {ideas.map((idea) => (
-          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3 border-[color:var(--gold)]/40 bg-gradient-to-br from-[color:var(--gold)]/5 to-transparent">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/40 font-semibold mb-1"><Sparkles className="h-3 w-3" /> Idée IA</span>
-                <h3 className="font-semibold text-sm leading-tight">{idea.titre}</h3>
-                <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{idea.description}</div>
+          <Card key={idea.id} className="p-0 overflow-hidden hover-lift cursor-pointer fade-up card-elevated group relative" onClick={() => createPost(idea)}>
+            <div className="h-40 bg-muted relative grid place-items-center text-muted-foreground">
+              <div className="text-center px-4">
+                <ImageIcon className="h-8 w-8 mx-auto opacity-40 mb-1" />
+                <div className="text-[11px] italic line-clamp-2">{idea.mediaConcept}</div>
               </div>
-              {idea.saved && <Bookmark className="h-4 w-4 text-[color:var(--gold)] shrink-0" />}
+              <div className="absolute top-2 left-2 flex gap-1">
+                {idea.platforms.map((pl) => { const Icon = IDEA_PLATFORM_ICON[pl]; return <span key={pl} className="text-white bg-black/60 backdrop-blur rounded-full h-6 w-6 grid place-items-center"><Icon className="h-3 w-3" /></span>; })}
+              </div>
+              <span className="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/90 text-[color:var(--gold-foreground)] backdrop-blur inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> IA</span>
+              <button className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-black/60 text-white grid place-items-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive" onClick={(e) => { e.stopPropagation(); postIdeasStore.remove(idea.id); toast.success("Idée supprimée"); }}><X className="h-3.5 w-3.5" /></button>
             </div>
-            <div className="rounded-lg border bg-muted/30 p-2 text-xs italic text-muted-foreground line-clamp-3">"{idea.suggestedCaption}"</div>
-            <div className="text-[11px] text-muted-foreground"><b className="text-foreground">Média :</b> {idea.mediaConcept}</div>
-            <div className="flex flex-wrap gap-1">{idea.hashtags.map((h) => <span key={h} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-muted-foreground">Plateformes :</span>
-              <div className="flex gap-1">{idea.platforms.map((p) => { const Icon = IDEA_PLATFORM_ICON[p]; return <span key={p} className={cn("h-6 w-6 rounded-full grid place-items-center border", PLATFORM_META[p].bg, PLATFORM_META[p].color)}><Icon className="h-3 w-3" /></span>; })}</div>
-            </div>
-            <div className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> Date suggérée : {idea.suggestedDate}</div>
-            <div className="flex gap-1.5 mt-auto pt-2 border-t flex-wrap">
-              <Button size="sm" onClick={() => createPost(idea)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><Send className="h-3.5 w-3.5 mr-1" /> Créer le post</Button>
-              <Button size="sm" variant="outline" onClick={() => { postIdeasStore.update(idea.id, { saved: !idea.saved }); toast.success(idea.saved ? "Retiré des favoris" : "Idée sauvegardée"); }}><Bookmark className="h-3.5 w-3.5" /></Button>
-              <Button size="sm" variant="outline" onClick={() => { toast.success("Idée régénérée"); }}><RefreshCw className="h-3.5 w-3.5" /></Button>
-              <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => { postIdeasStore.remove(idea.id); toast.success("Idée supprimée"); }}><X className="h-3.5 w-3.5" /></Button>
+            <div className="p-4">
+              <h3 className="font-semibold line-clamp-1">{idea.titre}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{idea.suggestedCaption}</p>
+              <div className="flex flex-wrap gap-1 mt-2">{idea.hashtags.slice(0, 3).map((h) => <span key={h} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div>
+              <div className="flex items-center justify-between mt-3">
+                <StatusBadge status="Brouillon" dot />
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {idea.suggestedDate}</span>
+              </div>
             </div>
           </Card>
         ))}
-        {ideas.length === 0 && <Card className="p-16 text-center text-muted-foreground col-span-full">Aucune idée. Cliquez sur "Générer" pour commencer.</Card>}
       </div>
+
       <PostWizard open={wizardOpen} onOpenChange={(v) => { setWizardOpen(v); if (!v) setPrefill(null); }} prefill={prefill} />
     </div>
   );
