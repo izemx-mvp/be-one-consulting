@@ -1374,7 +1374,8 @@ function ArticleIdeasSection() {
   };
 
   return (
-    <div>
+    <div className="mb-6">
+
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div>
           <div className="text-sm font-semibold flex items-center gap-1.5"><Lightbulb className="h-4 w-4 text-[color:var(--gold)]" /> Idées d'articles générées par l'IA</div>
