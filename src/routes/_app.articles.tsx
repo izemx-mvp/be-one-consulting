@@ -1486,11 +1486,12 @@ function ArticleIdeasSection() {
 // ---------------- POSTS TAB ----------------
 const PLATFORM_ICONS: Record<SocialPlatform, typeof Linkedin> = { LinkedIn: Linkedin, Facebook, Instagram, YouTube: Youtube };
 
-function PostsTab() {
+function PostsTab({ externalDetail, setExternalDetail }: { externalDetail: SocialPost | null; setExternalDetail: (p: SocialPost | null) => void }) {
   const posts = useStore(postsStore);
   const [postOpen, setPostOpen] = useState(false);
   const [editing, setEditing] = useState<SocialPost | null>(null);
-  const [detail, setDetail] = useState<SocialPost | null>(null);
+  const detail = externalDetail;
+  const setDetail = setExternalDetail;
   const [scheduleFor, setScheduleFor] = useState<SocialPost | null>(null);
   const [confirmDel, setConfirmDel] = useState<SocialPost | null>(null);
 
@@ -1515,8 +1516,8 @@ function PostsTab() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {posts.map((p) => (
-          <Card key={p.id} className="p-0 overflow-hidden hover-lift cursor-pointer fade-up card-elevated" onClick={() => setDetail(p)}>
-            <div className="h-40 bg-muted relative">
+          <Card key={p.id} className="p-0 overflow-hidden hover-lift fade-up card-elevated group">
+            <div className="h-40 bg-muted relative cursor-pointer" onClick={() => setDetail(p)}>
               {p.media[0] ? <img src={p.media[0].url} alt="" className="w-full h-full object-cover" /> : <div className="grid place-items-center h-full text-muted-foreground text-xs">Aucun média</div>}
               <div className="absolute top-2 left-2 flex gap-1">
                 {p.platforms.map((pl) => {
@@ -1526,18 +1527,37 @@ function PostsTab() {
               </div>
             </div>
             <div className="p-4">
-              <h3 className="font-semibold line-clamp-1">{p.titre}</h3>
+              <h3 className="font-semibold line-clamp-1 cursor-pointer" onClick={() => setDetail(p)}>{p.titre}</h3>
               <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{p.caption}</p>
               <div className="flex flex-wrap gap-1 mt-2">{p.hashtags.slice(0, 3).map((h) => <span key={h} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">{h}</span>)}</div>
               <div className="flex items-center justify-between mt-3">
                 <StatusBadge status={p.statut} dot={p.statut === "Brouillon"} />
                 <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {p.date}{p.heure ? ` ${p.heure}` : ""}</span>
               </div>
+              <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
+                {p.statut !== "Publié" && (
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); publish(p); }}>
+                    <Send className="h-3 w-3 mr-1" /> Publier
+                  </Button>
+                )}
+                {p.statut !== "Publié" && (
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); setScheduleFor(p); }}>
+                    <Clock className="h-3 w-3 mr-1" /> Planifier
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={(e) => { e.stopPropagation(); openEdit(p); }}>
+                  <Pencil className="h-3 w-3 mr-1" /> Modifier
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive ml-auto" onClick={(e) => { e.stopPropagation(); setConfirmDel(p); }}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
             </div>
           </Card>
         ))}
         {posts.length === 0 && <Card className="p-16 text-center text-muted-foreground col-span-full">Aucun post pour le moment.</Card>}
       </div>
+
 
       {/* Detail sheet */}
       <Sheet open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
