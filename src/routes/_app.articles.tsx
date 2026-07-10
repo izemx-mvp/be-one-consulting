@@ -49,20 +49,28 @@ import {
   articlesStore,
   ARTICLE_IMAGES,
   editorialConfigStore,
+  cmConfigStore,
+  postIdeasStore,
   uid,
   useStore,
   type Article,
+  type CmPlatform,
+  type CmPlatformConfig,
+  type PostIdea,
 } from "@/lib/mock-data";
 import { StatusBadge } from "@/components/status-badge";
-import { RichEditor } from "@/components/rich-editor";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { PostWizard, ContentTypePicker } from "@/components/post-wizard";
+import { PostWizard, ContentTypePicker, type PostWizardPrefill } from "@/components/post-wizard";
+import { ArticleWizard } from "@/components/article-wizard";
 import { ScheduleDialog } from "@/components/schedule-dialog";
 import { postsStore, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
-import { Linkedin, Facebook, Instagram, Youtube, Globe as GlobeIcon, Send } from "lucide-react";
+import { Linkedin, Facebook, Instagram, Youtube, Globe as GlobeIcon, Send, Lightbulb, RefreshCw, Bookmark, Copy } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { burstConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_app/articles")({
   head: () => ({ meta: [{ title: "Community Manager AI — Be One Consulting" }] }),
