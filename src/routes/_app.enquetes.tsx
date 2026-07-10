@@ -335,14 +335,40 @@ function Page() {
                 </Button>
                 {aiQuestions.length > 0 && (
                   <div className="mt-3 space-y-1.5">
-                    {aiQuestions.map((q, i) => (
-                      <div key={i} className="flex items-start gap-2 text-sm bg-background rounded-md border p-2">
-                        <span className="text-[10px] font-bold text-muted-foreground bg-muted rounded px-1.5 py-0.5 shrink-0 mt-0.5">Q{i + 1}</span>
-                        <input className="flex-1 bg-transparent focus:outline-none" defaultValue={q} />
+                    {aiQuestions.map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm bg-background rounded-md border p-2">
+                        <span className="text-[10px] font-bold text-muted-foreground bg-muted rounded px-1.5 py-0.5 shrink-0">Q{i + 1}</span>
+                        <input
+                          className="flex-1 bg-transparent focus:outline-none min-w-0"
+                          value={item.q}
+                          onChange={(e) => {
+                            const next = [...aiQuestions];
+                            const newQ = e.target.value;
+                            next[i] = { q: newQ, type: detectQuestionType(newQ) };
+                            setAiQuestions(next);
+                          }}
+                        />
+                        <Select
+                          value={item.type}
+                          onValueChange={(v) => {
+                            const next = [...aiQuestions];
+                            next[i] = { ...next[i], type: v as QuestionType };
+                            setAiQuestions(next);
+                          }}
+                        >
+                          <SelectTrigger className={cn("h-7 w-[140px] text-[11px] border", typeColor[item.type])}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(["Choix unique", "Choix multiple", "Échelle", "Note", "Texte libre"] as QuestionType[]).map((t) => (
+                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <button className="text-muted-foreground hover:text-destructive" onClick={() => setAiQuestions(aiQuestions.filter((_, j) => j !== i))}><X className="h-3.5 w-3.5" /></button>
                       </div>
                     ))}
-                    <Button size="sm" variant="ghost" onClick={() => setAiQuestions([...aiQuestions, "Nouvelle question..."])}><Plus className="h-3.5 w-3.5 mr-1" /> Ajouter une question</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setAiQuestions([...aiQuestions, { q: "Nouvelle question...", type: "Texte libre" }])}><Plus className="h-3.5 w-3.5 mr-1" /> Ajouter une question</Button>
                   </div>
                 )}
               </div>
