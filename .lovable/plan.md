@@ -1,70 +1,65 @@
-# Phase 2 — UI Enhancements & New Features
+## Goal
 
-Large scope. Grouped into 7 workstreams. All mock data, no backend changes.
+Three fixes to Community Manager AI so articles, posts and calendar behave consistently:
 
-## 1. Theme — Light Mode Redesign + default
-**Files:** `src/styles.css`, `src/lib/theme.tsx`
-- Flip default from `dark` to `light` on first visit; keep localStorage persistence + toggle.
-- Rework `:root` (light) tokens:
-  - Warmer neutrals (soft rose-tinted grays), colored surfaces per section, richer accents.
-  - Add `--surface-1/2/3`, `--gradient-hero`, `--gradient-card`, `--shadow-elegant`, `--shadow-glow`.
-  - Elevated card treatment (subtle border + layered shadow), glass utility already exists — extend.
-- Add hover-lift, colored stat-card variants, badge tone tokens (success/warn/info/gold).
-- Update `app-bg` for light: soft gold/pink radial washes on off-white base.
+1. **Calendar clicks open the real detail sheet** for both articles and posts.
+2. **Publié items** get a slimmed footer: read-only details + a single **Supprimer** button. No Publier/Planifier/Modifier/Révision.
+3. **Media in mock data** stops using external Unsplash URLs and uses **bundled imported assets** in `src/assets/`.
 
-## 2. Module Renames
-**Files:** `src/components/app-shell.tsx`, `src/routes/_app.faq.tsx`, `src/routes/_app.articles.tsx`, any breadcrumb/title strings.
-- Base de connaissance → **Service Client AI**
-- Articles AI → **Community Manager AI**
-- Keep route paths (`/faq`, `/articles`) to avoid churn — only labels/titles change.
+---
 
-## 3. Recruitment — CV section in Candidate Details
-**Files:** `src/routes/_app.recrutement.tsx`, `src/lib/mock-data.ts`
-- Extend candidate mock with `cv?: {name, uploadedAt, type, url}`.
-- New `<CvSection>` in candidate detail sheet: filename, date, type chip, Download + Preview buttons (opens dialog with iframe for PDF / img). Empty state with upload dropzone.
+## 1. Fix "calendar click → nothing opens"
 
-## 4. Enquêtes — AI Analysis card
-**Files:** `src/routes/_app.enquetes.tsx`
-- Add `<AiAnalysisCard>` to results detail sheet with sections: Tendances, Points positifs, Points négatifs, Sujets fréquents, Recommandations, Actions suggérées, Sentiment global, Indicateurs de risque.
-- Deterministic seeded content per enquete.id; sentiment gauge; risk chips.
+**Root cause.** The article and post detail `Sheet`s live inside `GridTab` and `PostsTab`. Radix Tabs unmounts inactive tab content, so while the user is on the **Calendrier** tab, neither sheet exists in the DOM. `setDetailArticle(a)` / `setDetailPost(p)` are called, but nothing renders.
 
-## 5. Community Manager AI — full workflow rewrite
-**Files:** `src/routes/_app.articles.tsx` (rename page), new `src/components/cm-post-wizard.tsx`, `src/components/cm-article-wizard.tsx`, `src/lib/mock-data.ts` (add posts store).
-- Entry step: choose **Post** or **Article**.
-- **Article path** — 2 steps:
-  1. Inputs (description, keywords, langue, ton, longueur, cover) → Générer.
-  2. Preview editable (titre, contenu RichEditor, image, tags, SEO). Actions: Publier / Planifier / Brouillon.
-- **Post path** — 3 steps:
-  1. Idea, AI prompt, image desc, video desc, refs, keywords, langue, ton → Générer.
-  2. Media editor: caption, hashtags, drag-and-drop reorder (dnd-kit already or use HTML5 DnD), add/remove media.
-  3. Platforms (LinkedIn/Facebook/Instagram/YouTube) multi-select; per-platform independent AI settings panel (accordion).
+**Fix.** Extract the two sheets into standalone components and mount them at `Page` level, next to the `<Tabs>`, so they render regardless of the active tab.
 
-## 6. Publishing — split Publish vs Schedule
-- Two distinct buttons everywhere (articles + posts).
-- Schedule opens `<ScheduleDialog>` with date, time, timezone select → status becomes `Planifié`.
+- New `ArticleDetailSheet` and `PostDetailSheet` components inside `src/routes/_app.articles.tsx`.
+- Move all the associated dialogs that the sheets trigger (reject modal, delete confirm, schedule dialog) to `Page` level too so their state is not tied to a tab.
+- `GridTab` and `PostsTab` keep opening the sheets via the same `setDetailArticle` / `setDetailPost` setters they already receive.
 
-## 7. CM Calendar upgrade
-**Files:** new `src/components/publication-calendar.tsx`, integrate into CM page.
-- Month grid with event chips; each shows platform icon (lucide: Linkedin, Facebook, Instagram, Youtube, Globe for articles).
-- Click → detail dialog: title, platform, image, date, caption/article, tags, statut, auteur, AI params used.
+Result: clicking any article or post — from Articles grid, Posts grid, **or** any calendar view — opens the exact same rich sheet with the same buttons.
 
-## 8. New Module — Assistant AI
-**Files:** new `src/routes/_app.assistant.tsx`, sidebar entry, `src/lib/mock-data.ts` (meetings/reminders/config stores).
-- Tabs: **Dashboard**, **Calendrier**, **Configuration**.
-- Dashboard: upcoming meetings list, today, missed, next reminders, mini-calendar overview, smart insight widgets (conflicts, duplicates, overdue).
-- Calendrier: month view, create/edit/delete events, event detail sheet (title, desc, participants, date, time, meeting link, notes, attachments, reminder status).
-- Configuration: langue rappel, timings (multi-select chips), meeting provider (Meet/Zoom/Teams), notifications (me / all), WhatsApp delivery toggle, auto-detect from email/WhatsApp toggles.
-- Smart features mocked: conflict badge on overlapping meetings, "Suggérer un meilleur créneau" button, duplicate detector, importance-based reminder suggestions, meeting summary preview.
+---
 
-## Technical notes
-- Sidebar: add Assistant AI entry with `Bot`/`Sparkles` icon; keep permissions structure (add `assistant` module key, default read=true).
-- Route file: `src/routes/_app.assistant.tsx` — must create BEFORE using `<Link to="/assistant">`; routeTree regenerates automatically.
-- Drag-and-drop: use native HTML5 DnD to avoid new deps.
-- All stores follow existing `mock-data.ts` pattern (subscribe/get/all/add/update/remove).
-- Every new interactive element wired to real state updates + toasts.
+## 2. Publié footer = "détails + Supprimer" only
 
-## Out of scope
-- No real backend, no real WhatsApp/email integration (mocked toggles + toast confirmations).
-- No route path renames (labels only) to keep bookmarks stable.
+Update both detail sheets:
 
-Approve to proceed; I'll implement in this order: theme → renames → recruit CV → survey AI → CM workflows → calendar → Assistant AI module.
+- `Brouillon` → Publier · Planifier · Révision · Modifier · Supprimer *(unchanged)*
+- `Planifié` → Publier maintenant · Replanifier · Retour brouillon · Modifier · Supprimer *(unchanged)*
+- `Publié` → **Supprimer** only (nothing else in the footer)
+
+Also drop the inline `Publier` / `Planifier` / `Modifier` buttons from the **card** action rows when `statut === "Publié"`; the card keeps only the `Supprimer` icon button. Same rule for both article and post cards.
+
+Calendar already filters to Publié + Planifié, so this stays consistent.
+
+---
+
+## 3. Replace external image URLs with bundled assets
+
+Currently `src/lib/mock-data.ts` uses Unsplash URLs in two arrays:
+
+- `ARTICLE_IMAGES` (12 URLs) — used as article covers and idea covers
+- `POST_IMAGES` (4 URLs) — used as post media
+
+**Plan.** Generate a smaller, curated library, upload each as a Lovable Asset (CDN-hosted, no binary in repo), and import the `.asset.json` pointers.
+
+- Generate **6 article cover images** (professional consulting / RH / Maroc themes) → `src/assets/article-cover-1.jpg` … `-6.jpg`.
+- Generate **4 post images** (team, event, leadership, webinar) → `src/assets/post-1.jpg` … `-4.jpg`.
+- For each, run `lovable-assets create --file … > …asset.json`, delete the source binary, keep only the pointer JSON.
+- In `mock-data.ts`, import the pointers and rebuild `ARTICLE_IMAGES` / `POST_IMAGES` as `[img1.url, img2.url, …]`.
+
+The `PostMedia` type keeps `kind: "image" | "video"`; no mock post currently uses `video`, so no video asset is generated. If a video is needed later, it can be added the same way.
+
+---
+
+## Files touched
+
+- `src/routes/_app.articles.tsx` — extract `ArticleDetailSheet` + `PostDetailSheet`, lift to `Page`, update footer/card action rules for Publié.
+- `src/lib/mock-data.ts` — swap `ARTICLE_IMAGES` and `POST_IMAGES` to imported asset pointers.
+- `src/assets/*.asset.json` (new, ~10 files) — pointer JSON for generated covers/post images.
+
+No schema, routing, or auth changes.  
+  
+make sure also that post have images 
