@@ -52,17 +52,19 @@ import {
   editorialConfigStore,
   cmConfigStore,
   postIdeasStore,
+  articleIdeasStore,
   uid,
   useStore,
   type Article,
   type CmPlatform,
   type CmPlatformConfig,
   type PostIdea,
+  type ArticleIdea,
 } from "@/lib/mock-data";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PostWizard, ContentTypePicker, type PostWizardPrefill } from "@/components/post-wizard";
-import { ArticleWizard } from "@/components/article-wizard";
+import { ArticleWizard, type ArticleWizardPrefill } from "@/components/article-wizard";
 import { ScheduleDialog } from "@/components/schedule-dialog";
 import { postsStore, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
 import { Linkedin, Facebook, Instagram, Youtube, Globe as GlobeIcon, Send, Lightbulb, RefreshCw, Bookmark, Copy } from "lucide-react";
@@ -1276,6 +1278,19 @@ function SwitchField({ label, value, onChange }: { label: string; value: boolean
 // ---------------- IDEAS TAB ----------------
 const IDEA_PLATFORM_ICON: Record<SocialPlatform, typeof Linkedin> = { LinkedIn: Linkedin, Facebook, Instagram, YouTube: Youtube };
 function IdeasTab() {
+  return (
+    <Tabs defaultValue="posts">
+      <TabsList className="mb-4">
+        <TabsTrigger value="posts"><Send className="h-4 w-4 mr-2" /> Posts sociaux</TabsTrigger>
+        <TabsTrigger value="articles"><FileText className="h-4 w-4 mr-2" /> Articles</TabsTrigger>
+      </TabsList>
+      <TabsContent value="posts"><PostIdeasSection /></TabsContent>
+      <TabsContent value="articles"><ArticleIdeasSection /></TabsContent>
+    </Tabs>
+  );
+}
+
+function PostIdeasSection() {
   const ideas = useStore(postIdeasStore);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [prefill, setPrefill] = useState<PostWizardPrefill | null>(null);
@@ -1341,6 +1356,75 @@ function IdeasTab() {
     </div>
   );
 }
+
+function ArticleIdeasSection() {
+  const ideas = useStore(articleIdeasStore);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [prefill, setPrefill] = useState<ArticleWizardPrefill | null>(null);
+  const [generating, setGenerating] = useState(false);
+
+  const regenerate = () => {
+    setGenerating(true);
+    setTimeout(() => {
+      const themes = [
+        { titre: "Culture feedback : instaurer le rituel hebdomadaire", description: "Guide pratique pour installer une culture du feedback continu.", extrait: "Comment passer de l'entretien annuel au feedback continu sans épuiser les managers.", angle: "Pédagogique — méthode + outils.", keywords: ["Feedback", "Culture", "Management"], thematique: "Management", longueur: "Moyen (700-1200)" },
+        { titre: "Diversité & inclusion : mesurer ce qui compte vraiment", description: "Article sur les KPI diversité pertinents.", extrait: "Au-delà des quotas : les 6 indicateurs D&I qui prédisent la performance.", angle: "Analytique — data + benchmark.", keywords: ["Diversité", "Inclusion", "KPI"], thematique: "D&I", longueur: "Long (1500+)" },
+      ];
+      const pick = themes[Math.floor(Math.random() * themes.length)];
+      articleIdeasStore.add({ id: uid(), titre: pick.titre, description: pick.description, suggestedExtrait: pick.extrait, angle: pick.angle, keywords: pick.keywords, thematique: pick.thematique, longueur: pick.longueur, suggestedDate: new Date().toISOString().slice(0, 10) });
+      setGenerating(false);
+      toast.success("Nouvelle idée d'article générée");
+    }, 700);
+  };
+
+  const createArticle = (idea: ArticleIdea) => {
+    setPrefill({ titre: idea.titre, description: idea.description, keywords: idea.keywords, thematique: idea.thematique, longueur: idea.longueur, extrait: idea.suggestedExtrait });
+    setWizardOpen(true);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div>
+          <div className="text-sm font-semibold flex items-center gap-1.5"><Lightbulb className="h-4 w-4 text-[color:var(--gold)]" /> Idées d'articles générées par l'IA</div>
+          <div className="text-xs text-muted-foreground">Sujets long-format alignés sur votre ligne éditoriale.</div>
+        </div>
+        <Button onClick={regenerate} disabled={generating} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><Sparkles className={cn("h-4 w-4 mr-1.5", generating && "animate-spin")} /> Générer de nouvelles idées</Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {ideas.map((idea) => (
+          <Card key={idea.id} className="p-4 hover-lift card-elevated flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{idea.thematique}</div>
+                <h3 className="font-semibold text-sm leading-tight">{idea.titre}</h3>
+                <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{idea.description}</div>
+              </div>
+              {idea.saved && <Bookmark className="h-4 w-4 text-[color:var(--gold)] shrink-0" />}
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-2 text-xs italic text-muted-foreground line-clamp-3">"{idea.suggestedExtrait}"</div>
+            <div className="text-[11px] text-muted-foreground"><b className="text-foreground">Angle :</b> {idea.angle}</div>
+            <div className="flex flex-wrap gap-1">{idea.keywords.map((h) => <span key={h} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30">#{h}</span>)}</div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-muted-foreground">Format :</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25 flex items-center gap-1"><GlobeIcon className="h-3 w-3" /> {idea.longueur}</span>
+            </div>
+            <div className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> Date suggérée : {idea.suggestedDate}</div>
+            <div className="flex gap-1.5 mt-auto pt-2 border-t flex-wrap">
+              <Button size="sm" onClick={() => createArticle(idea)} className="btn-premium hover:[&]:btn-premium-hover flex-1"><FileText className="h-3.5 w-3.5 mr-1" /> Créer l'article</Button>
+              <Button size="sm" variant="outline" onClick={() => { articleIdeasStore.update(idea.id, { saved: !idea.saved }); toast.success(idea.saved ? "Retiré des favoris" : "Idée sauvegardée"); }}><Bookmark className="h-3.5 w-3.5" /></Button>
+              <Button size="sm" variant="outline" onClick={() => { toast.success("Idée régénérée"); }}><RefreshCw className="h-3.5 w-3.5" /></Button>
+              <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => { articleIdeasStore.remove(idea.id); toast.success("Idée supprimée"); }}><X className="h-3.5 w-3.5" /></Button>
+            </div>
+          </Card>
+        ))}
+        {ideas.length === 0 && <Card className="p-16 text-center text-muted-foreground col-span-full">Aucune idée. Cliquez sur "Générer" pour commencer.</Card>}
+      </div>
+      <ArticleWizard open={wizardOpen} onOpenChange={(v) => { setWizardOpen(v); if (!v) setPrefill(null); }} prefill={prefill} />
+    </div>
+  );
+}
+
 
 
 // ---------------- POSTS TAB ----------------

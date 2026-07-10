@@ -21,7 +21,12 @@ function emptyArticle(theme: string): Article {
   return { id: "", titre: "", thematique: theme, auteur: "IA", contenu: "", extrait: "", statut: "Brouillon", date: new Date().toISOString().slice(0, 10), tags: [], heure: "09:00" };
 }
 
-export function ArticleWizard({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing?: Article | null }) {
+export type ArticleWizardPrefill = {
+  titre?: string; description?: string; keywords?: string[]; thematique?: string;
+  longueur?: string; extrait?: string; coverRef?: string;
+};
+
+export function ArticleWizard({ open, onOpenChange, editing, prefill }: { open: boolean; onOpenChange: (v: boolean) => void; editing?: Article | null; prefill?: ArticleWizardPrefill | null }) {
   const editorial = useStore(editorialConfigStore)[0];
   const websiteCfg = useStore(cmConfigStore).find((c) => c.platform === "Website");
   const [step, setStep] = useState(1);
@@ -44,11 +49,18 @@ export function ArticleWizard({ open, onOpenChange, editing }: { open: boolean; 
       setArticle(editing);
       setDescription(editing.extrait ?? "");
       setKeywords(editing.tags.join(", "));
+    } else if (prefill) {
+      const base = emptyArticle(prefill.thematique ?? editorial?.thematiques[0] ?? "Général");
+      setArticle({ ...base, titre: prefill.titre ?? "", extrait: prefill.extrait ?? "", tags: prefill.keywords ?? [] });
+      setDescription(prefill.description ?? "");
+      setKeywords((prefill.keywords ?? []).join(", "));
+      setCoverRef(prefill.coverRef ?? "");
+      if (prefill.longueur) setLongueur(prefill.longueur);
     } else {
       setArticle(emptyArticle(editorial?.thematiques[0] ?? "Général"));
       setDescription(""); setKeywords(""); setCoverRef("");
     }
-  }, [open, editing, editorial]);
+  }, [open, editing, prefill, editorial]);
 
   const generate = () => {
     setGenerating(true);
