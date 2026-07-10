@@ -160,6 +160,7 @@ function GridTab({
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Article>(empty(cfg));
   const [tagsInput, setTagsInput] = useState("");
+  const [step, setStep] = useState(1);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [confirmDel, setConfirmDel] = useState<Article | null>(null);
@@ -188,11 +189,13 @@ function GridTab({
   const openNew = () => {
     setEditing(empty(cfg));
     setTagsInput("");
+    setStep(1);
     setOpen(true);
   };
   const openEdit = (a: Article) => {
     setEditing(a);
     setTagsInput(a.tags.join(", "));
+    setStep(1);
     setOpen(true);
   };
 
