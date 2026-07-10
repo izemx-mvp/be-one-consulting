@@ -444,26 +444,20 @@ export const contactBasesStore = createStore<ContactBase>(seedBases);
 
 export const huntingStore = createStore<HuntingMission>(seedHunting);
 
-// ---------- Article cover images (bundled assets) ----------
-import articleCover1 from "@/assets/article-cover-1.jpg.asset.json";
-import articleCover2 from "@/assets/article-cover-2.jpg.asset.json";
-import articleCover3 from "@/assets/article-cover-3.jpg.asset.json";
-import articleCover4 from "@/assets/article-cover-4.jpg.asset.json";
-import articleCover5 from "@/assets/article-cover-5.jpg.asset.json";
-import articleCover6 from "@/assets/article-cover-6.jpg.asset.json";
+// ---------- Article cover images (external URLs) ----------
 export const ARTICLE_IMAGES = [
-  articleCover1.url,
-  articleCover2.url,
-  articleCover3.url,
-  articleCover4.url,
-  articleCover5.url,
-  articleCover6.url,
-  articleCover1.url,
-  articleCover2.url,
-  articleCover3.url,
-  articleCover4.url,
-  articleCover5.url,
-  articleCover6.url,
+  "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80",
 ];
 
 // ---------- Demande AI qualification summary ----------
