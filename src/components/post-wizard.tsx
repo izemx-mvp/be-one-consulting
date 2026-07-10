@@ -1,14 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { Sparkles, Linkedin, Facebook, Instagram, Youtube, Image as ImageIcon, Video as VideoIcon, X, Plus, GripVertical, Send, Clock, Save, ChevronLeft, ChevronRight, Wand2 } from "lucide-react";
-import { postsStore, PLATFORM_META, uid, type SocialPost, type SocialPlatform, type PostMedia } from "@/lib/mock-data";
+import { Sparkles, Linkedin, Facebook, Instagram, Youtube, Image as ImageIcon, Video as VideoIcon, X, Plus, GripVertical, Send, Clock, Save, ChevronLeft, ChevronRight, Wand2, FileText, Check } from "lucide-react";
+import { postsStore, cmConfigStore, uid, useStore, PLATFORM_META, type SocialPost, type SocialPlatform } from "@/lib/mock-data";
 import { ScheduleDialog } from "@/components/schedule-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -16,58 +14,80 @@ import { cn } from "@/lib/utils";
 const LANGUES = ["Français", "English", "العربية", "Español"];
 const TONS = ["Professionnel", "Chaleureux", "Expert", "Inspirationnel", "Humoristique", "Direct"];
 const PLATFORMS: SocialPlatform[] = ["LinkedIn", "Facebook", "Instagram", "YouTube"];
-
 const platformIcon = { LinkedIn: Linkedin, Facebook, Instagram, YouTube: Youtube };
 
 const STOCK_IMAGES = [
-  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=70",
-  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=70",
-  "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=70",
-  "https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=70",
-  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=600&q=70",
-  "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&q=70",
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=70",
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=70",
+  "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=800&q=70",
+  "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=70",
+  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=70",
+  "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=70",
 ];
 
 function emptyPost(): SocialPost {
   return { id: "", titre: "", caption: "", hashtags: [], media: [], platforms: [], platformConfig: {}, statut: "Brouillon", date: new Date().toISOString().slice(0, 10), heure: "09:00", auteur: "IA", langue: "Français", ton: "Professionnel" };
 }
 
-export function PostWizard({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing?: SocialPost | null }) {
+export type PostWizardPrefill = Partial<{
+  titre: string; caption: string; hashtags: string[]; platforms: SocialPlatform[];
+  idea: string; date: string;
+}>;
+
+export function PostWizard({ open, onOpenChange, editing, prefill }: { open: boolean; onOpenChange: (v: boolean) => void; editing?: SocialPost | null; prefill?: PostWizardPrefill | null }) {
   const [step, setStep] = useState(1);
   const [post, setPost] = useState<SocialPost>(emptyPost());
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  // step 1 inputs
   const [idea, setIdea] = useState("");
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [imageDesc, setImageDesc] = useState("");
-  const [videoDesc, setVideoDesc] = useState("");
   const [keywords, setKeywords] = useState("");
   const [generating, setGenerating] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const cfgs = useStore(cmConfigStore);
 
   useEffect(() => {
-    if (open) {
-      setStep(1);
-      if (editing) { setPost(editing); }
-      else { setPost(emptyPost()); setIdea(""); setAiPrompt(""); setImageDesc(""); setVideoDesc(""); setKeywords(""); }
+    if (!open) return;
+    setStep(1);
+    if (editing) {
+      setPost(editing);
+      setIdea(""); setKeywords(editing.hashtags.map((h) => h.replace(/^#/, "")).join(", "));
+    } else {
+      const base = emptyPost();
+      if (prefill) {
+        base.titre = prefill.titre ?? "";
+        base.caption = prefill.caption ?? "";
+        base.hashtags = prefill.hashtags ?? [];
+        base.platforms = prefill.platforms ?? [];
+        base.date = prefill.date ?? base.date;
+      }
+      setPost(base);
+      setIdea(prefill?.idea ?? "");
+      setKeywords((prefill?.hashtags ?? []).map((h) => h.replace(/^#/, "")).join(", "));
     }
-  }, [open, editing]);
+  }, [open, editing, prefill]);
+
+  const addMedia = (kind: "image" | "video") => {
+    setPost((p) => ({ ...p, media: [...p.media, { id: uid(), kind, url: STOCK_IMAGES[p.media.length % STOCK_IMAGES.length], description: "", reference: "", prompt: "" }] }));
+  };
+  const updateMedia = (id: string, patch: Partial<SocialPost["media"][number]>) => {
+    setPost((p) => ({ ...p, media: p.media.map((m) => (m.id === id ? { ...m, ...patch } : m)) }));
+  };
+  const removeMedia = (id: string) => setPost((p) => ({ ...p, media: p.media.filter((m) => m.id !== id) }));
+  const moveMedia = (from: number, to: number) => {
+    setPost((p) => { const media = [...p.media]; const [it] = media.splice(from, 1); media.splice(to, 0, it); return { ...p, media }; });
+  };
 
   const generate = () => {
     setGenerating(true);
     setTimeout(() => {
       const kw = keywords.split(",").map((s) => s.trim()).filter(Boolean);
-      setPost({
-        ...post,
-        titre: idea.slice(0, 60) || "Post généré par IA",
-        caption: `${idea || "Découvrez notre expertise Be One Consulting."} ${aiPrompt ? `\n\n${aiPrompt}` : ""}\n\nContactez-nous pour en savoir plus 👉`,
-        hashtags: [...kw.map((k) => `#${k.replace(/\s+/g, "")}`), "#BeOneConsulting", "#RH", "#Maroc"].slice(0, 6),
-        media: [
-          { id: uid(), kind: "image", url: STOCK_IMAGES[0], alt: imageDesc || undefined },
-          ...(imageDesc ? [{ id: uid(), kind: "image" as const, url: STOCK_IMAGES[1], alt: imageDesc }] : []),
-          ...(videoDesc ? [{ id: uid(), kind: "video" as const, url: STOCK_IMAGES[2], alt: videoDesc }] : []),
-        ],
-      });
+      const orderedDescs = post.media.map((m, i) => m.description || `Visuel ${i + 1}`);
+      setPost((p) => ({
+        ...p,
+        titre: p.titre || idea.slice(0, 60) || "Post généré par IA",
+        caption: p.caption || `${idea || "Découvrez notre expertise Be One Consulting."}${orderedDescs.length ? `\n\n📸 ${orderedDescs.join(" · ")}` : ""}\n\nContactez-nous pour en savoir plus 👉`,
+        hashtags: p.hashtags.length ? p.hashtags : [...kw.map((k) => `#${k.replace(/\s+/g, "")}`), "#BeOneConsulting", "#RH", "#Maroc"].slice(0, 6),
+        media: p.media.length ? p.media : [{ id: uid(), kind: "image" as const, url: STOCK_IMAGES[0], description: idea || undefined }],
+      }));
       setGenerating(false);
       setStep(2);
       toast.success("Post généré par l'IA");
@@ -78,91 +98,127 @@ export function PostWizard({ open, onOpenChange, editing }: { open: boolean; onO
     const on = post.platforms.includes(p);
     const platforms = on ? post.platforms.filter((x) => x !== p) : [...post.platforms, p];
     const platformConfig = { ...post.platformConfig };
-    if (!on && !platformConfig[p]) platformConfig[p] = defaultConfig(p);
+    if (!on) {
+      // hydrate from centralized configuration
+      const cfg = cfgs.find((c) => c.platform === p);
+      platformConfig[p] = cfg ? { ...cfg.settings } as Record<string, string | number> : {};
+    }
     setPost({ ...post, platforms, platformConfig });
-  };
-
-  const moveMedia = (from: number, to: number) => {
-    const media = [...post.media];
-    const [it] = media.splice(from, 1);
-    media.splice(to, 0, it);
-    setPost({ ...post, media });
   };
 
   const save = (statut: SocialPost["statut"], date?: string, heure?: string) => {
     if (!post.titre) { toast.error("Titre requis"); return; }
+    if (statut !== "Brouillon" && post.platforms.length === 0) { toast.error("Sélectionnez au moins une plateforme"); return; }
     const item = { ...post, statut, date: date ?? post.date, heure: heure ?? post.heure };
     if (editing?.id) { postsStore.update(editing.id, item); toast.success("Post mis à jour"); }
     else { postsStore.add({ ...item, id: uid() }); toast.success(statut === "Publié" ? "Post publié" : statut === "Planifié" ? `Post planifié pour le ${item.date} à ${item.heure}` : "Brouillon enregistré"); }
     onOpenChange(false);
   };
 
+  const stepLabels = ["Médias & contenu", "Aperçu IA", "Plateformes & publication"];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[92vh] overflow-y-auto scroll-fancy p-0">
         <div className="bg-gradient-to-r from-primary via-primary/90 to-[color:var(--gold)]/70 text-primary-foreground px-6 py-5 border-b">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg"><Sparkles className="h-5 w-5" /> Nouveau post — Community Manager AI</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-lg"><Sparkles className="h-5 w-5" /> {editing ? "Modifier le post" : "Nouveau post"} — Community Manager AI</DialogTitle>
           </DialogHeader>
           <div className="flex items-center gap-1.5 pt-3">
             {[1, 2, 3].map((s) => <span key={s} className={cn("h-1.5 flex-1 rounded-full transition-colors", s <= step ? "bg-[color:var(--gold)]" : "bg-white/25")} />)}
           </div>
-          <div className="text-xs text-primary-foreground/80 pt-2 font-medium">Étape {step} / 3 — {["Brief & génération", "Contenu & médias", "Plateformes & publication"][step - 1]}</div>
+          <div className="text-xs text-primary-foreground/80 pt-2 font-medium">Étape {step} / 3 — {stepLabels[step - 1]}</div>
         </div>
 
         <div className="px-6 py-5 space-y-4">
           {step === 1 && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-1"><Label>Idée générale</Label><Textarea rows={2} value={idea} onChange={(e) => setIdea(e.target.value)} placeholder="Ex: annonce du nouveau programme leadership de proximité" /></div>
-              <div className="col-span-2 space-y-1"><Label>Prompt IA additionnel (optionnel)</Label><Textarea rows={2} value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="Ex: mets l'accent sur le ROI managérial, ton inspirationnel" /></div>
-              <div className="space-y-1"><Label className="flex items-center gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Description image</Label><Input value={imageDesc} onChange={(e) => setImageDesc(e.target.value)} placeholder="Ex: managers en workshop" /></div>
-              <div className="space-y-1"><Label className="flex items-center gap-1.5"><VideoIcon className="h-3.5 w-3.5" /> Description vidéo</Label><Input value={videoDesc} onChange={(e) => setVideoDesc(e.target.value)} placeholder="Ex: teaser 15s dynamique" /></div>
-              <div className="col-span-2 space-y-1"><Label>Mots-clés (virgules)</Label><Input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="Leadership, RH, Maroc" /></div>
-              <div className="space-y-1"><Label>Langue</Label>
-                <Select value={post.langue} onValueChange={(v) => setPost({ ...post, langue: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{LANGUES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1"><Label>Ton</Label>
-                <Select value={post.ton} onValueChange={(v) => setPost({ ...post, ton: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{TONS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="col-span-2">
-                <div className="rounded-xl border p-3 bg-gradient-to-br from-[color:var(--gold)]/10 to-transparent border-[color:var(--gold)]/25 text-sm text-muted-foreground">Références (images/vidéos) : glissez-déposez ci-après une fois généré, ou ajoutez-les à l'étape 2.</div>
-              </div>
-            </div>
+            <>
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold">Médias du post</div>
+                    <div className="text-xs text-muted-foreground">L'ordre définit la séquence carrousel. Glissez pour réorganiser.</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => addMedia("image")}><ImageIcon className="h-3.5 w-3.5 mr-1.5" /> Image</Button>
+                    <Button size="sm" variant="outline" onClick={() => addMedia("video")}><VideoIcon className="h-3.5 w-3.5 mr-1.5" /> Vidéo</Button>
+                  </div>
+                </div>
+                {post.media.length === 0 && (
+                  <div className="rounded-xl border-2 border-dashed p-8 text-center text-sm text-muted-foreground">
+                    Aucun média. Ajoutez des images ou vidéos — chacun aura sa propre description IA.
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {post.media.map((m, i) => (
+                    <div key={m.id}
+                      draggable
+                      onDragStart={() => setDragIdx(i)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => { if (dragIdx !== null && dragIdx !== i) moveMedia(dragIdx, i); setDragIdx(null); }}
+                      className="rounded-xl border bg-card overflow-hidden hover:border-[color:var(--gold)] transition-colors">
+                      <div className="relative aspect-video bg-muted">
+                        <img src={m.url} alt={m.description ?? ""} className="w-full h-full object-cover" />
+                        {m.kind === "video" && <div className="absolute inset-0 grid place-items-center bg-black/40"><VideoIcon className="h-10 w-10 text-white" /></div>}
+                        <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1 cursor-grab"><GripVertical className="h-3 w-3" /> #{i + 1} · {m.kind === "image" ? "Image" : "Vidéo"}</div>
+                        <button onClick={() => removeMedia(m.id)} className="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1 hover:bg-red-500"><X className="h-3 w-3" /></button>
+                      </div>
+                      <div className="p-3 space-y-2">
+                        <div className="space-y-1"><Label className="text-[11px]">Description (utilisée par l'IA)</Label><Input className="h-8" value={m.description ?? ""} onChange={(e) => updateMedia(m.id, { description: e.target.value })} placeholder="Ex: manager en workshop, ambiance lumineuse" /></div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1"><Label className="text-[11px]">Référence / inspiration</Label><Input className="h-8" value={m.reference ?? ""} onChange={(e) => updateMedia(m.id, { reference: e.target.value })} placeholder="URL ou source" /></div>
+                          <div className="space-y-1"><Label className="text-[11px]">Prompt visuel</Label><Input className="h-8" value={m.prompt ?? ""} onChange={(e) => updateMedia(m.id, { prompt: e.target.value })} placeholder="Style, palette..." /></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="space-y-3 pt-3 border-t">
+                <div className="text-sm font-semibold">Brief général</div>
+                <div className="space-y-1"><Label>Idée générale</Label><Textarea rows={2} value={idea} onChange={(e) => setIdea(e.target.value)} placeholder="Ex: annonce du nouveau programme leadership de proximité" /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1"><Label>Langue</Label>
+                    <Select value={post.langue} onValueChange={(v) => setPost({ ...post, langue: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{LANGUES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent></Select>
+                  </div>
+                  <div className="space-y-1"><Label>Ton</Label>
+                    <Select value={post.ton} onValueChange={(v) => setPost({ ...post, ton: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TONS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select>
+                  </div>
+                </div>
+                <div className="space-y-1"><Label>Mots-clés (virgules)</Label><Input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="Leadership, RH, Maroc" /></div>
+              </section>
+            </>
           )}
 
           {step === 2 && (
             <div className="space-y-4">
+              <div className="rounded-xl border p-3 bg-gradient-to-br from-[color:var(--gold)]/10 to-transparent border-[color:var(--gold)]/25 text-xs text-muted-foreground flex items-center gap-2"><Sparkles className="h-4 w-4 text-[color:var(--gold)]" /> L'IA a rédigé le contenu à partir de votre brief. Éditez librement.</div>
               <div className="space-y-1"><Label>Titre interne</Label><Input value={post.titre} onChange={(e) => setPost({ ...post, titre: e.target.value })} /></div>
-              <div className="space-y-1"><Label>Caption</Label><Textarea rows={5} value={post.caption} onChange={(e) => setPost({ ...post, caption: e.target.value })} /></div>
+              <div className="space-y-1"><Label>Caption</Label><Textarea rows={6} value={post.caption} onChange={(e) => setPost({ ...post, caption: e.target.value })} /></div>
               <div className="space-y-1">
                 <Label>Hashtags (virgules)</Label>
                 <Input value={post.hashtags.join(", ")} onChange={(e) => setPost({ ...post, hashtags: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} />
                 <div className="flex flex-wrap gap-1 pt-1">{post.hashtags.map((h) => <span key={h} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30 font-medium">{h}</span>)}</div>
               </div>
               <div>
-                <Label className="mb-2 block">Médias — glissez pour réorganiser</Label>
+                <Label className="mb-2 block">Ordre des médias — glissez pour réorganiser</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {post.media.map((m, i) => (
                     <div key={m.id} draggable onDragStart={() => setDragIdx(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (dragIdx !== null && dragIdx !== i) moveMedia(dragIdx, i); setDragIdx(null); }}
                       className="relative group rounded-lg overflow-hidden border bg-muted aspect-video cursor-grab active:cursor-grabbing hover:border-[color:var(--gold)]">
-                      <img src={m.url} alt={m.alt ?? ""} className="w-full h-full object-cover" />
+                      <img src={m.url} alt={m.description ?? ""} className="w-full h-full object-cover" />
                       {m.kind === "video" && <div className="absolute inset-0 grid place-items-center bg-black/40"><VideoIcon className="h-8 w-8 text-white" /></div>}
                       <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1"><GripVertical className="h-3 w-3" /> #{i + 1}</div>
-                      <button onClick={() => setPost({ ...post, media: post.media.filter((x) => x.id !== m.id) })} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-500"><X className="h-3 w-3" /></button>
+                      <button onClick={() => removeMedia(m.id)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-red-500"><X className="h-3 w-3" /></button>
                     </div>
                   ))}
-                  <button onClick={() => setPost({ ...post, media: [...post.media, { id: uid(), kind: "image", url: STOCK_IMAGES[post.media.length % STOCK_IMAGES.length] }] })} className="aspect-video rounded-lg border-2 border-dashed grid place-items-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                  <button onClick={() => addMedia("image")} className="aspect-video rounded-lg border-2 border-dashed grid place-items-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                     <Plus className="h-6 w-6" />
                   </button>
                 </div>
               </div>
-              <Button size="sm" variant="outline" onClick={() => toast.success("Média régénéré par l'IA")}><Wand2 className="h-3.5 w-3.5 mr-1.5" /> Régénérer un visuel</Button>
+              <Button size="sm" variant="outline" onClick={() => toast.success("Contenu régénéré par l'IA")}><Wand2 className="h-3.5 w-3.5 mr-1.5" /> Régénérer avec l'IA</Button>
             </div>
           )}
 
@@ -175,22 +231,26 @@ export function PostWizard({ open, onOpenChange, editing }: { open: boolean; onO
                     const Icon = platformIcon[p];
                     const on = post.platforms.includes(p);
                     return (
-                      <button key={p} type="button" onClick={() => togglePlatform(p)} className={cn("rounded-xl border p-3 flex flex-col items-center gap-1.5 transition-all", on ? cn(PLATFORM_META[p].bg, "ring-2 ring-primary/30") : "hover:bg-muted")}>
-                        <Icon className={cn("h-5 w-5", PLATFORM_META[p].color)} />
+                      <button key={p} type="button" onClick={() => togglePlatform(p)} className={cn("relative rounded-xl border p-4 flex flex-col items-center gap-1.5 transition-all", on ? cn(PLATFORM_META[p].bg, "ring-2 ring-primary/40") : "hover:bg-muted")}>
+                        {on && <span className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-primary text-primary-foreground grid place-items-center"><Check className="h-2.5 w-2.5" /></span>}
+                        <Icon className={cn("h-6 w-6", PLATFORM_META[p].color)} />
                         <span className="text-xs font-medium">{p}</span>
                       </button>
                     );
                   })}
                 </div>
+                <div className="text-[11px] text-muted-foreground pt-2 flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-[color:var(--gold)]" /> Les paramètres IA sont hérités automatiquement depuis la configuration de chaque plateforme.</div>
               </div>
 
-              {post.platforms.map((p) => (
-                <PlatformSettings key={p} platform={p} value={post.platformConfig[p] ?? defaultConfig(p)} onChange={(v) => setPost({ ...post, platformConfig: { ...post.platformConfig, [p]: v } })} />
-              ))}
-
-              {post.platforms.length === 0 && (
-                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">Sélectionnez au moins une plateforme pour configurer la génération.</div>
-              )}
+              <div className="rounded-xl border p-4 bg-muted/30 space-y-2">
+                <div className="text-sm font-semibold flex items-center gap-2"><FileText className="h-4 w-4" /> Récapitulatif</div>
+                <div className="text-xs space-y-0.5 text-muted-foreground">
+                  <div><b className="text-foreground">Titre :</b> {post.titre || "—"}</div>
+                  <div><b className="text-foreground">Médias :</b> {post.media.length} ({post.media.filter((m) => m.kind === "image").length} image · {post.media.filter((m) => m.kind === "video").length} vidéo)</div>
+                  <div><b className="text-foreground">Plateformes :</b> {post.platforms.join(", ") || "aucune"}</div>
+                  <div><b className="text-foreground">Hashtags :</b> {post.hashtags.length}</div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -199,8 +259,8 @@ export function PostWizard({ open, onOpenChange, editing }: { open: boolean; onO
           <Button variant="outline" onClick={() => (step > 1 ? setStep(step - 1) : onOpenChange(false))}>
             <ChevronLeft className="h-4 w-4 mr-1" /> {step > 1 ? "Précédent" : "Annuler"}
           </Button>
-          <div className="flex gap-2">
-            {step === 1 && <Button onClick={generate} disabled={generating} className="btn-premium hover:[&]:btn-premium-hover"><Sparkles className={cn("h-4 w-4 mr-2", generating && "animate-spin")} /> {generating ? "Génération..." : "Générer"}</Button>}
+          <div className="flex gap-2 flex-wrap justify-end">
+            {step === 1 && <Button onClick={generate} disabled={generating} className="btn-premium hover:[&]:btn-premium-hover"><Sparkles className={cn("h-4 w-4 mr-2", generating && "animate-spin")} /> {generating ? "Génération..." : "Générer le post"}</Button>}
             {step === 2 && (
               <>
                 <Button variant="outline" onClick={() => save("Brouillon")}><Save className="h-4 w-4 mr-2" /> Brouillon</Button>
@@ -211,7 +271,7 @@ export function PostWizard({ open, onOpenChange, editing }: { open: boolean; onO
               <>
                 <Button variant="outline" onClick={() => save("Brouillon")}><Save className="h-4 w-4 mr-2" /> Brouillon</Button>
                 <Button variant="outline" onClick={() => setScheduleOpen(true)}><Clock className="h-4 w-4 mr-2" /> Planifier</Button>
-                <Button onClick={() => save("Publié")} className="btn-premium hover:[&]:btn-premium-hover"><Send className="h-4 w-4 mr-2" /> Publier</Button>
+                <Button onClick={() => save("Publié")} className="btn-premium hover:[&]:btn-premium-hover"><Send className="h-4 w-4 mr-2" /> Publier maintenant</Button>
               </>
             )}
           </div>
@@ -220,66 +280,6 @@ export function PostWizard({ open, onOpenChange, editing }: { open: boolean; onO
         <ScheduleDialog open={scheduleOpen} onOpenChange={setScheduleOpen} initialDate={post.date} initialTime={post.heure} onConfirm={({ date, time }) => save("Planifié", date, time)} />
       </DialogContent>
     </Dialog>
-  );
-}
-
-function defaultConfig(p: SocialPlatform): Record<string, string | number> {
-  if (p === "Instagram") return { captionLength: 120, emojiDensity: "Moyenne", hashtagCount: 10, tone: "Chaleureux" };
-  if (p === "LinkedIn") return { tone: "Professionnel", cta: "En savoir plus", paragraphes: "Moyen", hashtags: 3 };
-  if (p === "Facebook") return { style: "Conversationnel", cta: "Réagir", longueur: "Court" };
-  return { titre: "", description: "", tags: "", thumbnailPrompt: "" };
-}
-
-function PlatformSettings({ platform, value, onChange }: { platform: SocialPlatform; value: Record<string, string | number>; onChange: (v: Record<string, string | number>) => void }) {
-  const Icon = platformIcon[platform];
-  const set = (k: string, v: string | number) => onChange({ ...value, [k]: v });
-  return (
-    <Card className={cn("p-4 border", PLATFORM_META[platform].bg)}>
-      <div className={cn("flex items-center gap-2 font-semibold text-sm mb-3", PLATFORM_META[platform].color)}><Icon className="h-4 w-4" /> Paramètres {platform}</div>
-      {platform === "Instagram" && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1"><Label className="text-xs">Longueur caption (car.)</Label><Slider min={50} max={300} step={10} value={[value.captionLength as number]} onValueChange={(v) => set("captionLength", v[0])} /><div className="text-[10px] text-muted-foreground text-right tabular-nums">{value.captionLength}</div></div>
-          <div className="space-y-1"><Label className="text-xs">Densité émojis</Label>
-            <Select value={value.emojiDensity as string} onValueChange={(v) => set("emojiDensity", v)}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Faible">Faible</SelectItem><SelectItem value="Moyenne">Moyenne</SelectItem><SelectItem value="Élevée">Élevée</SelectItem></SelectContent></Select>
-          </div>
-          <div className="space-y-1"><Label className="text-xs">Nombre de hashtags</Label><Slider min={0} max={30} step={1} value={[value.hashtagCount as number]} onValueChange={(v) => set("hashtagCount", v[0])} /><div className="text-[10px] text-muted-foreground text-right tabular-nums">{value.hashtagCount}</div></div>
-          <div className="space-y-1"><Label className="text-xs">Ton</Label>
-            <Select value={value.tone as string} onValueChange={(v) => set("tone", v)}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent>{TONS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select>
-          </div>
-        </div>
-      )}
-      {platform === "LinkedIn" && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1"><Label className="text-xs">Ton professionnel</Label>
-            <Select value={value.tone as string} onValueChange={(v) => set("tone", v)}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent>{TONS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select>
-          </div>
-          <div className="space-y-1"><Label className="text-xs">CTA</Label><Input className="h-8" value={value.cta as string} onChange={(e) => set("cta", e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">Style de paragraphes</Label>
-            <Select value={value.paragraphes as string} onValueChange={(v) => set("paragraphes", v)}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Court">Court (1-2 lignes)</SelectItem><SelectItem value="Moyen">Moyen</SelectItem><SelectItem value="Long">Long (storytelling)</SelectItem></SelectContent></Select>
-          </div>
-          <div className="space-y-1"><Label className="text-xs">Nombre de hashtags</Label><Slider min={0} max={10} step={1} value={[value.hashtags as number]} onValueChange={(v) => set("hashtags", v[0])} /><div className="text-[10px] text-muted-foreground text-right tabular-nums">{value.hashtags}</div></div>
-        </div>
-      )}
-      {platform === "Facebook" && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1"><Label className="text-xs">Style</Label>
-            <Select value={value.style as string} onValueChange={(v) => set("style", v)}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Conversationnel">Conversationnel</SelectItem><SelectItem value="Storytelling">Storytelling</SelectItem><SelectItem value="Info">Informatif</SelectItem></SelectContent></Select>
-          </div>
-          <div className="space-y-1"><Label className="text-xs">CTA</Label><Input className="h-8" value={value.cta as string} onChange={(e) => set("cta", e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">Longueur</Label>
-            <Select value={value.longueur as string} onValueChange={(v) => set("longueur", v)}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Court">Court</SelectItem><SelectItem value="Moyen">Moyen</SelectItem><SelectItem value="Long">Long</SelectItem></SelectContent></Select>
-          </div>
-        </div>
-      )}
-      {platform === "YouTube" && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2 space-y-1"><Label className="text-xs">Titre vidéo</Label><Input className="h-8" value={value.titre as string} onChange={(e) => set("titre", e.target.value)} /></div>
-          <div className="col-span-2 space-y-1"><Label className="text-xs">Description</Label><Textarea rows={2} value={value.description as string} onChange={(e) => set("description", e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">Tags (virgules)</Label><Input className="h-8" value={value.tags as string} onChange={(e) => set("tags", e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">Prompt miniature</Label><Input className="h-8" value={value.thumbnailPrompt as string} onChange={(e) => set("thumbnailPrompt", e.target.value)} placeholder="Style vignette..." /></div>
-        </div>
-      )}
-    </Card>
   );
 }
 
@@ -294,12 +294,12 @@ export function ContentTypePicker({ open, onOpenChange, onPick }: { open: boolea
           <button onClick={() => { onOpenChange(false); onPick("post"); }} className="rounded-xl border p-5 hover-lift text-left stat-primary">
             <div className="h-10 w-10 rounded-lg bg-background/60 grid place-items-center mb-2"><Instagram className="h-5 w-5 text-pink-600" /></div>
             <div className="font-semibold text-sm">Post réseaux sociaux</div>
-            <div className="text-xs text-muted-foreground mt-1">LinkedIn, Facebook, Instagram, YouTube — génération multi-plateforme, médias, hashtags.</div>
+            <div className="text-xs text-muted-foreground mt-1">Multi-médias, drag & drop, publication multi-plateformes.</div>
           </button>
           <button onClick={() => { onOpenChange(false); onPick("article"); }} className="rounded-xl border p-5 hover-lift text-left stat-gold">
-            <div className="h-10 w-10 rounded-lg bg-background/60 grid place-items-center mb-2"><Youtube className="h-5 w-5 text-[color:var(--gold)]" style={{ display: "none" }} /><span className="text-lg font-bold text-[color:var(--gold)]">A</span></div>
+            <div className="h-10 w-10 rounded-lg bg-background/60 grid place-items-center mb-2"><FileText className="h-5 w-5 text-[color:var(--gold)]" /></div>
             <div className="font-semibold text-sm">Article de blog</div>
-            <div className="text-xs text-muted-foreground mt-1">Article long format optimisé SEO, image de couverture, tags, préview instantané.</div>
+            <div className="text-xs text-muted-foreground mt-1">Génération IA long format, SEO, couverture, preview complet.</div>
           </button>
         </div>
       </DialogContent>
