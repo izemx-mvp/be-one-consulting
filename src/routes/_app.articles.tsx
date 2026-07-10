@@ -11,12 +11,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Check, X, Plus, Search, Sparkles, Pencil, Trash2, Clock, ChevronLeft, ChevronRight, FileText, LayoutGrid, CalendarDays, Wand2, ImageIcon, Settings2, Lightbulb, CalendarCheck, Send, Tag, AlertTriangle, Hash } from "lucide-react";
+import { Check, X, Plus, Search, Sparkles, Pencil, Trash2, Clock, ChevronLeft, ChevronRight, FileText, LayoutGrid, CalendarDays, Wand2, ImageIcon, Settings2, Tag, AlertTriangle, Hash } from "lucide-react";
 import { articlesStore, ARTICLE_IMAGES, editorialConfigStore, uid, useStore, type Article } from "@/lib/mock-data";
 import { StatusBadge } from "@/components/status-badge";
 import { RichEditor } from "@/components/rich-editor";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { MiniCalendar, type CalendarEvent } from "@/components/mini-calendar";
 import { toast } from "sonner";
 import { burstConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
@@ -26,21 +25,8 @@ export const Route = createFileRoute("/_app/articles")({
   component: Page,
 });
 
-const STATUTS: Article["statut"][] = ["Idée", "Brouillon", "En attente de validation", "Planifié", "Publié"];
+const STATUTS: Article["statut"][] = ["Brouillon", "En attente de validation", "Planifié", "Publié"];
 const PAGE_SIZE = 9;
-
-const IA_IDEAS = [
-  "Comment structurer un comité de rémunération en PME marocaine",
-  "IA générative & RH : quelles applications concrètes en 2026 ?",
-  "Marque employeur : les 7 signaux faibles à surveiller",
-  "Négocier un package : ce que les cadres marocains attendent vraiment",
-  "Restructuration : conduire le changement sans casser la culture",
-  "Talent mapping : la nouvelle arme des DRH stratégiques",
-  "Onboarding hybride : sécuriser les 100 premiers jours",
-  "Automatiser le sourcing sans perdre l'humain",
-  "Politique salariale au Maroc : benchmarks 2026",
-  "Culture de feedback : rituels concrets à mettre en place",
-];
 
 function coverFor(a: Article, i: number) {
   return ARTICLE_IMAGES[(a.titre.length + i) % ARTICLE_IMAGES.length];
@@ -63,18 +49,17 @@ function empty(cfg: { thematiques: string[] }): Article {
 }
 
 function Page() {
+  const [detailArticle, setDetailArticle] = useState<Article | null>(null);
   return (
-    <AppShell title="Articles AI" subtitle="Agent Rédaction — idées, création IA ou manuelle, validation, planification et publication">
+    <AppShell title="Articles AI" subtitle="Agent Rédaction — création IA ou manuelle, validation, planification et publication">
       <Tabs defaultValue="grid">
         <TabsList className="mb-4">
           <TabsTrigger value="grid"><LayoutGrid className="h-4 w-4 mr-2" /> Articles</TabsTrigger>
-          <TabsTrigger value="ideas"><Lightbulb className="h-4 w-4 mr-2" /> Idées</TabsTrigger>
           <TabsTrigger value="calendar"><CalendarDays className="h-4 w-4 mr-2" /> Calendrier éditorial</TabsTrigger>
           <TabsTrigger value="config"><Settings2 className="h-4 w-4 mr-2" /> Configuration IA</TabsTrigger>
         </TabsList>
-        <TabsContent value="grid"><GridTab /></TabsContent>
-        <TabsContent value="ideas"><IdeasTab /></TabsContent>
-        <TabsContent value="calendar"><CalendarTab /></TabsContent>
+        <TabsContent value="grid"><GridTab externalDetail={detailArticle} setExternalDetail={setDetailArticle} /></TabsContent>
+        <TabsContent value="calendar"><CalendarTab onArticleClick={setDetailArticle} /></TabsContent>
         <TabsContent value="config"><ConfigTab /></TabsContent>
       </Tabs>
     </AppShell>
@@ -86,7 +71,7 @@ function TagChips({ tags }: { tags: string[] }) {
   return (
     <div className="flex flex-wrap gap-1 mt-2">
       {tags.map((t) => (
-        <span key={t} className="text-[10px] inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/10 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)] border border-[color:var(--gold)]/20">
+        <span key={t} className="text-[10px] inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/35 font-medium">
           <Hash className="h-2.5 w-2.5" />{t}
         </span>
       ))}
@@ -95,9 +80,9 @@ function TagChips({ tags }: { tags: string[] }) {
 }
 
 // ---------------- GRID TAB ----------------
-function GridTab() {
+function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Article | null; setExternalDetail: (a: Article | null) => void }) {
   const cfg = useConfig();
-  const rows = useStore(articlesStore).filter((a) => a.statut !== "Idée");
+  const rows = useStore(articlesStore);
   const [statut, setStatut] = useState("all");
   const [thematique, setThematique] = useState("all");
   const [auteur, setAuteur] = useState("all");
@@ -106,10 +91,12 @@ function GridTab() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Article>(empty(cfg));
   const [tagsInput, setTagsInput] = useState("");
-  const [detail, setDetail] = useState<Article | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [confirmDel, setConfirmDel] = useState<Article | null>(null);
+
+  const detail = externalDetail;
+  const setDetail = setExternalDetail;
 
   const filtered = useMemo(() => {
     const needle = q.toLowerCase();
@@ -128,8 +115,15 @@ function GridTab() {
   const openNew = () => { setEditing(empty(cfg)); setTagsInput(""); setOpen(true); };
   const openEdit = (a: Article) => { setEditing(a); setTagsInput(a.tags.join(", ")); setOpen(true); };
 
+  // Planifié requires the article to have been reviewed at least once (not Brouillon)
+  const canPlan = editing.statut !== "Brouillon" || Boolean(editing.id && rows.find((r) => r.id === editing.id && r.statut !== "Brouillon"));
+
   const save = () => {
     if (!editing.titre) { toast.error("Titre requis"); return; }
+    if (editing.statut === "Planifié" && !canPlan) {
+      toast.error("Impossible de planifier un brouillon", { description: "Passez d'abord en « En attente de validation »." });
+      return;
+    }
     const tags = tagsInput.split(",").map((s) => s.trim()).filter(Boolean);
     const item = { ...editing, tags };
     if (editing.id) { articlesStore.update(editing.id, item); toast.success("Article mis à jour"); }
@@ -148,7 +142,7 @@ function GridTab() {
         </div>
         <Select value={statut} onValueChange={setStatut}>
           <SelectTrigger className="w-[200px]"><SelectValue placeholder="Statut" /></SelectTrigger>
-          <SelectContent><SelectItem value="all">Tous statuts</SelectItem>{STATUTS.filter((s) => s !== "Idée").map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+          <SelectContent><SelectItem value="all">Tous statuts</SelectItem>{STATUTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={auteur} onValueChange={setAuteur}>
           <SelectTrigger className="w-[150px]"><SelectValue placeholder="Auteur" /></SelectTrigger>
@@ -242,7 +236,7 @@ function GridTab() {
                   {tagsInput && (
                     <div className="flex flex-wrap gap-1 pt-1">
                       {tagsInput.split(",").map((t) => t.trim()).filter(Boolean).map((t, i) => (
-                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]"><Hash className="h-2.5 w-2.5 inline" />{t}</span>
+                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold)] border border-[color:var(--gold)]/30 font-medium"><Hash className="h-2.5 w-2.5 inline" />{t}</span>
                       ))}
                     </div>
                   )}
@@ -256,8 +250,17 @@ function GridTab() {
                   <Label>Statut</Label>
                   <Select value={editing.statut} onValueChange={(v) => setEditing({ ...editing, statut: v as Article["statut"] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{STATUTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {STATUTS.map((s) => (
+                        <SelectItem key={s} value={s} disabled={s === "Planifié" && !canPlan}>
+                          {s}{s === "Planifié" && !canPlan ? " — validez d'abord" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
+                  {!canPlan && (
+                    <p className="text-[11px] text-muted-foreground pt-0.5">Un brouillon doit passer par « En attente de validation » avant d'être planifié.</p>
+                  )}
                 </div>
                 <div className="space-y-1"><Label>Date de publication</Label><Input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} /></div>
                 <div className="space-y-1"><Label>Heure</Label><Input type="time" value={editing.heure ?? "09:00"} onChange={(e) => setEditing({ ...editing, heure: e.target.value })} /></div>
@@ -292,7 +295,7 @@ function GridTab() {
               <SheetHeader className="border-b pb-4">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary uppercase">{detail.thematique}</span>
-                  {detail.auteur === "IA" && <span className="text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/20 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)] inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> IA</span>}
+                  {detail.auteur === "IA" && <span className="text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/20 text-[color:var(--gold)] inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> IA</span>}
                   <StatusBadge status={detail.statut} dot={detail.statut === "En attente de validation"} />
                 </div>
                 <SheetTitle className="text-2xl mt-2">{detail.titre}</SheetTitle>
@@ -343,141 +346,285 @@ function GridTab() {
   );
 }
 
-// ---------------- IDEAS TAB ----------------
-function IdeasTab() {
-  const cfg = useConfig();
-  const rows = useStore(articlesStore).filter((a) => a.statut === "Idée");
-  const [loading, setLoading] = useState(false);
-  const [planFor, setPlanFor] = useState<Article | null>(null);
-  const [planDate, setPlanDate] = useState(new Date().toISOString().slice(0, 10));
-  const [planTime, setPlanTime] = useState("09:00");
+// ---------------- CALENDAR TAB ----------------
+const MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+const DOW_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
-  const generate = () => {
-    setLoading(true);
-    setTimeout(() => {
-      const picks = [...IA_IDEAS].sort(() => Math.random() - 0.5).slice(0, 4);
-      picks.forEach((titre) => {
-        articlesStore.add({
-          id: uid(), titre,
-          thematique: cfg.thematiques[Math.floor(Math.random() * cfg.thematiques.length)],
-          auteur: "IA",
-          contenu: `<h2>${titre}</h2><p>Idée générée par l'agent Rédaction. Angle proposé : décryptage sectoriel avec cas d'usage marocains.</p>`,
-          extrait: "Idée proposée par l'agent Rédaction, en attente de traitement.",
-          statut: "Idée",
-          date: new Date().toISOString().slice(0, 10),
-          tags: ["IA", "Idée"],
-          heure: "09:00",
-        });
-      });
-      setLoading(false);
-      toast.success("4 nouvelles idées générées");
-    }, 700);
-  };
+type View = "year" | "month" | "week" | "day" | "agenda";
 
-  const approve = (a: Article) => {
-    articlesStore.update(a.id, { statut: "En attente de validation" });
-    toast.success("Idée approuvée — brouillon envoyé en validation");
-  };
-  const publish = (a: Article) => {
-    articlesStore.update(a.id, { statut: "Publié" });
-    burstConfetti(); toast.success("Article publié !");
-  };
-  const doPlan = () => {
-    if (!planFor) return;
-    articlesStore.update(planFor.id, { statut: "Planifié", date: planDate, heure: planTime });
-    toast.success("Planifié", { description: `${planDate} à ${planTime}` });
-    setPlanFor(null);
+function toneFor(a: Article) {
+  if (a.statut === "Publié") return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40";
+  if (a.statut === "En attente de validation") return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40";
+  if (a.statut === "Planifié") return "bg-[color:var(--gold)]/15 text-[color:var(--gold)] border-[color:var(--gold)]/40";
+  return "bg-muted text-muted-foreground border-border";
+}
+
+function dateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function CalendarTab({ onArticleClick }: { onArticleClick: (a: Article) => void }) {
+  const rows = useStore(articlesStore);
+  const [view, setView] = useState<View>("month");
+  const [cursor, setCursor] = useState<Date>(new Date());
+
+  const byDay = useMemo(() => {
+    const m = new Map<string, Article[]>();
+    for (const a of rows) {
+      if (!m.has(a.date)) m.set(a.date, []);
+      m.get(a.date)!.push(a);
+    }
+    return m;
+  }, [rows]);
+
+  const label = useMemo(() => {
+    if (view === "year") return `${cursor.getFullYear()}`;
+    if (view === "month") return `${MONTHS_FR[cursor.getMonth()]} ${cursor.getFullYear()}`;
+    if (view === "week") {
+      const s = startOfWeek(cursor);
+      const e = new Date(s); e.setDate(s.getDate() + 6);
+      return `Semaine du ${s.getDate()} ${MONTHS_FR[s.getMonth()].slice(0, 3)} – ${e.getDate()} ${MONTHS_FR[e.getMonth()].slice(0, 3)} ${e.getFullYear()}`;
+    }
+    if (view === "day") return `${DOW_FR[(cursor.getDay() + 6) % 7]} ${cursor.getDate()} ${MONTHS_FR[cursor.getMonth()]} ${cursor.getFullYear()}`;
+    return "Agenda éditorial";
+  }, [view, cursor]);
+
+  const shift = (delta: number) => {
+    const d = new Date(cursor);
+    if (view === "year") d.setFullYear(d.getFullYear() + delta);
+    else if (view === "month") d.setMonth(d.getMonth() + delta);
+    else if (view === "week") d.setDate(d.getDate() + delta * 7);
+    else if (view === "day") d.setDate(d.getDate() + delta);
+    setCursor(d);
   };
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 flex flex-wrap items-center gap-4 bg-gradient-to-br from-[color:var(--gold)]/10 via-primary/5 to-transparent border-[color:var(--gold)]/30">
-        <div className="h-12 w-12 rounded-xl bg-[color:var(--gold)]/20 grid place-items-center"><Lightbulb className="h-6 w-6 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]" /></div>
-        <div className="flex-1 min-w-[240px]">
-          <div className="font-semibold">Idées générées par l'agent Rédaction</div>
-          <div className="text-xs text-muted-foreground">Approuvez, planifiez ou publiez directement. Vous pouvez aussi éditer avant validation.</div>
+      <Card className="p-4 flex items-center gap-3 flex-wrap">
+        <div>
+          <div className="font-semibold text-sm">Calendrier éditorial</div>
+          <div className="text-xs text-muted-foreground">Cliquez un article pour ouvrir ses détails.</div>
         </div>
-        <Button onClick={generate} disabled={loading} className="btn-premium hover:[&]:btn-premium-hover">
-          <Sparkles className={cn("h-4 w-4 mr-2", loading && "animate-spin")} /> Générer 4 idées
-        </Button>
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
+          <div className="inline-flex rounded-lg border p-0.5 bg-muted/40">
+            {(["year", "month", "week", "day", "agenda"] as View[]).map((v) => (
+              <button key={v} onClick={() => setView(v)} className={cn("text-xs px-3 py-1.5 rounded-md capitalize transition-colors", view === v ? "bg-background shadow-sm font-semibold" : "text-muted-foreground hover:text-foreground")}>
+                {v === "year" ? "Année" : v === "month" ? "Mois" : v === "week" ? "Semaine" : v === "day" ? "Jour" : "Agenda"}
+              </button>
+            ))}
+          </div>
+          {view !== "agenda" && (
+            <div className="flex items-center gap-1">
+              <Button size="sm" variant="outline" onClick={() => setCursor(new Date())} className="h-8">Aujourd'hui</Button>
+              <Button size="icon" variant="ghost" onClick={() => shift(-1)} className="h-8 w-8"><ChevronLeft className="h-4 w-4" /></Button>
+              <Button size="icon" variant="ghost" onClick={() => shift(1)} className="h-8 w-8"><ChevronRight className="h-4 w-4" /></Button>
+            </div>
+          )}
+        </div>
+        <div className="w-full flex items-center justify-between border-t pt-3">
+          <div className="text-lg font-semibold">{label}</div>
+          <div className="flex gap-3 text-xs">
+            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Publié</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" /> En attente</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[color:var(--gold)]" /> Planifié</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-muted-foreground" /> Brouillon</span>
+          </div>
+        </div>
       </Card>
 
-      {rows.length === 0 ? (
-        <Card className="p-16 text-center text-muted-foreground">
-          <Lightbulb className="h-10 w-10 mx-auto mb-2 opacity-40" />
-          Aucune idée en attente. Cliquez sur « Générer 4 idées ».
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {rows.map((a) => (
-            <Card key={a.id} className="p-4 hover:shadow-md transition-all fade-up">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-lg bg-[color:var(--gold)]/15 grid place-items-center shrink-0"><Sparkles className="h-5 w-5 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]" /></div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">{a.thematique}</span>
-                    <StatusBadge status="Idée" />
-                  </div>
-                  <div className="font-semibold leading-snug">{a.titre}</div>
-                  <p className="text-xs text-muted-foreground mt-1">{a.extrait}</p>
-                  <TagChips tags={a.tags} />
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    <Button size="sm" onClick={() => approve(a)} className="bg-emerald-600 hover:bg-emerald-700 text-white"><Check className="h-3.5 w-3.5 mr-1" /> Approuver</Button>
-                    <Button size="sm" variant="outline" onClick={() => { setPlanFor(a); setPlanDate(a.date); setPlanTime(a.heure ?? "09:00"); }}><CalendarCheck className="h-3.5 w-3.5 mr-1" /> Planifier</Button>
-                    <Button size="sm" variant="outline" onClick={() => publish(a)}><Send className="h-3.5 w-3.5 mr-1" /> Publier</Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { articlesStore.remove(a.id); toast.success("Idée écartée"); }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <Dialog open={!!planFor} onOpenChange={(v) => !v && setPlanFor(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><CalendarCheck className="h-5 w-5 text-primary" /> Planifier la publication</DialogTitle>
-            <DialogDescription>{planFor?.titre}</DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Date</Label><Input type="date" value={planDate} onChange={(e) => setPlanDate(e.target.value)} /></div>
-            <div className="space-y-1"><Label>Heure</Label><Input type="time" value={planTime} onChange={(e) => setPlanTime(e.target.value)} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPlanFor(null)}>Annuler</Button>
-            <Button onClick={doPlan} className="btn-premium hover:[&]:btn-premium-hover">Planifier</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {view === "year" && <YearView year={cursor.getFullYear()} byDay={byDay} onMonth={(m) => { setCursor(new Date(cursor.getFullYear(), m, 1)); setView("month"); }} />}
+      {view === "month" && <MonthView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} onDay={(d) => { setCursor(d); setView("day"); }} />}
+      {view === "week" && <WeekView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />}
+      {view === "day" && <DayView cursor={cursor} byDay={byDay} onArticleClick={onArticleClick} />}
+      {view === "agenda" && <AgendaView rows={rows} onArticleClick={onArticleClick} />}
     </div>
   );
 }
 
-// ---------------- CALENDAR TAB ----------------
-function CalendarTab() {
-  const rows = useStore(articlesStore).filter((a) => a.statut !== "Idée");
-  const events: CalendarEvent[] = rows.map((a) => ({
-    id: a.id,
-    date: a.date,
-    title: a.titre,
-    tone: a.statut === "Publié" ? "success" : a.statut === "En attente de validation" ? "warn" : a.statut === "Planifié" ? "muted" : "muted",
-    onClick: () => toast.info(a.titre, { description: `${a.thematique} · ${a.statut}${a.heure ? ` · ${a.heure}` : ""}` }),
-  }));
+function startOfWeek(d: Date) {
+  const s = new Date(d);
+  const dow = (s.getDay() + 6) % 7; // Mon=0
+  s.setDate(s.getDate() - dow);
+  s.setHours(0, 0, 0, 0);
+  return s;
+}
+
+function YearView({ year, byDay, onMonth }: { year: number; byDay: Map<string, Article[]>; onMonth: (m: number) => void }) {
   return (
-    <div className="space-y-4">
-      <Card className="p-4 flex items-center gap-4 flex-wrap">
-        <div>
-          <div className="font-semibold text-sm">Calendrier éditorial</div>
-          <div className="text-xs text-muted-foreground">Publications planifiées par jour. Cliquez un article pour voir ses détails.</div>
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      {MONTHS_FR.map((name, m) => {
+        const first = new Date(year, m, 1);
+        const startDow = (first.getDay() + 6) % 7;
+        const days = new Date(year, m + 1, 0).getDate();
+        const cells: (number | null)[] = [];
+        for (let i = 0; i < startDow; i++) cells.push(null);
+        for (let d = 1; d <= days; d++) cells.push(d);
+        const total = Array.from(byDay.entries()).filter(([k]) => k.startsWith(`${year}-${String(m + 1).padStart(2, "0")}`)).reduce((s, [, v]) => s + v.length, 0);
+        return (
+          <button key={m} onClick={() => onMonth(m)} className="text-left rounded-xl border bg-card p-3 hover:border-primary hover:shadow-md transition-all">
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-semibold text-sm">{name}</div>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{total}</span>
+            </div>
+            <div className="grid grid-cols-7 gap-0.5 text-[9px]">
+              {DOW_FR.map((d) => <div key={d} className="text-center text-muted-foreground">{d[0]}</div>)}
+              {cells.map((d, i) => {
+                if (d === null) return <div key={i} />;
+                const key = `${year}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                const has = byDay.get(key);
+                return <div key={i} className={cn("aspect-square rounded grid place-items-center", has ? "bg-primary/20 text-primary font-semibold" : "text-muted-foreground")}>{d}</div>;
+              })}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function MonthView({ cursor, byDay, onArticleClick, onDay }: { cursor: Date; byDay: Map<string, Article[]>; onArticleClick: (a: Article) => void; onDay: (d: Date) => void }) {
+  const y = cursor.getFullYear(); const m = cursor.getMonth();
+  const first = new Date(y, m, 1);
+  const startDow = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const cells: (Date | null)[] = [];
+  for (let i = 0; i < startDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(y, m, d));
+  while (cells.length % 7 !== 0) cells.push(null);
+  const today = new Date();
+  return (
+    <div className="rounded-xl border bg-card overflow-hidden">
+      <div className="grid grid-cols-7 border-b bg-muted/30 text-[11px] font-semibold text-muted-foreground">
+        {DOW_FR.map((d) => <div key={d} className="p-2 text-center">{d}</div>)}
+      </div>
+      <div className="grid grid-cols-7 auto-rows-[minmax(120px,1fr)]">
+        {cells.map((d, i) => {
+          const isToday = d && d.toDateString() === today.toDateString();
+          const key = d ? dateKey(d) : "";
+          const evs = key ? byDay.get(key) ?? [] : [];
+          return (
+            <div key={i} className={cn("border-r border-b p-1.5 last:border-r-0", (i % 7 === 6) && "border-r-0", !d && "bg-muted/20")}>
+              {d && (
+                <>
+                  <button onClick={() => onDay(d)} className={cn("text-xs font-medium mb-1 h-6 w-6 grid place-items-center rounded-full hover:bg-muted", isToday && "bg-primary text-primary-foreground hover:bg-primary")}>{d.getDate()}</button>
+                  <div className="space-y-1">
+                    {evs.slice(0, 3).map((a) => (
+                      <button key={a.id} onClick={() => onArticleClick(a)} className={cn("w-full text-left text-[10px] leading-tight px-1.5 py-1 rounded border truncate hover:brightness-95 transition", toneFor(a))} title={a.titre}>
+                        {a.heure && <span className="opacity-70 mr-1">{a.heure}</span>}{a.titre}
+                      </button>
+                    ))}
+                    {evs.length > 3 && <button onClick={() => onDay(d)} className="text-[10px] text-muted-foreground pl-1 hover:text-foreground">+{evs.length - 3} autres</button>}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function WeekView({ cursor, byDay, onArticleClick }: { cursor: Date; byDay: Map<string, Article[]>; onArticleClick: (a: Article) => void }) {
+  const start = startOfWeek(cursor);
+  const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(start); d.setDate(start.getDate() + i); return d; });
+  const today = new Date();
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
+      {days.map((d) => {
+        const evs = byDay.get(dateKey(d)) ?? [];
+        const isToday = d.toDateString() === today.toDateString();
+        return (
+          <Card key={d.toISOString()} className="p-3 min-h-[280px]">
+            <div className={cn("text-xs font-semibold mb-2 pb-2 border-b flex items-center justify-between", isToday && "text-primary")}>
+              <span>{DOW_FR[(d.getDay() + 6) % 7]}</span>
+              <span className={cn("h-6 w-6 rounded-full grid place-items-center", isToday && "bg-primary text-primary-foreground")}>{d.getDate()}</span>
+            </div>
+            <div className="space-y-1.5">
+              {evs.length === 0 && <div className="text-[10px] text-muted-foreground italic">Aucune publication</div>}
+              {evs.map((a) => (
+                <button key={a.id} onClick={() => onArticleClick(a)} className={cn("w-full text-left text-[11px] px-2 py-1.5 rounded border hover:brightness-95 transition", toneFor(a))}>
+                  {a.heure && <div className="text-[9px] opacity-70">{a.heure}</div>}
+                  <div className="font-medium line-clamp-2">{a.titre}</div>
+                </button>
+              ))}
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+function DayView({ cursor, byDay, onArticleClick }: { cursor: Date; byDay: Map<string, Article[]>; onArticleClick: (a: Article) => void }) {
+  const evs = (byDay.get(dateKey(cursor)) ?? []).slice().sort((a, b) => (a.heure ?? "").localeCompare(b.heure ?? ""));
+  const hours = Array.from({ length: 12 }, (_, i) => 8 + i); // 8h → 19h
+  const byHour = new Map<number, Article[]>();
+  for (const a of evs) {
+    const h = parseInt((a.heure ?? "09:00").slice(0, 2), 10);
+    if (!byHour.has(h)) byHour.set(h, []);
+    byHour.get(h)!.push(a);
+  }
+  return (
+    <Card className="p-0 overflow-hidden">
+      {evs.length === 0 && (
+        <div className="p-16 text-center text-muted-foreground">
+          <CalendarDays className="h-10 w-10 mx-auto mb-2 opacity-40" />
+          Aucune publication ce jour.
         </div>
-        <div className="flex gap-3 ml-auto text-xs">
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Publié</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" /> En attente</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-muted-foreground" /> Brouillon / Planifié</span>
+      )}
+      {evs.length > 0 && (
+        <div className="divide-y">
+          {hours.map((h) => {
+            const items = byHour.get(h) ?? [];
+            return (
+              <div key={h} className="grid grid-cols-[80px_1fr] min-h-[64px]">
+                <div className="text-xs text-muted-foreground p-3 border-r bg-muted/20 font-mono">{String(h).padStart(2, "0")}:00</div>
+                <div className="p-2 space-y-1.5">
+                  {items.map((a) => (
+                    <button key={a.id} onClick={() => onArticleClick(a)} className={cn("w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition", toneFor(a))}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono opacity-70">{a.heure}</span>
+                        <span className="font-medium">{a.titre}</span>
+                        <StatusBadge status={a.statut} />
+                      </div>
+                      <div className="text-[11px] opacity-80 mt-0.5">{a.thematique} · {a.auteur}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </Card>
-      <MiniCalendar events={events} title="Planning de publication" />
+      )}
+    </Card>
+  );
+}
+
+function AgendaView({ rows, onArticleClick }: { rows: Article[]; onArticleClick: (a: Article) => void }) {
+  const sorted = rows.slice().sort((a, b) => (a.date + (a.heure ?? "")).localeCompare(b.date + (b.heure ?? "")));
+  const groups = new Map<string, Article[]>();
+  for (const a of sorted) {
+    if (!groups.has(a.date)) groups.set(a.date, []);
+    groups.get(a.date)!.push(a);
+  }
+  return (
+    <div className="space-y-3">
+      {[...groups.entries()].map(([date, items]) => (
+        <Card key={date} className="p-4">
+          <div className="text-sm font-semibold mb-2">{date}</div>
+          <div className="space-y-1.5">
+            {items.map((a) => (
+              <button key={a.id} onClick={() => onArticleClick(a)} className={cn("w-full text-left px-3 py-2 rounded-lg border hover:brightness-95 transition flex items-center gap-3", toneFor(a))}>
+                <span className="text-xs font-mono opacity-70 w-12">{a.heure ?? "—"}</span>
+                <span className="flex-1 font-medium truncate">{a.titre}</span>
+                <StatusBadge status={a.statut} />
+              </button>
+            ))}
+          </div>
+        </Card>
+      ))}
+      {groups.size === 0 && <Card className="p-16 text-center text-muted-foreground">Aucun article planifié.</Card>}
     </div>
   );
 }
@@ -550,7 +697,7 @@ function ConfigTab() {
 
       <Card className="p-5 lg:col-span-2">
         <div className="flex items-center gap-2 mb-4">
-          <div className="h-9 w-9 rounded-lg bg-[color:var(--gold)]/20 grid place-items-center"><Wand2 className="h-4 w-4 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]" /></div>
+          <div className="h-9 w-9 rounded-lg bg-[color:var(--gold)]/20 grid place-items-center"><Wand2 className="h-4 w-4 text-[color:var(--gold)]" /></div>
           <div>
             <div className="font-semibold">Paramètres de génération IA</div>
             <div className="text-xs text-muted-foreground">Fréquence, ton, longueur et automatisation.</div>

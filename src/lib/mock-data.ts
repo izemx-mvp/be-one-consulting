@@ -75,7 +75,7 @@ export type RendezVous = {
 export type Article = {
   id: string; titre: string; thematique: string;
   auteur: "IA" | "Manuel"; contenu: string;
-  statut: "Idée" | "Brouillon" | "En attente de validation" | "Planifié" | "Publié";
+  statut: "Brouillon" | "En attente de validation" | "Planifié" | "Publié";
   date: string;
   extrait: string;
   tags: string[];
@@ -338,7 +338,7 @@ export type HuntingMission = {
   entreprisesCibles: string[];
   entreprisesExclues: string[];
   fourchetteRemu: string;
-  sources: { linkedin: boolean; facebook: boolean; web: boolean };
+  sources: { linkedin: boolean; facebook: boolean; web: boolean; rekrute?: boolean; indeed?: boolean; reseau?: boolean };
   motsClesLinkedin: string;
   urgence: "Standard" | "Prioritaire" | "Critique";
   statut: "En sourcing" | "En qualification" | "Shortlist" | "Livrée";
@@ -348,6 +348,19 @@ export type HuntingMission = {
   dateOuverture: string;
   echeance: string;
   briefing: string;
+  // Extended flexibility fields
+  formation?: string;
+  ageMin?: number;
+  ageMax?: number;
+  experienceMin?: number;
+  mobilite?: "Aucune" | "Nationale" | "Internationale" | "Négociable";
+  disponibilite?: string;
+  packageDetails?: string;
+  avantages?: string[];
+  discretion?: "Publique" | "Confidentielle" | "Ultra-confidentielle";
+  livrablesAttendus?: string;
+  criteresExclusion?: string;
+  notesInternes?: string;
 };
 
 const seedHunting: HuntingMission[] = [
@@ -396,6 +409,18 @@ const seedServices: Service[] = [
   { id: uid(), nom: "Étude de marché sectorielle", famille: "Enquêtes", description: "Analyse concurrentielle, cartographie d'acteurs, insights terrain.", duree: "6 à 10 semaines", livrables: ["Rapport 40-80 pages", "Base concurrents", "Restitution"], tarifIndicatif: "180-450k MAD", actif: true },
 ];
 export const servicesStore = createStore<Service>(seedServices);
+
+// ---------- Contact bases for surveys ----------
+export type ContactBase = { id: string; nom: string; description: string; nbContacts: number; source: string; derniereMaj: string };
+const seedBases: ContactBase[] = [
+  { id: uid(), nom: "Clients B2B — Grands comptes", description: "Interlocuteurs décisionnaires des 40 principaux clients Corp.", nbContacts: 187, source: "CRM HubSpot", derniereMaj: d(3) },
+  { id: uid(), nom: "Collaborateurs — Groupe complet", description: "Base RH interne, tous sites confondus.", nbContacts: 642, source: "SIRH Talentia", derniereMaj: d(1) },
+  { id: uid(), nom: "Candidats vivier 2025-2026", description: "Candidats qualifiés issus des campagnes de sourcing des 12 derniers mois.", nbContacts: 1_284, source: "CVthèque interne", derniereMaj: d(7) },
+  { id: uid(), nom: "Anciens participants formations", description: "Participants à nos parcours certifiants leadership et RH.", nbContacts: 356, source: "LMS Be One Academy", derniereMaj: d(14) },
+  { id: uid(), nom: "Prospects tièdes — Retail & FMCG", description: "Prospects ayant échangé avec l'équipe commerciale sans décision.", nbContacts: 92, source: "CRM HubSpot", derniereMaj: d(20) },
+  { id: uid(), nom: "Écosystème RH Maroc", description: "DRH, DRHA, responsables talent management identifiés au Maroc.", nbContacts: 428, source: "LinkedIn Sales Nav", derniereMaj: d(9) },
+];
+export const contactBasesStore = createStore<ContactBase>(seedBases);
 
 export const huntingStore = createStore<HuntingMission>(seedHunting);
 

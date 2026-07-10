@@ -231,11 +231,6 @@ function DocsTab() {
 
   return (
     <div className="space-y-4">
-      <Card className="p-6 border-2 border-dashed border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 text-center cursor-pointer hover:bg-[color:var(--gold)]/10 transition-colors" onClick={() => { setEditing(emptyDoc()); setTagsInput(""); setOpen(true); }}>
-        <UploadCloud className="h-8 w-8 mx-auto text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)] mb-2" />
-        <div className="font-semibold">Importer un document</div>
-        <div className="text-xs text-muted-foreground mt-1">Glissez un fichier PDF, DOCX, XLSX ou PPTX — jusqu'à 20 Mo. Ces documents nourrissent l'agent de service client.</div>
-      </Card>
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[240px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -245,8 +240,13 @@ function DocsTab() {
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="Catégorie" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Toutes catégories</SelectItem>{docCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
         </Select>
-        <Button onClick={() => { setEditing(emptyDoc()); setTagsInput(""); setOpen(true); }} className="ml-auto bg-primary text-primary-foreground"><Plus className="h-4 w-4 mr-1" /> Nouveau document</Button>
+        <Button onClick={() => { setEditing(emptyDoc()); setTagsInput(""); setOpen(true); }} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><UploadCloud className="h-4 w-4 mr-1.5" /> Nouveau document</Button>
       </div>
+      <Card className="p-6 border-2 border-dashed border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 text-center cursor-pointer hover:bg-[color:var(--gold)]/10 transition-colors" onClick={() => { setEditing(emptyDoc()); setTagsInput(""); setOpen(true); }}>
+        <UploadCloud className="h-8 w-8 mx-auto text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)] mb-2" />
+        <div className="font-semibold">Importer un document</div>
+        <div className="text-xs text-muted-foreground mt-1">Glissez un fichier PDF, DOCX, XLSX ou PPTX — jusqu'à 20 Mo. Ces documents nourrissent l'agent de service client.</div>
+      </Card>
       <Card className="p-0 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
@@ -267,19 +267,16 @@ function DocsTab() {
                     <div className={cn("h-9 w-9 rounded-lg grid place-items-center text-[10px] font-bold text-white", d.type === "PDF" && "bg-red-500", d.type === "DOCX" && "bg-blue-500", d.type === "XLSX" && "bg-emerald-600", d.type === "PPTX" && "bg-orange-500")}>{d.type}</div>
                     <div>
                       <div className="font-medium">{d.nom}</div>
-                      <div className="flex gap-1 mt-0.5">{d.tags.map((t) => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-muted">#{t}</span>)}</div>
+                      <div className="flex gap-1 mt-0.5 flex-wrap">{d.tags.map((t) => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">#{t}</span>)}</div>
                     </div>
                   </div>
                 </td>
-                <td className="p-3"><span className="text-xs px-2 py-0.5 rounded-full bg-secondary">{d.categorie}</span></td>
+                <td className="p-3"><span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">{d.categorie}</span></td>
                 <td className="p-3 text-muted-foreground">{d.type}</td>
                 <td className="p-3 text-muted-foreground">{d.taille}</td>
                 <td className="p-3 text-muted-foreground">{d.date}</td>
                 <td className="p-3 text-right">
-                  <div className="flex gap-1 justify-end">
-                    <Button size="icon" variant="ghost" onClick={() => openEdit(d)}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setConfirmDel(d)}><Trash2 className="h-4 w-4" /></Button>
-                  </div>
+                  <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setConfirmDel(d)}><Trash2 className="h-4 w-4" /></Button>
                 </td>
               </tr>
             ))}
@@ -288,18 +285,23 @@ function DocsTab() {
         </table>
       </Card>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>{editing.id ? "Modifier le document" : "Nouveau document"}</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2 border-2 border-dashed rounded-lg p-4 text-center text-xs text-muted-foreground">📎 Glissez ici votre fichier (démo — chargement simulé)</div>
-            <div className="col-span-2 space-y-1"><Label>Nom du document</Label><Input value={editing.nom} onChange={(e) => setEditing({ ...editing, nom: e.target.value })} placeholder="Ex: Plaquette commerciale 2026.pdf" /></div>
-            <div className="space-y-1"><Label>Type</Label><Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as KbDocument["type"] })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PDF">PDF</SelectItem><SelectItem value="DOCX">DOCX</SelectItem><SelectItem value="XLSX">XLSX</SelectItem><SelectItem value="PPTX">PPTX</SelectItem></SelectContent></Select></div>
-            <div className="space-y-1"><Label>Catégorie</Label><Select value={editing.categorie} onValueChange={(v) => setEditing({ ...editing, categorie: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{docCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-1"><Label>Taille</Label><Input value={editing.taille} onChange={(e) => setEditing({ ...editing, taille: e.target.value })} /></div>
-            <div className="space-y-1"><Label>Date</Label><Input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} /></div>
-            <div className="col-span-2 space-y-1"><Label>Tags (séparés par virgules)</Label><Input value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} placeholder="ex: plaquette, présentation" /></div>
+        <DialogContent className="sm:max-w-lg p-0">
+          <div className="bg-gradient-to-r from-primary via-primary/90 to-[color:var(--gold)]/70 text-primary-foreground px-6 py-4 border-b">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><UploadCloud className="h-5 w-5" /> Nouveau document</DialogTitle>
+            </DialogHeader>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button><Button onClick={save} className="bg-primary text-primary-foreground">Enregistrer</Button></DialogFooter>
+          <div className="px-6 py-4 grid grid-cols-2 gap-3">
+            <div className="col-span-2 border-2 border-dashed border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 rounded-lg p-6 text-center text-xs text-muted-foreground">
+              <UploadCloud className="h-6 w-6 mx-auto mb-1 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]" />
+              Glissez ici votre fichier — PDF, DOCX, XLSX ou PPTX (démo — chargement simulé)
+            </div>
+            <div className="col-span-2 space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nom du document</Label><Input value={editing.nom} onChange={(e) => setEditing({ ...editing, nom: e.target.value })} placeholder="Ex: Plaquette commerciale 2026.pdf" className="h-11" /></div>
+            <div className="space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</Label><Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as KbDocument["type"] })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PDF">PDF</SelectItem><SelectItem value="DOCX">DOCX</SelectItem><SelectItem value="XLSX">XLSX</SelectItem><SelectItem value="PPTX">PPTX</SelectItem></SelectContent></Select></div>
+            <div className="space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Catégorie</Label><Select value={editing.categorie} onValueChange={(v) => setEditing({ ...editing, categorie: v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{docCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
+            <div className="col-span-2 space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tags (séparés par virgules)</Label><Input value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} placeholder="ex: plaquette, présentation" className="h-11" /></div>
+          </div>
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30"><Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button><Button onClick={save} className="btn-premium hover:[&]:btn-premium-hover">Importer</Button></DialogFooter>
         </DialogContent>
       </Dialog>
       <ConfirmDialog open={!!confirmDel} onOpenChange={(v) => !v && setConfirmDel(null)} title="Supprimer ce document ?" destructive confirmLabel="Supprimer" onConfirm={() => { if (confirmDel) { documentsStore.remove(confirmDel.id); toast.success("Document supprimé"); } setConfirmDel(null); }} />

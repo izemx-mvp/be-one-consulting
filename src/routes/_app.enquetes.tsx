@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MoreHorizontal, Eye, Pencil, Trash2, Send, ChevronLeft, ChevronRight, LayoutList, CalendarDays, Sparkles, Wand2, Plus, X } from "lucide-react";
-import { enquetesStore, ENTREPRISES, uid, useStore, type Enquete, type EnqueteDest } from "@/lib/mock-data";
+import { enquetesStore, ENTREPRISES, uid, useStore, contactBasesStore, type Enquete, type EnqueteDest } from "@/lib/mock-data";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { MiniCalendar, type CalendarEvent } from "@/components/mini-calendar";
@@ -62,6 +62,8 @@ function Page() {
   const [detail, setDetail] = useState<Enquete | null>(null);
   const [destPage, setDestPage] = useState(1);
   const [confirmDel, setConfirmDel] = useState<Enquete | null>(null);
+  const [selectedBases, setSelectedBases] = useState<string[]>([]);
+  const bases = useStore(contactBasesStore);
 
   const filtered = rows.filter((r) =>
     (type === "all" || r.type === type) &&
@@ -220,46 +222,76 @@ function Page() {
 
       {/* Multi-step create/edit */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editing.id ? "Modifier l'enquête" : "Nouvelle enquête"}</DialogTitle>
-            <div className="flex items-center gap-2 pt-2 text-xs">
-              {[1, 2, 3, 4].map((s) => (
-                <span key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-[color:var(--gold)]" : "bg-muted"}`} />
-              ))}
+        <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-y-auto p-0">
+          <div className="bg-gradient-to-r from-primary via-primary/90 to-[color:var(--gold)]/70 text-primary-foreground px-6 py-5 border-b">
+            <DialogHeader>
+              <DialogTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5" /> {editing.id ? "Modifier l'enquête" : "Nouvelle enquête AI"}</DialogTitle>
+            </DialogHeader>
+            <div className="flex items-center gap-1.5 pt-3">
+              {[1, 2, 3, 4].map((s) => <span key={s} className={cn("h-1.5 flex-1 rounded-full transition-colors", s <= step ? "bg-[color:var(--gold)]" : "bg-white/25")} />)}
             </div>
-            <div className="text-xs text-muted-foreground pt-1">Étape {step} sur 4 — {["Infos générales", "Base destinataires", "Questionnaire (IA)", "Planification"][step - 1]}</div>
-          </DialogHeader>
+            <div className="text-xs text-primary-foreground/80 pt-2 font-medium">Étape {step} / 4 — {["Infos générales", "Base destinataires", "Questionnaire (IA)", "Planification"][step - 1]}</div>
+          </div>
+          <div className="px-6 py-5">
           {step === 1 && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 space-y-1"><Label>Nom de l'enquête</Label><Input value={editing.nom} onChange={(e) => setEditing({ ...editing, nom: e.target.value })} placeholder="Ex: Satisfaction B2B Q1 2026" /></div>
-              <div className="col-span-2 space-y-1"><Label>Client</Label><Input value={editing.client} onChange={(e) => setEditing({ ...editing, client: e.target.value })} placeholder="Ex: OCP Group" /></div>
-              <div className="space-y-1">
-                <Label>Type</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nom de l'enquête</Label><Input value={editing.nom} onChange={(e) => setEditing({ ...editing, nom: e.target.value })} placeholder="Ex: Satisfaction B2B Q1 2026" className="h-11" /></div>
+              <div className="col-span-2 space-y-1.5"><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Client</Label><Input value={editing.client} onChange={(e) => setEditing({ ...editing, client: e.target.value })} placeholder="Ex: OCP Group" list="ent-list-enq" className="h-11" /><datalist id="ent-list-enq">{ENTREPRISES.map((e) => <option key={e} value={e} />)}</datalist></div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</Label>
                 <Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as Enquete["type"] })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                   <SelectContent>{TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <Label>Statut initial</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Statut initial</Label>
                 <Select value={editing.statut} onValueChange={(v) => setEditing({ ...editing, statut: v as Enquete["statut"] })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                   <SelectContent>{STATUTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
           )}
           {step === 2 && (
-            <div className="space-y-3">
-              <div className="space-y-1"><Label>Nombre de destinataires</Label><Input type="number" value={editing.envoyees} onChange={(e) => setEditing({ ...editing, envoyees: Number(e.target.value) })} /></div>
-              <div className="rounded-lg border-2 border-dashed border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 p-6 text-center text-sm">
-                <div className="text-2xl mb-2">📎</div>
-                <div className="font-medium">Glissez votre base CSV / Excel</div>
-                <div className="text-xs text-muted-foreground mt-1">Colonnes attendues : Nom, Email, Entreprise, Fonction</div>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Sélectionner une ou plusieurs bases de destinataires</Label>
+                <div className="grid grid-cols-1 gap-2 mt-2">
+                  {bases.map((b) => {
+                    const on = selectedBases.includes(b.id);
+                    return (
+                      <button type="button" key={b.id} onClick={() => {
+                        const nb = on ? selectedBases.filter((x) => x !== b.id) : [...selectedBases, b.id];
+                        setSelectedBases(nb);
+                        const total = bases.filter((x) => nb.includes(x.id)).reduce((s, x) => s + x.nbContacts, 0);
+                        setEditing({ ...editing, envoyees: total });
+                      }} className={cn("text-left rounded-xl border p-4 transition-all flex items-center gap-3", on ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "hover:bg-muted/40")}>
+                        <div className={cn("h-10 w-10 rounded-lg grid place-items-center shrink-0", on ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                          <span className="text-sm font-bold tabular-nums">{b.nbContacts.toLocaleString("fr-FR").slice(0, 3)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">{b.nom}</div>
+                          <div className="text-xs text-muted-foreground truncate">{b.description}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">{b.nbContacts.toLocaleString("fr-FR")} contacts · Source : {b.source} · MAJ {b.derniereMaj}</div>
+                        </div>
+                        <div className={cn("h-5 w-5 rounded-full border-2 grid place-items-center shrink-0", on ? "border-primary bg-primary" : "border-muted-foreground/30")}>
+                          {on && <div className="h-2 w-2 rounded-full bg-primary-foreground" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+              {selectedBases.length > 0 && (
+                <div className="rounded-xl border p-4 bg-gradient-to-br from-[color:var(--gold)]/10 to-transparent border-[color:var(--gold)]/25">
+                  <div className="text-sm font-semibold flex items-center gap-2"><Sparkles className="h-4 w-4 text-[color:var(--gold)]" /> {selectedBases.length} base(s) sélectionnée(s)</div>
+                  <div className="text-xs text-muted-foreground mt-1">Total : <b className="text-foreground">{editing.envoyees.toLocaleString("fr-FR")}</b> contacts uniques seront ciblés par l'enquête.</div>
+                </div>
+              )}
             </div>
           )}
+
           {step === 3 && (
             <div className="space-y-3">
               <div>
@@ -318,19 +350,20 @@ function Page() {
               </div>
             </div>
           )}
-          <DialogFooter className="justify-between">
+          </div>
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30 flex-row justify-between sm:justify-between">
             <Button variant="outline" onClick={() => step > 1 ? setStep(step - 1) : setOpen(false)}>
               {step > 1 ? "Précédent" : "Annuler"}
             </Button>
             {step < 4 ? (
-              <Button onClick={() => setStep(step + 1)} className="bg-primary text-primary-foreground">Suivant</Button>
+              <Button onClick={() => setStep(step + 1)} className="btn-premium hover:[&]:btn-premium-hover">Suivant</Button>
             ) : (
-
-              <Button onClick={save} className="bg-primary text-primary-foreground">Enregistrer</Button>
+              <Button onClick={save} className="btn-premium hover:[&]:btn-premium-hover">Enregistrer</Button>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       {/* Detail Drawer */}
       <Sheet open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, Linkedin, Facebook, Instagram, Rocket, Calendar, MessageSquare, XCircle, ArrowRight, Target } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, Linkedin, Facebook, Instagram, Calendar, MessageSquare, XCircle, ArrowRight, Target } from "lucide-react";
 import { candidatsStore, POSTES, rdvStore, uid, useStore, type Candidat } from "@/lib/mock-data";
 import { HeadHuntingPanel } from "@/components/head-hunting";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -77,7 +77,6 @@ function Page() {
   const [editing, setEditing] = useState<Candidat>(empty());
   const [detail, setDetail] = useState<Candidat | null>(null);
   const [confirmDel, setConfirmDel] = useState<Candidat | null>(null);
-  const [campaignOpen, setCampaignOpen] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
 
   const filtered = rows.filter((r) =>
@@ -127,10 +126,8 @@ function Page() {
             <TabsTrigger value="kanban">Pipeline</TabsTrigger>
             <TabsTrigger value="hunting"><Target className="h-4 w-4 mr-1.5" /> Head Hunting</TabsTrigger>
           </TabsList>
-          <Button onClick={() => setCampaignOpen(true)} variant="outline" className="border-[color:var(--gold)]/40 text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]">
-            <Rocket className="h-4 w-4 mr-2" /> Lancer une campagne de sourcing
-          </Button>
         </div>
+
 
 
         <TabsContent value="table">
@@ -371,32 +368,6 @@ function Page() {
         </SheetContent>
       </Sheet>
 
-      {/* Campaign modal */}
-      <Dialog open={campaignOpen} onOpenChange={setCampaignOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>Lancer une campagne de sourcing</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label>Plateforme</Label>
-              <Select defaultValue="LinkedIn">
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="LinkedIn">LinkedIn (B2B, cadres)</SelectItem><SelectItem value="Facebook">Facebook (grand public)</SelectItem><SelectItem value="Instagram">Instagram (grand public)</SelectItem></SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1"><Label>Poste ciblé</Label><Input placeholder="Ex: Contrôleur de gestion" /></div>
-            <div className="space-y-1"><Label>Critères clés (mots-clés)</Label><Input placeholder="Ex: SAP, 5 ans exp., anglais courant" /></div>
-            <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-              L'agent lancera la recherche sur la plateforme sélectionnée et poussera les profils qualifiés dans la CVthèque.
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCampaignOpen(false)}>Annuler</Button>
-            <Button onClick={() => { setCampaignOpen(false); toast.success("Campagne lancée", { description: "Les premiers profils arriveront sous 24-48h." }); }} className="bg-primary text-primary-foreground">
-              <Rocket className="h-4 w-4 mr-2" /> Lancer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <ConfirmDialog
         open={!!confirmDel}
