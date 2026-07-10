@@ -176,10 +176,8 @@ function GridTab({
   const [auteur, setAuteur] = useState("all");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Article>(empty(cfg));
-  const [tagsInput, setTagsInput] = useState("");
-  const [step, setStep] = useState(1);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardEditing, setWizardEditing] = useState<Article | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [confirmDel, setConfirmDel] = useState<Article | null>(null);
@@ -208,42 +206,9 @@ function GridTab({
   const current = Math.min(page, totalPages);
   const pageItems = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  const openNew = () => {
-    setEditing(empty(cfg));
-    setTagsInput("");
-    setStep(1);
-    setOpen(true);
-  };
-  const openEdit = (a: Article) => {
-    setEditing(a);
-    setTagsInput(a.tags.join(", "));
-    setStep(1);
-    setOpen(true);
-  };
+  const openNew = () => { setWizardEditing(null); setWizardOpen(true); };
+  const openEdit = (a: Article) => { setWizardEditing(a); setWizardOpen(true); };
 
-  // Brouillon must be reviewed (approved) before it can be scheduled or published.
-  const isBrouillon = editing.statut === "Brouillon";
-  const availableStatuts: Article["statut"][] = isBrouillon ? ["Brouillon"] : STATUTS;
-
-  const save = () => {
-    if (!editing.titre) {
-      toast.error("Titre requis");
-      return;
-    }
-    const tags = tagsInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const item = { ...editing, tags };
-    if (editing.id) {
-      articlesStore.update(editing.id, item);
-      toast.success("Article mis à jour");
-    } else {
-      articlesStore.add({ ...item, id: uid() });
-      toast.success("Article créé");
-    }
-    setOpen(false);
-  };
 
   // Lifecycle actions from the detail sheet.
   const approveToPlanified = (a: Article) => {
