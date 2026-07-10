@@ -338,7 +338,7 @@ export type HuntingMission = {
   entreprisesCibles: string[];
   entreprisesExclues: string[];
   fourchetteRemu: string;
-  sources: { linkedin: boolean; facebook: boolean; web: boolean };
+  sources: { linkedin: boolean; facebook: boolean; web: boolean; rekrute: boolean; indeed: boolean; reseau: boolean };
   motsClesLinkedin: string;
   urgence: "Standard" | "Prioritaire" | "Critique";
   statut: "En sourcing" | "En qualification" | "Shortlist" | "Livrée";
@@ -348,6 +348,19 @@ export type HuntingMission = {
   dateOuverture: string;
   echeance: string;
   briefing: string;
+  // Extended flexibility fields
+  formation?: string;
+  ageMin?: number;
+  ageMax?: number;
+  experienceMin?: number;
+  mobilite?: "Aucune" | "Nationale" | "Internationale" | "Négociable";
+  disponibilite?: string;
+  packageDetails?: string;
+  avantages?: string[];
+  discretion?: "Publique" | "Confidentielle" | "Ultra-confidentielle";
+  livrablesAttendus?: string;
+  criteresExclusion?: string;
+  notesInternes?: string;
 };
 
 const seedHunting: HuntingMission[] = [
