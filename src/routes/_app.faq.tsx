@@ -279,7 +279,7 @@ function DocsTab() {
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="Catégorie" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Toutes catégories</SelectItem>{docCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
         </Select>
-        <Button onClick={() => { setEditing(emptyDoc()); setTagsInput(""); setOpen(true); }} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><UploadCloud className="h-4 w-4 mr-1.5" /> Nouveau document</Button>
+        <Button onClick={() => { setEditing(emptyDoc()); setOpen(true); }} className="ml-auto btn-premium hover:[&]:btn-premium-hover"><UploadCloud className="h-4 w-4 mr-1.5" /> Nouveau document</Button>
       </div>
       <Card className="p-0 overflow-hidden">
         <table className="w-full text-sm">
