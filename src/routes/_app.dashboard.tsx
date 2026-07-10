@@ -84,7 +84,7 @@ function Dashboard() {
 
   const enCours = candidats.filter((c) => ["Nouveau", "Présélectionné", "Entretien", "Offre"].includes(c.statut)).length;
   const enquetesActives = enquetes.filter((e) => e.statut !== "Terminé" && e.statut !== "Brouillon").length;
-  const articlesAttente = articles.filter((a) => a.statut === "En attente de validation");
+  const articlesAttente = articles.filter((a) => a.statut === "Brouillon");
   const candidatsAttente = candidats.filter((c) => c.statut === "Nouveau").slice(0, 3);
   const rdvSemaine = rdv.filter((r) => {
     const dt = new Date(r.dateHeure);

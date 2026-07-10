@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_app/articles")({
   component: Page,
 });
 
-const STATUTS: Article["statut"][] = ["Brouillon", "En attente de validation", "Planifié", "Publié"];
+const STATUTS: Article["statut"][] = ["Brouillon", "Planifié", "Publié"];
 const PAGE_SIZE = 9;
 
 function coverFor(a: Article, i: number) {
@@ -115,15 +115,12 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
   const openNew = () => { setEditing(empty(cfg)); setTagsInput(""); setOpen(true); };
   const openEdit = (a: Article) => { setEditing(a); setTagsInput(a.tags.join(", ")); setOpen(true); };
 
-  // Planifié requires the article to have been reviewed at least once (not Brouillon)
-  const canPlan = editing.statut !== "Brouillon" || Boolean(editing.id && rows.find((r) => r.id === editing.id && r.statut !== "Brouillon"));
+  // A Brouillon must be approved (via the detail sheet) before it can be planned or published.
+  const isBrouillon = editing.statut === "Brouillon";
+  const availableStatuts: Article["statut"][] = isBrouillon ? ["Brouillon"] : STATUTS;
 
   const save = () => {
     if (!editing.titre) { toast.error("Titre requis"); return; }
-    if (editing.statut === "Planifié" && !canPlan) {
-      toast.error("Impossible de planifier un brouillon", { description: "Passez d'abord en « En attente de validation »." });
-      return;
-    }
     const tags = tagsInput.split(",").map((s) => s.trim()).filter(Boolean);
     const item = { ...editing, tags };
     if (editing.id) { articlesStore.update(editing.id, item); toast.success("Article mis à jour"); }
@@ -183,7 +180,7 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{a.extrait}</p>
                 <TagChips tags={a.tags} />
                 <div className="flex items-center justify-between mt-3">
-                  <StatusBadge status={a.statut} dot={a.statut === "En attente de validation"} />
+                  <StatusBadge status={a.statut} dot={a.statut === "Brouillon"} />
                   <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {a.date}</span>
                 </div>
               </div>
@@ -251,15 +248,11 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
                   <Select value={editing.statut} onValueChange={(v) => setEditing({ ...editing, statut: v as Article["statut"] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {STATUTS.map((s) => (
-                        <SelectItem key={s} value={s} disabled={s === "Planifié" && !canPlan}>
-                          {s}{s === "Planifié" && !canPlan ? " — validez d'abord" : ""}
-                        </SelectItem>
-                      ))}
+                      {availableStatuts.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  {!canPlan && (
-                    <p className="text-[11px] text-muted-foreground pt-0.5">Un brouillon doit passer par « En attente de validation » avant d'être planifié.</p>
+                  {isBrouillon && (
+                    <p className="text-[11px] text-muted-foreground pt-0.5">Approuvez le brouillon depuis sa fiche pour le planifier ou le publier.</p>
                   )}
                 </div>
                 <div className="space-y-1"><Label>Date de publication</Label><Input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} /></div>
@@ -296,7 +289,7 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary uppercase">{detail.thematique}</span>
                   {detail.auteur === "IA" && <span className="text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--gold)]/20 text-[color:var(--gold)] inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> IA</span>}
-                  <StatusBadge status={detail.statut} dot={detail.statut === "En attente de validation"} />
+                  <StatusBadge status={detail.statut} dot={detail.statut === "Brouillon"} />
                 </div>
                 <SheetTitle className="text-2xl mt-2">{detail.titre}</SheetTitle>
                 <div className="text-xs text-muted-foreground">Publication : {detail.date}{detail.heure ? ` · ${detail.heure}` : ""}</div>
@@ -307,7 +300,7 @@ function GridTab({ externalDetail, setExternalDetail }: { externalDetail: Articl
                 <article className="prose prose-sm dark:prose-invert max-w-none mt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-4 [&_ul]:list-disc [&_ul]:pl-5" dangerouslySetInnerHTML={{ __html: detail.contenu }} />
               </div>
               <div className="sticky bottom-0 bg-background border-t -mx-6 px-6 py-3 flex flex-wrap gap-2">
-                {detail.statut === "En attente de validation" && (
+                {detail.statut === "Brouillon" && (
                   <>
                     <Button onClick={() => approve(detail)} className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1">
                       <Check className="h-4 w-4 mr-2" /> Approuver & Publier
@@ -354,7 +347,7 @@ type View = "year" | "month" | "week" | "day" | "agenda";
 
 function toneFor(a: Article) {
   if (a.statut === "Publié") return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40";
-  if (a.statut === "En attente de validation") return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40";
+  if (a.statut === "Brouillon") return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40";
   if (a.statut === "Planifié") return "bg-[color:var(--gold)]/15 text-[color:var(--gold)] border-[color:var(--gold)]/40";
   return "bg-muted text-muted-foreground border-border";
 }
