@@ -417,6 +417,49 @@ export function HeadHuntingPanel() {
                     <Card className="p-3 text-center bg-[color:var(--gold)]/10"><div className="text-xs text-muted-foreground">Qualifiés</div><div className="text-2xl font-bold text-[color:var(--gold-foreground)] dark:text-[color:var(--gold)]">{detail.profilsQualifies}</div></Card>
                   </div>
                 </section>
+                <section>
+                  <div className="flex items-baseline justify-between mb-2">
+                    <h4 className="text-xs font-semibold uppercase text-muted-foreground inline-flex items-center gap-1.5"><Users2 className="h-3.5 w-3.5" /> Candidats identifiés pour cette chasse</h4>
+                    <span className="text-[10px] text-muted-foreground">Triés par score IA</span>
+                  </div>
+                  <div className="space-y-2">
+                    {candidatesForMission(detail, allCandidats).map((c) => {
+                      const initials = c.nom.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+                      const scoreColor = c.score >= 85 ? "text-emerald-600 dark:text-emerald-400" : c.score >= 70 ? "text-[color:var(--gold)]" : "text-muted-foreground";
+                      const barColor = c.score >= 85 ? "bg-emerald-500" : c.score >= 70 ? "bg-[color:var(--gold)]" : "bg-muted-foreground/50";
+                      return (
+                        <button key={c.id} onClick={() => setCandidatDetail(c)} className="w-full text-left rounded-xl border bg-card hover:border-primary hover:shadow-md transition-all p-3">
+                          <div className="flex items-start gap-3">
+                            <div className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-primary to-[color:var(--gold)] text-primary-foreground grid place-items-center font-semibold text-xs">{initials}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="font-semibold text-sm truncate">{c.nom}</div>
+                                  <div className="text-xs text-muted-foreground truncate">{c.poste} · {c.experience} ans</div>
+                                </div>
+                                <div className={cn("flex items-center gap-1 text-lg font-bold tabular-nums", scoreColor)}>
+                                  <Star className="h-3.5 w-3.5 fill-current" />{c.score}
+                                </div>
+                              </div>
+                              <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden"><div className={cn("h-full", barColor)} style={{ width: `${c.score}%` }} /></div>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-2 text-[10px]">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted">{sourceIcon[c.source]}{c.source}</span>
+                                <StatusBadge status={c.statut} />
+                                {c.competences.slice(0, 2).map((k) => (
+                                  <span key={k} className="px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground truncate max-w-[120px]">{k}</span>
+                                ))}
+                                {c.competences.length > 2 && <span className="text-muted-foreground">+{c.competences.length - 2}</span>}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {candidatesForMission(detail, allCandidats).length === 0 && (
+                      <div className="text-xs text-muted-foreground italic py-4 text-center border rounded-lg bg-muted/20">Aucun candidat identifié pour le moment.</div>
+                    )}
+                  </div>
+                </section>
                 <div className="flex gap-2">
                   <Button onClick={() => launchSearch(detail)} className="flex-1 btn-premium hover:[&]:btn-premium-hover"><Sparkles className="h-4 w-4 mr-2" /> Relancer la recherche IA</Button>
                   <Button variant="outline" onClick={() => toast.info("Shortlist exportée", { description: "Envoi par email au consultant." })}><ExternalLink className="h-4 w-4 mr-2" /> Voir profils</Button>
